@@ -1,0 +1,268 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bg-canvas" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="50%" stop-color="#F1F5F9"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+
+    <!-- Ambient Glows -->
+    <radialGradient id="glow-green" cx="25%" cy="30%" r="35%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+    </radialGradient>
+    
+    <radialGradient id="glow-rose" cx="75%" cy="70%" r="35%">
+      <stop offset="0%" stop-color="#F43F5E" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#F43F5E" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="glow-blue" cx="50%" cy="50%" r="40%">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- UI Card Gradients -->
+    <linearGradient id="card-white" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F8FAFC"/>
+    </linearGradient>
+
+    <linearGradient id="pocket-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+
+    <!-- Accents Gradients -->
+    <linearGradient id="grad-income" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <linearGradient id="grad-expense" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FB7185"/>
+      <stop offset="100%" stop-color="#E11D48"/>
+    </linearGradient>
+
+    <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+
+    <!-- Path Flow Gradients -->
+    <linearGradient id="flow-in" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#3B82F6" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <linearGradient id="flow-out" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#F43F5E" stop-opacity="0.8"/>
+    </linearGradient>
+
+    <!-- Shadows -->
+    <filter id="shadow-main" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="20" stdDeviation="25" flood-color="#0F172A" flood-opacity="0.08"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.04"/>
+    </filter>
+
+    <filter id="shadow-card" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0F172A" flood-opacity="0.06"/>
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.03"/>
+    </filter>
+
+    <filter id="shadow-badge-in" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#10B981" flood-opacity="0.25"/>
+    </filter>
+
+    <filter id="shadow-badge-out" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#F43F5E" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <style>
+    .font-base {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Prompt', 'Noto Sans Thai', sans-serif;
+    }
+  </style>
+
+  <!-- Background Canvas -->
+  <rect width="800" height="600" rx="32" fill="url(#bg-canvas)"/>
+
+  <!-- Ambient Light Orbs -->
+  <circle cx="200" cy="180" r="240" fill="url(#glow-green)"/>
+  <circle cx="620" cy="420" r="240" fill="url(#glow-rose)"/>
+  <circle cx="400" cy="300" r="260" fill="url(#glow-blue)"/>
+
+  <!-- Dot Grid Pattern -->
+  <g opacity="0.25">
+    <circle cx="80" cy="80" r="2" fill="#94A3B8"/>
+    <circle cx="140" cy="80" r="2" fill="#94A3B8"/>
+    <circle cx="200" cy="80" r="2" fill="#94A3B8"/>
+    <circle cx="600" cy="80" r="2" fill="#94A3B8"/>
+    <circle cx="660" cy="80" r="2" fill="#94A3B8"/>
+    <circle cx="720" cy="80" r="2" fill="#94A3B8"/>
+    
+    <circle cx="80" cy="520" r="2" fill="#94A3B8"/>
+    <circle cx="140" cy="520" r="2" fill="#94A3B8"/>
+    <circle cx="200" cy="520" r="2" fill="#94A3B8"/>
+    <circle cx="600" cy="520" r="2" fill="#94A3B8"/>
+    <circle cx="660" cy="520" r="2" fill="#94A3B8"/>
+    <circle cx="720" cy="520" r="2" fill="#94A3B8"/>
+  </g>
+
+  <!-- Flow Connectors -->
+  <!-- Income Flow: Inward Curve into Smart Pocket -->
+  <path d="M 270 230 C 330 230, 320 285, 360 285" fill="none" stroke="url(#flow-in)" stroke-width="3" stroke-dasharray="6 6" stroke-linecap="round"/>
+  <!-- Expense Flow: Outward Curve from Smart Pocket -->
+  <path d="M 440 335 C 480 335, 470 395, 520 395" fill="none" stroke="url(#flow-out)" stroke-width="3" stroke-dasharray="6 6" stroke-linecap="round"/>
+
+  <!-- Flow Direction Pulse Rings -->
+  <circle cx="315" cy="255" r="4" fill="#10B981" opacity="0.8"/>
+  <circle cx="485" cy="365" r="4" fill="#F43F5E" opacity="0.8"/>
+
+  <!-- ====================================================== -->
+  <!-- CENTRAL ELEMENT: SMART POCKET HUB                      -->
+  <!-- ====================================================== -->
+  <g transform="translate(240, 160)" filter="url(#shadow-main)">
+    <!-- Main Card Body -->
+    <rect width="320" height="280" rx="24" fill="url(#card-white)" stroke="#E2E8F0" stroke-width="1.5"/>
+
+    <!-- Card Header -->
+    <g transform="translate(24, 24)">
+      <!-- App Icon / Badge -->
+      <rect width="38" height="38" rx="12" fill="url(#pocket-dark)"/>
+      <!-- Wallet Minimal Path -->
+      <path d="M 12 15 C 12 13.89 12.89 13 14 13 L 24 13 C 25.11 13 26 13.89 26 15 L 26 23 C 26 24.11 25.11 25 24 25 L 14 25 C 12.89 25 12 24.11 12 23 Z" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M 21 19 L 24 19" stroke="#34D399" stroke-width="2" stroke-linecap="round"/>
+
+      <text x="48" y="19" class="font-base" font-size="14" font-weight="700" fill="#0F172A">Smart Pocket</text>
+      <text x="48" y="32" class="font-base" font-size="11" font-weight="500" fill="#64748B">กระเป๋าเงินอัจฉริยะ</text>
+
+      <!-- Active Status Dot -->
+      <circle cx="264" cy="18" r="4" fill="#10B981"/>
+      <circle cx="264" cy="18" r="8" fill="#10B981" opacity="0.2"/>
+    </g>
+
+    <!-- Net Balance Section -->
+    <g transform="translate(24, 86)">
+      <text x="0" y="0" class="font-base" font-size="12" font-weight="500" fill="#94A3B8" letter-spacing="0.5">ยอดคงเหลือสุทธิ (NET BALANCE)</text>
+      <text x="0" y="32" class="font-base" font-size="30" font-weight="800" fill="#0F172A">฿ 42,500<tspan font-size="18" font-weight="600" fill="#64748B">.00</tspan></text>
+    </g>
+
+    <!-- Budget Allocation Bar (Pocket Split) -->
+    <g transform="translate(24, 150)">
+      <!-- Allocation Track -->
+      <rect width="272" height="8" rx="4" fill="#F1F5F9"/>
+      <!-- Segments: Blue (Needs 50%), Green (Savings 30%), Purple (Wants 20%) -->
+      <rect width="136" height="8" rx="4" fill="url(#grad-blue)"/>
+      <rect x="139" width="78" height="8" rx="4" fill="url(#grad-income)"/>
+      <rect x="220" width="52" height="8" rx="4" fill="#A855F7"/>
+    </g>
+
+    <!-- Pocket Allocation Chips -->
+    <g transform="translate(24, 180)">
+      <!-- Chip 1: Needs -->
+      <rect x="0" y="0" width="84" height="68" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+      <circle cx="16" cy="18" r="4" fill="#2563EB"/>
+      <text x="26" y="21" class="font-base" font-size="10" font-weight="600" fill="#64748B">จำเป็น</text>
+      <text x="12" y="44" class="font-base" font-size="12" font-weight="700" fill="#0F172A">50%</text>
+      <text x="12" y="58" class="font-base" font-size="9" font-weight="500" fill="#94A3B8">฿21,250</text>
+
+      <!-- Chip 2: Savings -->
+      <rect x="94" y="0" width="84" height="68" rx="14" fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1"/>
+      <circle cx="110" cy="18" r="4" fill="#10B981"/>
+      <text x="120" y="21" class="font-base" font-size="10" font-weight="600" fill="#15803D">เงินออม</text>
+      <text x="106" y="44" class="font-base" font-size="12" font-weight="700" fill="#166534">30%</text>
+      <text x="106" y="58" class="font-base" font-size="9" font-weight="500" fill="#15803D">฿12,750</text>
+
+      <!-- Chip 3: Wants -->
+      <rect x="188" y="0" width="84" height="68" rx="14" fill="#FAF5FF" stroke="#E9D5FF" stroke-width="1"/>
+      <circle cx="204" cy="18" r="4" fill="#9333EA"/>
+      <text x="214" y="21" class="font-base" font-size="10" font-weight="600" fill="#7E22CE">ความสุข</text>
+      <text x="200" y="44" class="font-base" font-size="12" font-weight="700" fill="#581C87">20%</text>
+      <text x="200" y="58" class="font-base" font-size="9" font-weight="500" fill="#7E22CE">฿8,500</text>
+    </g>
+  </g>
+
+  <!-- ====================================================== -->
+  <!-- LEFT ELEMENT: INCOME (รายรับ) FLOATING CARD            -->
+  <!-- ====================================================== -->
+  <g transform="translate(70, 170)" filter="url(#shadow-card)">
+    <rect width="200" height="116" rx="20" fill="#FFFFFF" stroke="#BBF7D0" stroke-width="1.5"/>
+    
+    <!-- Top Row: Icon + Label -->
+    <g transform="translate(18, 18)">
+      <rect width="36" height="36" rx="12" fill="url(#grad-income)" filter="url(#shadow-badge-in)"/>
+      <!-- Inward / Upward Trend Icon -->
+      <path d="M 13 23 L 23 13 M 23 13 L 16 13 M 23 13 L 23 20" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      
+      <text x="46" y="16" class="font-base" font-size="11" font-weight="600" fill="#059669">กระแสเงินเข้า</text>
+      <text x="46" y="32" class="font-base" font-size="15" font-weight="800" fill="#064E3B">รายรับ (Income)</text>
+    </g>
+
+    <!-- Amount -->
+    <g transform="translate(18, 76)">
+      <text x="0" y="22" class="font-base" font-size="22" font-weight="800" fill="#059669">+ ฿ 55,000</text>
+    </g>
+  </g>
+
+  <!-- Floating Green Mini Coin (Income) -->
+  <g transform="translate(50, 130)" filter="url(#shadow-badge-in)">
+    <circle cx="22" cy="22" r="22" fill="url(#grad-income)"/>
+    <text x="22" y="28" class="font-base" font-size="18" font-weight="800" fill="#FFFFFF" text-anchor="middle">฿</text>
+  </g>
+
+  <!-- ====================================================== -->
+  <!-- RIGHT ELEMENT: EXPENSE (รายจ่าย) FLOATING CARD         -->
+  <!-- ====================================================== -->
+  <g transform="translate(520, 335)" filter="url(#shadow-card)">
+    <rect width="200" height="116" rx="20" fill="#FFFFFF" stroke="#FECDD3" stroke-width="1.5"/>
+    
+    <!-- Top Row: Icon + Label -->
+    <g transform="translate(18, 18)">
+      <rect width="36" height="36" rx="12" fill="url(#grad-expense)" filter="url(#shadow-badge-out)"/>
+      <!-- Outward / Downward Trend Icon -->
+      <path d="M 13 13 L 23 23 M 23 23 L 16 23 M 23 23 L 23 16" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      
+      <text x="46" y="16" class="font-base" font-size="11" font-weight="600" fill="#E11D48">ควบคุมการใช้</text>
+      <text x="46" y="32" class="font-base" font-size="15" font-weight="800" fill="#881337">รายจ่าย (Expense)</text>
+    </g>
+
+    <!-- Amount -->
+    <g transform="translate(18, 76)">
+      <text x="0" y="22" class="font-base" font-size="22" font-weight="800" fill="#E11D48">− ฿ 12,500</text>
+    </g>
+  </g>
+
+  <!-- Floating Receipt Mini Badge (Expense) -->
+  <g transform="translate(710, 420)" filter="url(#shadow-badge-out)">
+    <rect width="40" height="40" rx="12" fill="url(#grad-expense)"/>
+    <!-- Minimal Receipt Icon -->
+    <path d="M 14 12 L 26 12 C 27 12 28 13 28 14 L 28 28 L 25 26 L 22 28 L 19 26 L 16 28 L 12 28 L 12 14 C 12 13 13 12 14 12 Z" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linejoin="round"/>
+    <line x1="16" y1="17" x2="24" y2="17" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="16" y1="21" x2="21" y2="21" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- ====================================================== -->
+  <!-- TOP BRANDING & CONCEPT BADGE                           -->
+  <!-- ====================================================== -->
+  <g transform="translate(400, 75)" text-anchor="middle">
+    <!-- Pill Container -->
+    <rect x="-140" y="-18" width="280" height="36" rx="18" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1" filter="url(#shadow-card)"/>
+    <!-- Two Colored Dots: Income & Expense -->
+    <circle cx="-100" cy="0" r="5" fill="#10B981"/>
+    <circle cx="-86" cy="0" r="5" fill="#F43F5E"/>
+    <text x="15" y="4" class="font-base" font-size="12" font-weight="700" fill="#334155" letter-spacing="0.5">
+      รายรับ • รายจ่าย • ระบบแบ่งกระเป๋า
+    </text>
+  </g>
+
+  <!-- Bottom Minimal Summary -->
+  <g transform="translate(400, 550)" text-anchor="middle">
+    <text x="0" y="0" class="font-base" font-size="13" font-weight="600" fill="#64748B">
+      Smart Pocket — วางแผนรายรับ ควบคุมรายจ่าย สบายใจทุกสิ้นเดือน
+    </text>
+  </g>
+</svg>

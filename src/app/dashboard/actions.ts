@@ -11,17 +11,20 @@ export async function addExpense(formData: FormData) {
   const amount = Number(formData.get('amount'))
   const note = formData.get('note') as string
   const bucketId = formData.get('bucket_id') as string
+  const slipUrl = formData.get('slip_url') as string || null
+  const receiver = formData.get('receiver') as string || null
 
   if (!bucketId || amount <= 0) throw new Error('Invalid input')
 
-  // เรียกใช้ RPC แบบ Atomic ที่เราสร้างไว้ใน schema.sql
   const { error } = await supabase.rpc('process_expense', {
     p_user_id: user.id,
     p_bucket_id: bucketId,
     p_amount: amount,
     p_category: 'expense',
     p_note: note,
-    p_date: new Date().toISOString()
+    p_date: new Date().toISOString(),
+    p_slip_url: slipUrl,
+    p_receiver: receiver
   })
 
   if (error) {
@@ -87,5 +90,37 @@ export async function addIncome(formData: FormData) {
       .eq('user_id', user.id)
   }
 
+  revalidatePath('/dashboard', 'layout')
+}
+
+export async function moveToTrash(transactionId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not logged in')
+
+  const { data, error } = await supabase.rpc('move_to_trash', {
+    p_tx_id: transactionId,
+    p_user_id: user.id
+  })
+
+  if (error || !data) {
+    throw new Error('Failed to move to trash')
+  }
+  revalidatePath('/dashboard', 'layout')
+}
+
+export async function restoreFromTrash(transactionId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not logged in')
+
+  const { data, error } = await supabase.rpc('restore_from_trash', {
+    p_tx_id: transactionId,
+    p_user_id: user.id
+  })
+
+  if (error || !data) {
+    throw new Error('Failed to restore from trash')
+  }
   revalidatePath('/dashboard', 'layout')
 }
