@@ -6,7 +6,7 @@
 - **Database & Auth**: Supabase (PostgreSQL with RLS)
 - **Deployment**: Vercel (recommended)
 
-## Current State (Milestone 4 Completed - User Settings, Export CSV & Budget Alerts)
+## Current State (Milestone 5.1 Completed - Recurring Transactions System)
 - UI Prototyping completed (Landing Page, Login, Dashboard, Income/Expense forms, History).
 - Configured Supabase Auth and Database with RLS.
 - Soft-delete (Trash) system with 3-day lazy cleanup implemented.
@@ -26,11 +26,26 @@
 - **Budget Limit Alerts (Dashboard & Expense Form)**:
   - Yellow warning (>= 80%) & Red alert (>= 100%) on Dashboard.
   - Dynamic real-time calculation and alert banner when choosing buckets in `/dashboard/expense`.
+- **Recurring Transactions System (`/dashboard/recurring`) — NEW**:
+  - ตาราง `recurring_schedules` พร้อม RLS ครบ 4 ทิศทาง และ Index สำหรับ Lazy Evaluation.
+  - Atomic PostgreSQL RPC `process_due_recurring_transactions` ที่ปลอดภัย (IDOR guard, `FOR UPDATE` row lock, safety cap 36 iterations).
+  - รองรับ 4 ความถี่: รายวัน (Daily), รายสัปดาห์ (Weekly), รายเดือน (Monthly), รายปี (Yearly).
+  - End-of-month anchor preservation (31 Jan -> 28 Feb -> 31 Mar ไม่เลื่อนวัน).
+  - Lazy Evaluation Runner ตรวจสอบและบันทึกรายการอัตโนมัติเมื่อเปิด Dashboard.
+  - UI หน้า `/dashboard/recurring` พร้อม Monthly Commitments KPI, Filter tabs, Toggle Active, Modal Form.
+  - Auto-process notification banner บน Dashboard และ Shortcut Card.
+  - Security hardening: REVOKE/GRANT ป้องกัน anonymous PostgREST calls.
 - **Automated Tests**:
-  - Unit tests suite (`npm test` via `tests/milestone4.test.mjs`) covering math, validation, and CSV format with 100% pass rate.
+  - Unit tests suite (`npm test`) ผ่านฉลุย **87/87 tests** (100% pass rate) ครอบคลุม M4 + M5 Unit + M5 Adversarial + M5 Stress.
 
-## Next Steps (Milestone 5)
-1. **Recurring Transactions**: ระบบบันทึกรายจ่าย/รายรับประจำอัตโนมัติ (เช่น ค่าเน็ต, คอนโด, Netflix).
-2. **Multi-Currency Support**: รองรับการแปลงและบันทึกสกุลเงินต่างประเทศแบบ Real-time.
-3. **Receipt Image Cloud Backup**: ระบบจัดเก็บภาพสลิปใบเสร็จบน Supabase Storage พร้อมการดาวน์โหลดเป็นชุด.
+## Next Steps (Milestone 5 — Remaining Features)
+1. **Multi-Currency Support**: รองรับการแปลงและบันทึกสกุลเงินต่างประเทศแบบ Real-time.
+2. **Receipt Image Cloud Backup**: ระบบจัดเก็บภาพสลิปใบเสร็จบน Supabase Storage พร้อมการดาวน์โหลดเป็นชุด.
+
+## Migration Required (Supabase)
+Run the following SQL in Supabase SQL Editor or `supabase db push`:
+```
+supabase/schema_recurring.sql
+```
+
 
