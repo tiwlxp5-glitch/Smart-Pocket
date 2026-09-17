@@ -16,7 +16,9 @@ import {
   TrendingUp, 
   Coffee,
   Save,
-  Mail
+  Mail,
+  Repeat,
+  ChevronRight
 } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import { updateUserProfile, updateUserPassword, updateBucketBudget } from '../actions'
@@ -359,7 +361,30 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Section 4: Sign Out */}
+        {/* Section 4: Recurring Transactions */}
+        <section className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col gap-3">
+          <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <Repeat size={22} />
+            </div>
+            <div>
+              <h2 className="font-bold text-gray-900 text-base">รายการประจำอัตโนมัติ (Recurring)</h2>
+              <p className="text-xs text-gray-500">จัดการบิลค่าห้อง, ค่าเน็ต, สตรีมมิ่ง, เงินเดือน</p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/recurring"
+            className="w-full py-3 px-4 bg-indigo-50 hover:bg-indigo-100/80 text-indigo-700 rounded-2xl text-sm font-semibold transition flex items-center justify-between border border-indigo-100 group"
+          >
+            <div className="flex items-center gap-2">
+              <Repeat size={18} className="text-indigo-600 group-hover:rotate-45 transition-transform duration-300" />
+              <span>เข้าสู่หน้าจัดการรายการประจำ</span>
+            </div>
+            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </section>
+
+        {/* Section 5: Sign Out */}
         <section className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
           <form action="/auth/signout" method="post">
             <button

@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
-import { ShieldCheck, TrendingUp, Coffee, Settings, PieChart, ChevronRight, AlertTriangle, AlertCircle, Wallet } from 'lucide-react'
+import { ShieldCheck, TrendingUp, Coffee, Settings, PieChart, ChevronRight, AlertTriangle, AlertCircle, Wallet, Repeat, CalendarClock, Sparkles } from 'lucide-react'
 import Link from 'next/link'
+import { calculateMonthlyCommitment } from '@/utils/recurringHelper'
 
 // Dummy fallback data if DB is empty or not connected
 const fallbackBuckets = [
@@ -12,6 +13,30 @@ const fallbackBuckets = [
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  // 1. Lazy Evaluation Runner: Trigger due recurring transactions
+  let autoProcessedResult: { processed_count: number; total_expense: number; total_income: number } | null = null
+  if (user) {
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('process_due_recurring_transactions', {
+        p_user_id: user.id
+      })
+      if (!rpcError && rpcData && Number(rpcData.processed_count) > 0) {
+        autoProcessedResult = rpcData
+      }
+    } catch (err) {
+      console.warn('Dashboard recurring lazy runner warning:', err)
+    }
+  }
+
+  // 2. Fetch Recurring summary
+  const { data: recurringData } = user ? await supabase
+    .from('recurring_schedules')
+    .select('amount, frequency, type, is_active')
+    .eq('user_id', user.id)
+    .eq('is_active', true) : { data: null }
+
+  const recurringCommitment = calculateMonthlyCommitment((recurringData || []) as any)
   
   // Fetch from DB (will fail gracefully to fallback if no DB connection)
   let { data: buckets } = await supabase.from('buckets').select('*').order('created_at')
@@ -96,6 +121,32 @@ export default async function DashboardPage() {
           <Settings size={20} />
         </Link>
       </header>
+
+      {/* Auto-processed Recurring Notification Banner */}
+      {autoProcessedResult && Number(autoProcessedResult.processed_count) > 0 && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-6 text-emerald-900 shadow-xs flex items-start gap-3">
+          <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+            <Sparkles size={18} />
+          </div>
+          <div className="flex-1">
+            <h4 className="font-bold text-sm text-emerald-900">
+              ตัดรอบบิลประจำอัตโนมัติเรียบร้อย ({autoProcessedResult.processed_count} รายการ)
+            </h4>
+            <p className="text-xs text-emerald-700 mt-0.5">
+              {Number(autoProcessedResult.total_expense) > 0 && `รายจ่าย -฿${Number(autoProcessedResult.total_expense).toLocaleString('th-TH')} `}
+              {Number(autoProcessedResult.total_income) > 0 && `รายรับ +฿${Number(autoProcessedResult.total_income).toLocaleString('th-TH')}`}
+            </p>
+            <div className="flex gap-3 mt-2">
+              <Link href="/dashboard/recurring" className="text-xs font-bold text-emerald-800 underline hover:text-emerald-950">
+                ดูรายการประจำ
+              </Link>
+              <Link href="/dashboard/history" className="text-xs font-semibold text-emerald-700 hover:underline">
+                ดูประวัติการเงิน
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Total Balance Card */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl p-6 text-white shadow-lg mb-8">
@@ -183,6 +234,32 @@ export default async function DashboardPage() {
           <div>
             <p className="text-[10px] text-gray-500">จ่ายออกเดือนนี้</p>
             <p className="text-sm font-bold text-rose-600">-฿{monthExpense.toLocaleString('th-TH')}</p>
+          </div>
+        </div>
+      </Link>
+
+      {/* Recurring Transactions Shortcut Card */}
+      <Link 
+        href="/dashboard/recurring"
+        className="block bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-8 hover:shadow-md hover:border-indigo-200 transition group"
+      >
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
+            <Repeat size={18} />
+            <span>รายการประจำ (Recurring)</span>
+          </div>
+          <span className="text-xs text-indigo-600 font-semibold group-hover:translate-x-0.5 transition flex items-center gap-0.5">
+            จัดการรอบบิล <ChevronRight size={14} />
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 bg-indigo-50/50 p-3 rounded-2xl border border-indigo-100/50">
+          <div>
+            <p className="text-[10px] text-gray-500">เปิดใช้งานอยู่</p>
+            <p className="text-sm font-bold text-indigo-900">{recurringCommitment.activeCount} รายการ</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-500">ภาระจ่ายประจำ/เดือน</p>
+            <p className="text-sm font-bold text-rose-600">~฿{recurringCommitment.totalExpense.toLocaleString('th-TH')}</p>
           </div>
         </div>
       </Link>
