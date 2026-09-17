@@ -1,25 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowDownCircle, PieChart, CheckCircle2, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-
-// ใช้ข้อมูลสมมติไปก่อน รอเชื่อม Database
-const fallbackBuckets = [
-  { id: '1', name: 'เงินสำรองฉุกเฉิน', color: '#F59E0B', allocation_percentage: 20 },
-  { id: '2', name: 'เงินลงทุน', color: '#10B981', allocation_percentage: 30 },
-  { id: '3', name: 'เงินใช้ชีวิต', color: '#3B82F6', allocation_percentage: 50 },
-]
+import { addIncome } from '../actions'
+import { createBrowserClient } from '@supabase/ssr'
 
 export default function IncomePage() {
   const router = useRouter()
+  const [buckets, setBuckets] = useState<any[]>([])
   const [amount, setAmount] = useState<string>('')
   const [note, setNote] = useState('')
   const [showSplitter, setShowSplitter] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
 
   const numAmount = Number(amount) || 0
+
+  useEffect(() => {
+    const fetchBuckets = async () => {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      const { data } = await supabase.from('buckets').select('*').order('created_at')
+      if (data) setBuckets(data)
+      setIsLoading(false)
+    }
+    fetchBuckets()
+  }, [])
 
   const handleAllocate = (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,12 +39,24 @@ export default function IncomePage() {
     }
   }
 
-  const handleConfirm = () => {
-    // อนาคต: ยิง API บันทึกข้อมูลลง Supabase (Transactions & Allocations)
-    setIsSuccess(true)
-    setTimeout(() => {
-      router.push('/dashboard')
-    }, 2000)
+  const handleConfirm = async () => {
+    if (numAmount > 0) {
+      setIsSaving(true)
+      const formData = new FormData()
+      formData.append('amount', numAmount.toString())
+      formData.append('note', note)
+      
+      try {
+        await addIncome(formData)
+        setIsSuccess(true)
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 2000)
+      } catch (error) {
+        alert('เกิดข้อผิดพลาดในการบันทึกรายรับ')
+        setIsSaving(false)
+      }
+    }
   }
 
   if (isSuccess) {
@@ -86,11 +109,11 @@ export default function IncomePage() {
 
           <button
             type="submit"
-            disabled={numAmount <= 0}
+            disabled={numAmount <= 0 || isLoading}
             className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-emerald-700 transition disabled:opacity-50 disabled:bg-gray-400 flex items-center justify-center gap-2"
           >
             <PieChart size={20} />
-            จัดสรรเงินอัตโนมัติ
+            {isLoading ? 'กำลังโหลด...' : 'จัดสรรเงินอัตโนมัติ'}
           </button>
         </form>
       ) : (
@@ -106,14 +129,14 @@ export default function IncomePage() {
 
           <h3 className="font-bold text-gray-900 mb-4 text-lg">สรุปการจัดสรรเงิน</h3>
           <div className="flex flex-col gap-3 mb-8">
-            {fallbackBuckets.map((bucket) => {
-              const allocatedAmount = (numAmount * bucket.allocation_percentage) / 100
+            {buckets.map((bucket) => {
+              const allocatedAmount = (numAmount * Number(bucket.allocation_percentage)) / 100
               
               return (
                 <div key={bucket.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center gap-4">
                   <div 
                     className="w-4 h-12 rounded-full shrink-0"
-                    style={{ backgroundColor: bucket.color }}
+                    style={{ backgroundColor: bucket.color || '#3B82F6' }}
                   ></div>
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900">{bucket.name}</p>
@@ -132,16 +155,18 @@ export default function IncomePage() {
           <div className="flex gap-3">
             <button
               onClick={() => setShowSplitter(false)}
-              className="flex-1 bg-white text-gray-600 border border-gray-200 py-4 rounded-2xl font-bold hover:bg-gray-50 transition"
+              disabled={isSaving}
+              className="flex-1 bg-white text-gray-600 border border-gray-200 py-4 rounded-2xl font-bold hover:bg-gray-50 transition disabled:opacity-50"
             >
               แก้ไขยอด
             </button>
             <button
               onClick={handleConfirm}
-              className="flex-[2] bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition flex items-center justify-center gap-2"
+              disabled={isSaving}
+              className="flex-[2] bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <CheckCircle2 size={20} />
-              ยืนยันการบันทึก
+              {isSaving ? 'กำลังบันทึก...' : 'ยืนยันการบันทึก'}
             </button>
           </div>
         </div>

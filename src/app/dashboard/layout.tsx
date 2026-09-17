@@ -10,10 +10,9 @@ export default async function DashboardLayout({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // [DEV MODE] Temporarily disabled to allow UI testing
-  // if (!user) {
-  //   redirect('/login')
-  // }
+  if (!user) {
+    redirect('/login')
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">

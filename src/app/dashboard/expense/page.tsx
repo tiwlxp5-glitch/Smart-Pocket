@@ -1,32 +1,56 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowUpCircle, CheckCircle2, ChevronLeft, ShieldCheck, TrendingUp, Coffee } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-
-const fallbackBuckets = [
-  { id: '1', name: 'เงินสำรองฉุกเฉิน', icon: 'shield', color: '#F59E0B', balance: 15000 },
-  { id: '2', name: 'เงินลงทุน', icon: 'trending-up', color: '#10B981', balance: 8000 },
-  { id: '3', name: 'เงินใช้ชีวิต', icon: 'coffee', color: '#3B82F6', balance: 12500 },
-]
+import { addExpense } from '../actions'
+import { createBrowserClient } from '@supabase/ssr'
 
 export default function ExpensePage() {
   const router = useRouter()
+  const [buckets, setBuckets] = useState<any[]>([])
   const [amount, setAmount] = useState<string>('')
   const [note, setNote] = useState('')
-  const [selectedBucketId, setSelectedBucketId] = useState<string>('3') // Default to Daily Living
+  const [selectedBucketId, setSelectedBucketId] = useState<string>('')
   const [isSuccess, setIsSuccess] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const numAmount = Number(amount) || 0
 
-  const handleConfirm = (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchBuckets = async () => {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      const { data } = await supabase.from('buckets').select('*').order('created_at')
+      if (data) {
+        setBuckets(data)
+        if (data.length > 0) setSelectedBucketId(data[data.length - 1].id) // Default to last (usually Daily Living)
+      }
+      setIsLoading(false)
+    }
+    fetchBuckets()
+  }, [])
+
+  const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (numAmount > 0) {
-      setIsSuccess(true)
-      setTimeout(() => {
-        router.push('/dashboard')
-      }, 2000)
+    if (numAmount > 0 && selectedBucketId) {
+      const formData = new FormData()
+      formData.append('amount', numAmount.toString())
+      formData.append('note', note)
+      formData.append('bucket_id', selectedBucketId)
+      
+      try {
+        await addExpense(formData)
+        setIsSuccess(true)
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 2000)
+      } catch (error) {
+        alert('เกิดข้อผิดพลาดในการบันทึกรายจ่าย ยอดเงินอาจไม่พอหรือมีปัญหาการเชื่อมต่อ')
+      }
     }
   }
 
@@ -68,43 +92,47 @@ export default function ExpensePage() {
 
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
           <h3 className="block text-sm font-medium text-gray-700 mb-4">หักจากกระเป๋าเงิน</h3>
-          <div className="flex flex-col gap-3">
-            {fallbackBuckets.map(bucket => {
-              const isSelected = selectedBucketId === bucket.id
-              const Icon = bucket.icon === 'shield' ? ShieldCheck : bucket.icon === 'trending-up' ? TrendingUp : Coffee
-              
-              return (
-                <label 
-                  key={bucket.id}
-                  className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                    isSelected ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-gray-50 hover:bg-gray-100'
-                  }`}
-                >
-                  <input 
-                    type="radio" 
-                    name="bucket" 
-                    value={bucket.id} 
-                    checked={isSelected}
-                    onChange={() => setSelectedBucketId(bucket.id)}
-                    className="hidden"
-                  />
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0"
-                    style={{ backgroundColor: bucket.color }}
+          {isLoading ? (
+            <p className="text-center text-gray-400 py-4">กำลังโหลดกระเป๋าเงิน...</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {buckets.map(bucket => {
+                const isSelected = selectedBucketId === bucket.id
+                const Icon = bucket.icon === 'shield' ? ShieldCheck : bucket.icon === 'trending-up' ? TrendingUp : Coffee
+                
+                return (
+                  <label 
+                    key={bucket.id}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                      isSelected ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-gray-50 hover:bg-gray-100'
+                    }`}
                   >
-                    <Icon size={20} />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`font-semibold ${isSelected ? 'text-rose-700' : 'text-gray-900'}`}>{bucket.name}</p>
-                    <p className={`text-xs ${isSelected ? 'text-rose-500' : 'text-gray-500'}`}>คงเหลือ: ฿{bucket.balance.toLocaleString('th-TH')}</p>
-                  </div>
-                  {isSelected && (
-                    <CheckCircle2 className="text-rose-500" size={24} />
-                  )}
-                </label>
-              )
-            })}
-          </div>
+                    <input 
+                      type="radio" 
+                      name="bucket" 
+                      value={bucket.id} 
+                      checked={isSelected}
+                      onChange={() => setSelectedBucketId(bucket.id)}
+                      className="hidden"
+                    />
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0"
+                      style={{ backgroundColor: bucket.color || '#3B82F6' }}
+                    >
+                      <Icon size={20} />
+                    </div>
+                    <div className="flex-1">
+                      <p className={`font-semibold ${isSelected ? 'text-rose-700' : 'text-gray-900'}`}>{bucket.name}</p>
+                      <p className={`text-xs ${isSelected ? 'text-rose-500' : 'text-gray-500'}`}>คงเหลือ: ฿{Number(bucket.balance).toLocaleString('th-TH')}</p>
+                    </div>
+                    {isSelected && (
+                      <CheckCircle2 className="text-rose-500" size={24} />
+                    )}
+                  </label>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
@@ -120,7 +148,7 @@ export default function ExpensePage() {
 
         <button
           type="submit"
-          disabled={numAmount <= 0}
+          disabled={numAmount <= 0 || isLoading || !selectedBucketId}
           className="w-full bg-rose-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-rose-700 transition disabled:opacity-50 disabled:bg-gray-400 flex items-center justify-center gap-2"
         >
           ยืนยันการจ่ายเงิน
