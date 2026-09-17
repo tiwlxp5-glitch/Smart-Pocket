@@ -124,4 +124,29 @@ describe('Milestone 4: Critical Business Logic & Math Verification', () => {
       assert.equal(validatePassword('123456', 'abcdef'), false, 'Mismatch')
     })
   })
+
+  describe('4. Professional Excel (.xlsx) Structure & Validation', () => {
+    test('verifies that Excel workbook generates valid ZIP archive format for .xlsx', async () => {
+      // Excel files are ZIP archives starting with magic byte sequence: 0x50, 0x4B, 0x03, 0x04 ('PK\x03\x04')
+      const ExcelJS = (await import('exceljs')).default
+      const wb = new ExcelJS.Workbook()
+      const ws = wb.addWorksheet('รายงานบันทึกการเงิน')
+      ws.columns = [
+        { key: 'no', width: 8 },
+        { key: 'date', width: 16 },
+        { key: 'type', width: 14 },
+        { key: 'amount', width: 20 },
+      ]
+      ws.addRow([1, '2026-09-17', 'รายรับ', 1153.00])
+      const buffer = await wb.xlsx.writeBuffer()
+
+      assert.ok(buffer.byteLength > 1000, 'Excel file must have substantial binary content')
+      const uint8 = new Uint8Array(buffer)
+      assert.equal(uint8[0], 0x50, 'Magic byte 1 must be P')
+      assert.equal(uint8[1], 0x4B, 'Magic byte 2 must be K')
+      assert.equal(uint8[2], 0x03, 'Magic byte 3 must be 0x03')
+      assert.equal(uint8[3], 0x04, 'Magic byte 4 must be 0x04')
+    })
+  })
 })
+

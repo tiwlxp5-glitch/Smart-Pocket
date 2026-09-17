@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Download, X, FileSpreadsheet, Calendar, Check, Loader2 } from 'lucide-react'
+import { Download, X, FileSpreadsheet, Calendar, Check, Loader2, Sparkles, FileText } from 'lucide-react'
 import { format } from 'date-fns'
-import { th } from 'date-fns/locale'
 
 export interface ExportTransactionItem {
   id: string
@@ -24,7 +23,8 @@ type TimeframeOption = 'this_month' | 'this_year' | 'all'
 export function ExportModal({ transactions }: ExportModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [timeframe, setTimeframe] = useState<TimeframeOption>('this_month')
-  const [isExporting, setIsExporting] = useState(false)
+  const [isExportingExcel, setIsExportingExcel] = useState(false)
+  const [isExportingCSV, setIsExportingCSV] = useState(false)
 
   const now = new Date()
   const currentYear = now.getFullYear()
@@ -42,17 +42,68 @@ export function ExportModal({ transactions }: ExportModalProps) {
     return true // 'all'
   })
 
+  // Calculate summary
+  let incomeSum = 0
+  let expenseSum = 0
+  filteredData.forEach((tx) => {
+    const amt = Number(tx.amount) || 0
+    if (tx.type === 'income') incomeSum += amt
+    else if (tx.type === 'expense') expenseSum += amt
+  })
+  const netSum = incomeSum - expenseSum
+
+  // 1. Download Styled Excel (.xlsx)
+  const handleDownloadExcel = async () => {
+    setIsExportingExcel(true)
+    try {
+      const res = await fetch('/api/export/excel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeframe, items: filteredData })
+      })
+
+      if (!res.ok) {
+        throw new Error('Server error exporting Excel')
+      }
+
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+
+      const fileSuffix = timeframe === 'this_month'
+        ? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+        : timeframe === 'this_year'
+        ? `${currentYear}`
+        : 'all'
+
+      link.href = url
+      link.setAttribute('download', `smart_pocket_report_${fileSuffix}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      setIsOpen(false)
+    } catch (err) {
+      console.error('Export Excel Error:', err)
+      alert('เกิดข้อผิดพลาดในการสร้างไฟล์ Excel กรุณาลองใหม่อีกครั้ง')
+    } finally {
+      setIsExportingExcel(false)
+    }
+  }
+
+  // 2. Download CSV (.csv)
   const escapeCSV = (val: string | number | null | undefined): string => {
     if (val === null || val === undefined) return '""'
     const str = String(val).replace(/"/g, '""')
     return `"${str}"`
   }
 
-  const handleDownload = () => {
-    setIsExporting(true)
+  const handleDownloadCSV = () => {
+    setIsExportingCSV(true)
     try {
-      // 1. Header row
       const headers = [
+        'ลำดับ',
         'วันที่',
         'เวลา',
         'ประเภท',
@@ -63,14 +114,13 @@ export function ExportModal({ transactions }: ExportModalProps) {
       ]
       let csvString = headers.map(h => escapeCSV(h)).join(',') + '\r\n'
 
-      // 2. Data rows
-      filteredData.forEach((tx) => {
+      filteredData.forEach((tx, idx) => {
         const txDate = new Date(tx.transaction_date)
         const dateStr = format(txDate, 'yyyy-MM-dd')
         const timeStr = format(txDate, 'HH:mm:ss')
         const typeStr = tx.type === 'income' ? 'รายรับ' : tx.type === 'expense' ? 'รายจ่าย' : 'โอนเงิน'
         const amountStr = Number(tx.amount).toFixed(2)
-        
+
         let bucketName = '-'
         if (Array.isArray(tx.buckets) && tx.buckets.length > 0) {
           bucketName = tx.buckets[0]?.name || '-'
@@ -82,6 +132,7 @@ export function ExportModal({ transactions }: ExportModalProps) {
         const receiverStr = tx.receiver || ''
 
         const row = [
+          escapeCSV(idx + 1),
           escapeCSV(dateStr),
           escapeCSV(timeStr),
           escapeCSV(typeStr),
@@ -93,15 +144,15 @@ export function ExportModal({ transactions }: ExportModalProps) {
         csvString += row.join(',') + '\r\n'
       })
 
-      // 3. Add UTF-8 BOM (\uFEFF) to guarantee proper Thai rendering in MS Excel
+      // Add UTF-8 BOM (\uFEFF)
       const blob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
-      
-      const fileSuffix = timeframe === 'this_month' 
-        ? format(now, 'yyyy-MM') 
-        : timeframe === 'this_year' 
-        ? `${currentYear}` 
+
+      const fileSuffix = timeframe === 'this_month'
+        ? format(now, 'yyyy-MM')
+        : timeframe === 'this_year'
+        ? `${currentYear}`
         : 'all'
 
       link.href = url
@@ -113,10 +164,10 @@ export function ExportModal({ transactions }: ExportModalProps) {
 
       setIsOpen(false)
     } catch (err) {
-      console.error('Export Error:', err)
-      alert('เกิดข้อผิดพลาดในการส่งออกไฟล์ กรุณาลองใหม่อีกครั้ง')
+      console.error('Export CSV Error:', err)
+      alert('เกิดข้อผิดพลาดในการส่งออกไฟล์ CSV')
     } finally {
-      setIsExporting(false)
+      setIsExportingCSV(false)
     }
   }
 
@@ -124,25 +175,25 @@ export function ExportModal({ transactions }: ExportModalProps) {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100 transition shadow-2xs"
-        title="ส่งออกประวัติเป็นไฟล์ CSV/Excel"
+        className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 px-3 py-1.5 rounded-full transition shadow-2xs"
+        title="ส่งออกรายงานเป็นไฟล์ Excel หรือ CSV"
       >
-        <Download size={15} />
-        <span>ส่งออกข้อมูล</span>
+        <FileSpreadsheet size={15} />
+        <span>ส่งออก Excel / CSV</span>
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-xl border border-gray-100 flex flex-col gap-5 animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-gray-100 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-2xs">
                   <FileSpreadsheet size={22} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 text-base">ส่งออกข้อมูลธุรกรรม</h3>
-                  <p className="text-xs text-gray-500">ไฟล์ CSV สำหรับ Excel / Sheets</p>
+                  <h3 className="font-bold text-gray-900 text-base">ส่งออกรายงานการเงิน</h3>
+                  <p className="text-xs text-gray-500">รายงานระดับมืออาชีพ พร้อมเปิดใน Excel ทันที</p>
                 </div>
               </div>
               <button
@@ -155,16 +206,16 @@ export function ExportModal({ transactions }: ExportModalProps) {
 
             {/* Timeframe selection */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-gray-600 flex items-center gap-1">
-                <Calendar size={14} />
-                <span>เลือกระยะเวลาที่ต้องการส่งออก:</span>
+              <label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                <Calendar size={14} className="text-gray-500" />
+                <span>เลือกรอบระยะเวลา:</span>
               </label>
 
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setTimeframe('this_month')}
-                  className={`py-2.5 px-2 rounded-xl text-xs font-semibold transition text-center ${
+                  className={`py-2 px-2 rounded-xl text-xs font-semibold transition text-center ${
                     timeframe === 'this_month'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -175,7 +226,7 @@ export function ExportModal({ transactions }: ExportModalProps) {
                 <button
                   type="button"
                   onClick={() => setTimeframe('this_year')}
-                  className={`py-2.5 px-2 rounded-xl text-xs font-semibold transition text-center ${
+                  className={`py-2 px-2 rounded-xl text-xs font-semibold transition text-center ${
                     timeframe === 'this_year'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -186,7 +237,7 @@ export function ExportModal({ transactions }: ExportModalProps) {
                 <button
                   type="button"
                   onClick={() => setTimeframe('all')}
-                  className={`py-2.5 px-2 rounded-xl text-xs font-semibold transition text-center ${
+                  className={`py-2 px-2 rounded-xl text-xs font-semibold transition text-center ${
                     timeframe === 'all'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -197,36 +248,72 @@ export function ExportModal({ transactions }: ExportModalProps) {
               </div>
             </div>
 
-            {/* Info Box */}
-            <div className="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-3.5 flex flex-col gap-1 text-xs text-emerald-900">
-              <div className="flex items-center justify-between font-bold">
-                <span>จำนวนรายการที่จะส่งออก:</span>
-                <span className="text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+            {/* Financial Summary Preview */}
+            <div className="bg-gray-50 rounded-2xl p-3.5 border border-gray-100 flex flex-col gap-2">
+              <div className="flex items-center justify-between text-xs text-gray-600 font-semibold">
+                <span>สรุปข้อมูลที่จะส่งออก:</span>
+                <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-bold">
                   {filteredData.length} รายการ
                 </span>
               </div>
-              <p className="text-[11px] text-emerald-700 mt-1">
-                ✓ เข้ารหัสแบบ UTF-8 BOM รองรับภาษาไทยใน Microsoft Excel สมบูรณ์ 100%
-              </p>
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                <div className="bg-white p-2 rounded-xl border border-gray-100 text-center">
+                  <p className="text-[10px] text-gray-400">รายรับ</p>
+                  <p className="text-xs font-bold text-emerald-600 truncate">+฿{incomeSum.toLocaleString()}</p>
+                </div>
+                <div className="bg-white p-2 rounded-xl border border-gray-100 text-center">
+                  <p className="text-[10px] text-gray-400">รายจ่าย</p>
+                  <p className="text-xs font-bold text-rose-600 truncate">-฿{expenseSum.toLocaleString()}</p>
+                </div>
+                <div className="bg-white p-2 rounded-xl border border-gray-100 text-center">
+                  <p className="text-[10px] text-gray-400">สุทธิ</p>
+                  <p className={`text-xs font-bold truncate ${netSum >= 0 ? 'text-blue-600' : 'text-rose-600'}`}>
+                    ฿{netSum.toLocaleString()}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2">
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2.5">
+              {/* Option 1: Styled Excel (.xlsx) */}
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
-                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition"
+                disabled={isExportingExcel || isExportingCSV || filteredData.length === 0}
+                onClick={handleDownloadExcel}
+                className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm shadow-md hover:shadow-lg transition flex items-center justify-between disabled:opacity-50 group"
               >
-                ยกเลิก
+                <div className="flex items-center gap-2.5">
+                  {isExportingExcel ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    <FileSpreadsheet size={20} />
+                  )}
+                  <div className="text-left">
+                    <div className="flex items-center gap-1.5">
+                      <span>ดาวน์โหลด Excel (.xlsx)</span>
+                      <span className="text-[10px] bg-white/25 px-1.5 py-0.2 rounded-md font-semibold">แนะนำ</span>
+                    </div>
+                    <p className="text-[10px] text-emerald-100 font-normal">
+                      จัดตารางสวย มีสรุปยอดบนหัวตาราง แก้ไขปัญหา ###### 100%
+                    </p>
+                  </div>
+                </div>
+                <Download size={18} className="opacity-80 group-hover:translate-y-0.5 transition" />
               </button>
+
+              {/* Option 2: Plain CSV (.csv) */}
               <button
                 type="button"
-                disabled={isExporting || filteredData.length === 0}
-                onClick={handleDownload}
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+                disabled={isExportingExcel || isExportingCSV || filteredData.length === 0}
+                onClick={handleDownloadCSV}
+                className="w-full py-2.5 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-2xl text-xs font-semibold transition flex items-center justify-between disabled:opacity-50"
               >
-                {isExporting ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-                <span>ดาวน์โหลด CSV</span>
+                <div className="flex items-center gap-2">
+                  {isExportingCSV ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} className="text-gray-400" />}
+                  <span>ดาวน์โหลดไฟล์ข้อมูลดิบ CSV (.csv)</span>
+                </div>
+                <Download size={14} className="text-gray-400" />
               </button>
             </div>
           </div>
