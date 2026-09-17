@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Smart Pocket - แอพรายรับรายจ่ายอัจฉริยะ",
   description: "จดบันทึกรายรับรายจ่ายด้วย AI สแกนสลิปอัตโนมัติ",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     title: "รายรับรายจ่าย",
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"

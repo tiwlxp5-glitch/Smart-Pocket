@@ -7,5 +7,9 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Required to pass Chrome PWA installation criteria
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return new Response('You are offline.');
+    })
+  );
 });
