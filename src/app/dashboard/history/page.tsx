@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { th } from 'date-fns/locale'
 import { moveToTrash } from '../actions'
+import { ExportModal } from './ExportModal'
 
 interface HistoryItem {
   id: string
@@ -38,10 +39,13 @@ export default async function HistoryPage() {
           <ScrollText size={28} className="text-blue-600" />
           <h1 className="text-2xl font-bold text-gray-900">ประวัติการเงิน</h1>
         </div>
-        <Link href="/dashboard/history/trash" className="flex items-center gap-2 text-sm font-medium text-rose-500 bg-rose-50 px-3 py-1.5 rounded-full hover:bg-rose-100 transition">
-          <Trash2 size={16} />
-          ถังขยะ
-        </Link>
+        <div className="flex items-center gap-2">
+          <ExportModal transactions={(transactions || []) as unknown as HistoryItem[]} />
+          <Link href="/dashboard/history/trash" className="flex items-center gap-1.5 text-xs font-semibold text-rose-500 bg-rose-50 px-3 py-1.5 rounded-full hover:bg-rose-100 transition shadow-2xs">
+            <Trash2 size={15} />
+            ถังขยะ
+          </Link>
+        </div>
       </header>
 
       <div className="flex flex-col gap-4">

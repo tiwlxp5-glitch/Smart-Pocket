@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ArrowUpCircle, CheckCircle2, ChevronLeft, ShieldCheck, TrendingUp, Coffee, ScanLine, Loader2 } from 'lucide-react'
+import { ArrowUpCircle, CheckCircle2, ChevronLeft, ShieldCheck, TrendingUp, Coffee, ScanLine, Loader2, AlertTriangle, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { addExpense } from '../actions'
@@ -15,11 +15,13 @@ interface Bucket {
   color?: string | null
   balance: number
   allocation_percentage?: number
+  monthly_budget?: number | null
 }
 
 export default function ExpensePage() {
   const router = useRouter()
   const [buckets, setBuckets] = useState<Bucket[]>([])
+  const [bucketExpenses, setBucketExpenses] = useState<Record<string, number>>({})
   const [amount, setAmount] = useState<string>('')
   const [note, setNote] = useState('')
   const [receiver, setReceiver] = useState('')
@@ -40,15 +42,37 @@ export default function ExpensePage() {
   )
 
   useEffect(() => {
-    const fetchBuckets = async () => {
+    const fetchBucketsAndExpenses = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
       const { data } = await supabase.from('buckets').select('*').order('created_at')
       if (data) {
         setBuckets(data)
         if (data.length > 0) setSelectedBucketId(data[data.length - 1].id)
       }
+
+      if (user) {
+        const startOfMonthStr = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+        const { data: txs } = await supabase
+          .from('transactions')
+          .select('bucket_id, amount')
+          .eq('user_id', user.id)
+          .eq('type', 'expense')
+          .is('deleted_at', null)
+          .gte('transaction_date', startOfMonthStr)
+
+        if (txs) {
+          const expMap: Record<string, number> = {}
+          txs.forEach((tx) => {
+            if (tx.bucket_id) {
+              expMap[tx.bucket_id] = (expMap[tx.bucket_id] || 0) + (Number(tx.amount) || 0)
+            }
+          })
+          setBucketExpenses(expMap)
+        }
+      }
       setIsLoading(false)
     }
-    fetchBuckets()
+    fetchBucketsAndExpenses()
   }, [supabase])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -273,7 +297,9 @@ export default function ExpensePage() {
             <div className="flex flex-col gap-3">
               {buckets.map(bucket => {
                 const isSelected = selectedBucketId === bucket.id
-                const Icon = bucket.icon === 'shield' ? ShieldCheck : bucket.icon === 'trending-up' ? TrendingUp : Coffee
+                const Icon = bucket.icon === 'shield' ? ShieldCheck : bucket.icon === 'trending-up' ? TrendingUp : bucket.icon === 'wallet' ? Wallet : Coffee
+                const bucketMonthlyLimit = bucket.monthly_budget ? Number(bucket.monthly_budget) : null
+                const bucketSpent = bucketExpenses[bucket.id] || 0
                 
                 return (
                   <label 
@@ -298,7 +324,14 @@ export default function ExpensePage() {
                     </div>
                     <div className="flex-1">
                       <p className={`font-semibold ${isSelected ? 'text-rose-700' : 'text-gray-900'}`}>{bucket.name}</p>
-                      <p className={`text-xs ${isSelected ? 'text-rose-500' : 'text-gray-500'}`}>คงเหลือ: ฿{Number(bucket.balance).toLocaleString('th-TH')}</p>
+                      <p className={`text-xs ${isSelected ? 'text-rose-500' : 'text-gray-500'}`}>
+                        คงเหลือ: ฿{Number(bucket.balance).toLocaleString('th-TH')}
+                        {bucketMonthlyLimit && (
+                          <span className="ml-1 opacity-80">
+                            • งบ: ฿{bucketSpent.toLocaleString('th-TH')}/฿{bucketMonthlyLimit.toLocaleString('th-TH')}
+                          </span>
+                        )}
+                      </p>
                     </div>
                     {isSelected && (
                       <CheckCircle2 className="text-rose-500" size={24} />
@@ -306,6 +339,47 @@ export default function ExpensePage() {
                   </label>
                 )
               })}
+
+              {/* Dynamic Budget Warning Alert for selected bucket */}
+              {(() => {
+                const selectedBucket = buckets.find(b => b.id === selectedBucketId)
+                const currentSpent = selectedBucket ? (bucketExpenses[selectedBucket.id] || 0) : 0
+                const monthlyLimit = selectedBucket?.monthly_budget ? Number(selectedBucket.monthly_budget) : null
+                if (!monthlyLimit || monthlyLimit <= 0) return null
+
+                const projectedSpent = currentSpent + numAmount
+                const projectedRatio = Math.round((projectedSpent / monthlyLimit) * 100)
+
+                if (projectedRatio >= 100) {
+                  return (
+                    <div className="mt-2 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-800 animate-in fade-in duration-200">
+                      <AlertTriangle size={18} className="text-rose-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">⚠️ การจ่ายครั้งนี้จะทำให้กระเป๋านี้เกินงบประมาณรายเดือน!</p>
+                        <p className="mt-0.5 text-[11px] opacity-90 leading-relaxed">
+                          ใช้ไปแล้ว ฿{currentSpent.toLocaleString('th-TH')} {numAmount > 0 ? `+ ฿${numAmount.toLocaleString('th-TH')} = ฿${projectedSpent.toLocaleString('th-TH')}` : ''} (แตะ {projectedRatio}% ของเพดานงบ ฿{monthlyLimit.toLocaleString('th-TH')})
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }
+
+                if (projectedRatio >= 80) {
+                  return (
+                    <div className="mt-2 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-xs text-amber-800 animate-in fade-in duration-200">
+                      <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">⚡ การจ่ายครั้งนี้จะแตะ {projectedRatio}% ของงบประมาณรายเดือน</p>
+                        <p className="mt-0.5 text-[11px] opacity-90 leading-relaxed">
+                          ใช้ไปแล้ว ฿{currentSpent.toLocaleString('th-TH')} {numAmount > 0 ? `+ ฿${numAmount.toLocaleString('th-TH')} = ฿${projectedSpent.toLocaleString('th-TH')}` : ''} จากเพดานงบ ฿{monthlyLimit.toLocaleString('th-TH')}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }
+
+                return null
+              })()}
             </div>
           )}
         </div>

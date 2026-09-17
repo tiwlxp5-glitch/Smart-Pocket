@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS buckets (
   color TEXT,
   allocation_percentage NUMERIC(5,2) DEFAULT 0, -- แผนการแบ่งเงิน %
   target_amount NUMERIC(15,2), -- เป้าหมาย (ถ้ามี)
+  monthly_budget NUMERIC(15,2), -- เพดานงบประมาณรายเดือน (ถ้ามี)
   balance NUMERIC(15,2) DEFAULT 0 NOT NULL,
   is_archived BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
