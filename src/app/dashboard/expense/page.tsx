@@ -47,32 +47,57 @@ export default function ExpensePage() {
     if (!file) return
 
     setSlipFile(file)
-    setSlipPreview(URL.createObjectURL(file))
     setIsScanning(true)
-
+    
     try {
-      // อ่านไฟล์เป็น Base64
-      const reader = new FileReader()
-      reader.onloadend = async () => {
-        try {
-          const base64Data = (reader.result as string).split(',')[1] // เอาแค่ส่วน data
-          // ส่งให้ Gemini AI อ่านสลิป
-          const extracted = await extractSlipData(base64Data, file.type)
-          
-          if (extracted.amount) setAmount(extracted.amount.toString())
-          if (extracted.note) setNote(extracted.note)
-          if (extracted.receiver) setReceiver(extracted.receiver)
-        } catch (error) {
-          alert('อ่านสลิปไม่สำเร็จ กรุณากรอกข้อมูลเองครับ')
-          setSlipPreview(null)
-          setSlipFile(null)
-        } finally {
-          setIsScanning(false)
-        }
+      // 1. บีบอัดรูปก่อนส่ง (แก้ปัญหา Vercel โหลดรูปจากกล้องมือถือไม่ผ่านเพราะไฟล์ใหญ่เกิน 4.5MB)
+      const compressImage = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            const img = new Image()
+            img.onload = () => {
+              const canvas = document.createElement('canvas')
+              let { width, height } = img
+              const MAX_SIZE = 1200
+              if (width > height && width > MAX_SIZE) {
+                height *= MAX_SIZE / width
+                width = MAX_SIZE
+              } else if (height > MAX_SIZE) {
+                width *= MAX_SIZE / height
+                height = MAX_SIZE
+              }
+              canvas.width = width
+              canvas.height = height
+              const ctx = canvas.getContext('2d')
+              ctx?.drawImage(img, 0, 0, width, height)
+              resolve(canvas.toDataURL('image/jpeg', 0.7))
+            }
+            img.onerror = reject
+            img.src = e.target?.result as string
+          }
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
       }
-      reader.readAsDataURL(file)
+
+      const compressedDataUrl = await compressImage(file)
+      setSlipPreview(compressedDataUrl) // โชว์รูปพรีวิวจากที่บีบอัดแล้ว
+      
+      const base64Data = compressedDataUrl.split(',')[1]
+      
+      // 2. ส่งไป AI
+      const extracted = await extractSlipData(base64Data, 'image/jpeg')
+      
+      if (extracted.amount) setAmount(extracted.amount.toString())
+      if (extracted.note) setNote(extracted.note)
+      if (extracted.receiver) setReceiver(extracted.receiver)
     } catch (error) {
-      alert('อ่านไฟล์ไม่สำเร็จ')
+      console.error(error)
+      alert('อ่านสลิปไม่สำเร็จ กรุณากรอกข้อมูลเองครับ')
+      setSlipPreview(null)
+      setSlipFile(null)
+    } finally {
       setIsScanning(false)
     }
   }
