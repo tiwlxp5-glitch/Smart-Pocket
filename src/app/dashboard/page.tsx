@@ -1,7 +1,8 @@
 import { createClient } from '@/utils/supabase/server'
-import { ShieldCheck, TrendingUp, Coffee, Settings, PieChart, ChevronRight, AlertTriangle, AlertCircle, Wallet, Repeat, CalendarClock, Sparkles } from 'lucide-react'
+import { ShieldCheck, TrendingUp, Coffee, Settings, PieChart, ChevronRight, AlertTriangle, AlertCircle, Wallet as WalletIcon, Repeat, CalendarClock, Sparkles, ArrowRightLeft, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { calculateMonthlyCommitment } from '@/utils/recurringHelper'
+import { WalletCard } from '@/components/WalletCard'
 
 // Dummy fallback data if DB is empty or not connected
 const fallbackBuckets = [
@@ -74,7 +75,39 @@ export default async function DashboardPage() {
     })
   }
 
-  const totalBalance = buckets.reduce((sum, b) => sum + (Number(b.balance) || 0), 0)
+  // Fetch Wallets
+  let { data: wallets } = user ? await supabase
+    .from('wallets')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('is_archived', false)
+    .order('is_default', { ascending: false })
+    .order('created_at', { ascending: true }) : { data: null }
+
+  // Fallback default wallet for display if not populated
+  if (!wallets || wallets.length === 0) {
+    wallets = [
+      {
+        id: 'default-w',
+        user_id: user?.id || '',
+        name: 'บัญชีหลัก / เงินสด',
+        type: 'cash',
+        bank_name: 'cash',
+        color: '#10b981',
+        icon: 'wallet',
+        opening_balance: 0,
+        balance: buckets.reduce((sum, b) => sum + (Number(b.balance) || 0), 0),
+        is_default: true,
+        is_archived: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as any
+    ]
+  }
+
+  const totalBalance = (wallets && wallets.length > 0)
+    ? wallets.reduce((sum, w) => sum + (Number(w.balance) || 0), 0)
+    : buckets.reduce((sum, b) => sum + (Number(b.balance) || 0), 0)
 
   // คำนวณการแจ้งเตือนงบประมาณรายเดือน (Budget Alerts >= 80%)
   const budgetAlerts = buckets
@@ -149,18 +182,60 @@ export default async function DashboardPage() {
       )}
 
       {/* Total Balance Card */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl p-6 text-white shadow-lg mb-8">
-        <p className="text-blue-100 text-sm mb-1">ยอดเงินรวมทุกกระเป๋า</p>
-        <h1 className="text-4xl font-extrabold tracking-tight mb-6">
-          ฿{totalBalance.toLocaleString('th-TH')}
+      <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-950 rounded-3xl p-6 text-white shadow-xl mb-6 relative overflow-hidden">
+        <div className="absolute -right-8 -bottom-8 w-36 h-36 bg-blue-500/15 rounded-full blur-xl pointer-events-none" />
+        <div className="flex justify-between items-center mb-1">
+          <p className="text-blue-200 text-xs font-medium">ยอดเงินรวมทุกบัญชี</p>
+          <Link href="/dashboard/wallets" className="text-[11px] text-blue-300 hover:text-white font-semibold flex items-center gap-0.5">
+            ดู {wallets.length} บัญชี <ChevronRight size={13} />
+          </Link>
+        </div>
+        <h1 className="text-4xl font-black tracking-tight mb-4 text-white">
+          ฿{totalBalance.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </h1>
-        <div className="flex gap-2">
-          <div className="bg-white/20 px-3 py-1 rounded-full text-xs backdrop-blur-sm">
-            จัดการเงินฉลาด
+        <div className="flex items-center gap-2">
+          <Link 
+            href="/dashboard/transfer" 
+            className="flex-1 py-2 px-3 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition text-white shadow-2xs"
+          >
+            <ArrowRightLeft size={14} /> โอนเงิน
+          </Link>
+          <Link 
+            href="/dashboard/wallets" 
+            className="flex-1 py-2 px-3 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition text-white shadow-2xs"
+          >
+            <WalletIcon size={14} /> จัดการกระเป๋า
+          </Link>
+        </div>
+      </div>
+
+      {/* Wallets Horizontal Carousel */}
+      <div className="mb-7">
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-1.5">
+            <WalletIcon size={16} className="text-blue-600" />
+            <h3 className="font-bold text-gray-900 text-sm">กระเป๋าและบัญชี</h3>
           </div>
-          <div className="bg-white/20 px-3 py-1 rounded-full text-xs backdrop-blur-sm">
-            ปลอดภัย 100%
-          </div>
+          <Link href="/dashboard/wallets" className="text-xs text-blue-600 font-semibold hover:underline flex items-center gap-0.5">
+            ทั้งหมด <ChevronRight size={13} />
+          </Link>
+        </div>
+
+        <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2 snap-x">
+          {wallets.map((w) => (
+            <div key={w.id} className="min-w-[210px] max-w-[230px] snap-start shrink-0">
+              <WalletCard wallet={w} />
+            </div>
+          ))}
+          <Link
+            href="/dashboard/wallets"
+            className="min-w-[120px] rounded-3xl border-2 border-dashed border-gray-200 hover:border-blue-400 bg-gray-50/60 hover:bg-blue-50/40 flex flex-col items-center justify-center p-4 text-center transition group snap-start shrink-0"
+          >
+            <div className="w-10 h-10 rounded-2xl bg-white border border-gray-200 text-gray-400 group-hover:text-blue-600 group-hover:border-blue-300 flex items-center justify-center mb-1.5 shadow-2xs transition">
+              <Plus size={18} />
+            </div>
+            <span className="text-[11px] font-bold text-gray-600 group-hover:text-blue-600">เพิ่มกระเป๋า</span>
+          </Link>
         </div>
       </div>
 
@@ -264,12 +339,17 @@ export default async function DashboardPage() {
         </div>
       </Link>
 
-      <h3 className="font-bold text-gray-900 mb-4 text-lg">กระเป๋าเงินของคุณ</h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-bold text-gray-900 text-lg">ถังงบประมาณ (Envelopes)</h3>
+        <Link href="/dashboard/settings" className="text-xs text-blue-600 font-semibold hover:underline">
+          ตั้งค่างบ
+        </Link>
+      </div>
       
       <div className="flex flex-col gap-4">
         {buckets.map((bucket) => {
           // Choose icon mapping
-          const Icon = bucket.icon === 'shield' ? ShieldCheck : bucket.icon === 'trending-up' ? TrendingUp : bucket.icon === 'wallet' ? Wallet : Coffee
+          const Icon = bucket.icon === 'shield' ? ShieldCheck : bucket.icon === 'trending-up' ? TrendingUp : bucket.icon === 'wallet' ? WalletIcon : Coffee
           const spentThisMonth = bucketMonthlyExpenses[bucket.id] || 0
           const monthlyBudget = bucket.monthly_budget ? Number(bucket.monthly_budget) : null
           const hasBudget = monthlyBudget !== null && monthlyBudget > 0

@@ -6,6 +6,7 @@ export interface RecurringSchedule {
   user_id: string;
   type: RecurringType;
   bucket_id: string | null;
+  wallet_id?: string | null;
   amount: number;
   category: string;
   note: string | null;
@@ -26,6 +27,13 @@ export interface RecurringSchedule {
     color?: string | null;
     icon?: string | null;
     balance?: number;
+  } | null;
+  wallet?: {
+    id: string;
+    name: string;
+    color?: string | null;
+    icon?: string | null;
+    type?: string | null;
   } | null;
 }
 

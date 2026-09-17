@@ -21,7 +21,7 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
-import { updateUserProfile, updateUserPassword, updateBucketBudget } from '../actions'
+import { updateUserProfile, updateUserPassword, updateBucketSettings } from '../actions'
 
 interface BucketItem {
   id: string
@@ -30,6 +30,13 @@ interface BucketItem {
   color?: string | null
   balance: number
   monthly_budget?: number | null
+  default_wallet_id?: string | null
+}
+
+interface WalletItem {
+  id: string
+  name: string
+  bank_name?: string | null
 }
 
 export default function SettingsPage() {
@@ -49,6 +56,8 @@ export default function SettingsPage() {
   // Buckets state
   const [buckets, setBuckets] = useState<BucketItem[]>([])
   const [bucketBudgets, setBucketBudgets] = useState<Record<string, string>>({})
+  const [bucketWallets, setBucketWallets] = useState<Record<string, string>>({})
+  const [wallets, setWallets] = useState<WalletItem[]>([])
   const [savingBucketId, setSavingBucketId] = useState<string | null>(null)
   const [budgetFeedback, setBudgetFeedback] = useState<string | null>(null)
 
@@ -65,19 +74,25 @@ export default function SettingsPage() {
         setEmail(user.email || '')
         setFullName(user.user_metadata?.full_name || '')
 
-        const { data: bucketsData } = await supabase
-          .from('buckets')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at')
+        const [bucketsRes, walletsRes] = await Promise.all([
+          supabase.from('buckets').select('*').eq('user_id', user.id).order('created_at'),
+          supabase.from('wallets').select('id, name, bank_name').eq('user_id', user.id).eq('is_archived', false).order('name')
+        ])
 
-        if (bucketsData) {
-          setBuckets(bucketsData)
+        if (walletsRes.data) {
+          setWallets(walletsRes.data)
+        }
+
+        if (bucketsRes.data) {
+          setBuckets(bucketsRes.data)
           const budgetMap: Record<string, string> = {}
-          bucketsData.forEach((b) => {
+          const walletMap: Record<string, string> = {}
+          bucketsRes.data.forEach((b) => {
             budgetMap[b.id] = b.monthly_budget !== null && b.monthly_budget !== undefined ? String(b.monthly_budget) : ''
+            walletMap[b.id] = b.default_wallet_id || ''
           })
           setBucketBudgets(budgetMap)
+          setBucketWallets(walletMap)
         }
       }
       setLoading(false)
@@ -129,10 +144,12 @@ export default function SettingsPage() {
 
     const rawVal = bucketBudgets[bucketId]?.trim()
     const budgetVal = rawVal === '' ? null : Number(rawVal)
+    
+    const walletVal = bucketWallets[bucketId] || null
 
-    const res = await updateBucketBudget(bucketId, budgetVal)
+    const res = await updateBucketSettings(bucketId, budgetVal, walletVal)
     if (res.success) {
-      setBudgetFeedback('บันทึกงบประมาณสำเร็จ')
+      setBudgetFeedback('บันทึกการตั้งค่าสำเร็จ')
       router.refresh()
       setTimeout(() => setBudgetFeedback(null), 3000)
     }
@@ -332,7 +349,7 @@ export default function SettingsPage() {
                     <span className="text-xs text-gray-500">คงเหลือ ฿{Number(bucket.balance).toLocaleString()}</span>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                     <div className="relative flex-1">
                       <input
                         type="number"
@@ -345,11 +362,30 @@ export default function SettingsPage() {
                       />
                       <span className="absolute left-2.5 top-2.5 text-xs text-gray-400 font-semibold">฿</span>
                     </div>
+                    
+                    <div className="relative flex-1">
+                      <select
+                        value={bucketWallets[bucket.id] || ''}
+                        onChange={(e) => setBucketWallets({ ...bucketWallets, [bucket.id]: e.target.value })}
+                        className="w-full pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-700"
+                      >
+                        <option value="">-- ไม่ผูกบัญชี --</option>
+                        {wallets.map(w => (
+                          <option key={w.id} value={w.id}>
+                            ผูกกับ: {w.name} {w.bank_name ? `(${w.bank_name})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute right-3 top-2.5 pointer-events-none text-gray-400">
+                        <ChevronRight size={16} className="rotate-90" />
+                      </div>
+                    </div>
+
                     <button
                       type="button"
                       disabled={isSaving}
                       onClick={() => handleSaveBudget(bucket.id)}
-                      className="px-3.5 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition flex items-center gap-1 shrink-0 disabled:opacity-50"
+                      className="px-3.5 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1 shrink-0 disabled:opacity-50"
                     >
                       {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                       <span>บันทึก</span>

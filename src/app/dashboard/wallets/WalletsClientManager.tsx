@@ -1,0 +1,438 @@
+'use client'
+
+import React, { useState } from 'react'
+import { Wallet, WalletType } from '@/types/database'
+import { BankPreset, getWalletTypeLabel } from '@/utils/walletHelper'
+import { WalletCard } from '@/components/WalletCard'
+import { createWallet, updateWallet, archiveWallet } from '@/app/dashboard/actions'
+import { Plus, Edit2, Archive, X, Check, Building2, Banknote, Smartphone, CreditCard } from 'lucide-react'
+
+interface Props {
+  initialWallets: Wallet[]
+  archivedWallets: Wallet[]
+  bankPresets: BankPreset[]
+}
+
+export function WalletsClientManager({
+  initialWallets,
+  archivedWallets,
+  bankPresets,
+}: Props) {
+  const [filterType, setFilterType] = useState<string>('all')
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [editingWallet, setEditingWallet] = useState<Wallet | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  // Form states for Create
+  const [selectedPreset, setSelectedPreset] = useState<BankPreset | null>(bankPresets[0])
+  const [name, setName] = useState(bankPresets[0].name)
+  const [type, setType] = useState<WalletType>(bankPresets[0].type)
+  const [color, setColor] = useState(bankPresets[0].color)
+  const [bankName, setBankName] = useState(bankPresets[0].code)
+  const [openingBalance, setOpeningBalance] = useState('')
+
+  // Edit form states
+  const [editName, setEditName] = useState('')
+  const [editColor, setEditColor] = useState('')
+
+  const handleSelectPreset = (preset: BankPreset) => {
+    setSelectedPreset(preset)
+    setName(preset.name)
+    setType(preset.type)
+    setColor(preset.color)
+    setBankName(preset.code)
+  }
+
+  const handleOpenCreate = () => {
+    handleSelectPreset(bankPresets[0])
+    setOpeningBalance('')
+    setErrorMessage(null)
+    setIsCreateModalOpen(true)
+  }
+
+  const handleOpenEdit = (w: Wallet) => {
+    setEditingWallet(w)
+    setEditName(w.name)
+    setEditColor(w.color || '#10b981')
+    setErrorMessage(null)
+  }
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setErrorMessage(null)
+
+    const formData = new FormData()
+    formData.append('name', name)
+    formData.append('type', type)
+    formData.append('bank_name', bankName)
+    formData.append('color', color)
+    formData.append('opening_balance', openingBalance || '0')
+
+    const res = await createWallet(formData)
+    setIsSubmitting(false)
+    if (res?.success) {
+      setIsCreateModalOpen(false)
+    } else {
+      setErrorMessage(res?.message || 'เกิดข้อผิดพลาดในการสร้างกระเป๋าเงิน')
+    }
+  }
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingWallet) return
+    setIsSubmitting(true)
+    setErrorMessage(null)
+
+    const formData = new FormData()
+    formData.append('wallet_id', editingWallet.id)
+    formData.append('name', editName)
+    formData.append('color', editColor)
+
+    const res = await updateWallet(formData)
+    setIsSubmitting(false)
+    if (res?.success) {
+      setEditingWallet(null)
+    } else {
+      setErrorMessage(res?.message || 'เกิดข้อผิดพลาดในการแก้ไขกระเป๋าเงิน')
+    }
+  }
+
+  const handleArchive = async (walletId: string, walletName: string) => {
+    if (!confirm(`คุณต้องการจัดเก็บกระเป๋า "${walletName}" ใช่หรือไม่?\n(ข้อมูลประวัติยังคงอยู่ แต่จะไม่แสดงในรายการเลือก)`)) {
+      return
+    }
+    await archiveWallet(walletId)
+  }
+
+  const filteredWallets = initialWallets.filter((w) => {
+    if (filterType === 'all') return true
+    return w.type === filterType
+  })
+
+  return (
+    <div>
+      {/* Category Tabs & Add Button */}
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+          <button
+            onClick={() => setFilterType('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
+              filterType === 'all'
+                ? 'bg-blue-600 text-white shadow-2xs'
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            ทั้งหมด ({initialWallets.length})
+          </button>
+          <button
+            onClick={() => setFilterType('bank')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
+              filterType === 'bank'
+                ? 'bg-blue-600 text-white shadow-2xs'
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            ธนาคาร
+          </button>
+          <button
+            onClick={() => setFilterType('cash')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
+              filterType === 'cash'
+                ? 'bg-blue-600 text-white shadow-2xs'
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            เงินสด
+          </button>
+          <button
+            onClick={() => setFilterType('ewallet')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
+              filterType === 'ewallet'
+                ? 'bg-blue-600 text-white shadow-2xs'
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            E-Wallet
+          </button>
+          <button
+            onClick={() => setFilterType('credit')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
+              filterType === 'credit'
+                ? 'bg-blue-600 text-white shadow-2xs'
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            บัตรเครดิต
+          </button>
+        </div>
+
+        <button
+          onClick={handleOpenCreate}
+          className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shrink-0 shadow-xs transition"
+        >
+          <Plus size={14} /> เพิ่มกระเป๋า
+        </button>
+      </div>
+
+      {/* Wallets Grid */}
+      <div className="grid grid-cols-1 gap-3.5">
+        {filteredWallets.map((wallet) => (
+          <div key={wallet.id} className="relative group">
+            <WalletCard wallet={wallet} />
+            <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
+              <button
+                onClick={() => handleOpenEdit(wallet)}
+                className="p-1.5 rounded-lg bg-black/30 hover:bg-black/50 text-white backdrop-blur-md transition shadow-2xs"
+                title="แก้ไขกระเป๋า"
+              >
+                <Edit2 size={13} />
+              </button>
+              {!wallet.is_default && (
+                <button
+                  onClick={() => handleArchive(wallet.id, wallet.name)}
+                  className="p-1.5 rounded-lg bg-black/30 hover:bg-black/50 text-white backdrop-blur-md transition shadow-2xs"
+                  title="จัดเก็บกระเป๋า"
+                >
+                  <Archive size={13} />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {filteredWallets.length === 0 && (
+          <div className="p-8 text-center bg-gray-50 border border-dashed border-gray-200 rounded-3xl">
+            <p className="text-sm text-gray-500">ไม่พบกระเป๋าในหมวดหมู่นี้</p>
+            <button
+              onClick={handleOpenCreate}
+              className="mt-3 text-xs text-blue-600 font-bold hover:underline"
+            >
+              + เพิ่มกระเป๋าใหม่
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Modal: Create Wallet */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-5 max-w-sm w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="font-bold text-base text-gray-900">เพิ่มกระเป๋า / บัญชีใหม่</h3>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {errorMessage && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl mt-3">
+                {errorMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleCreateSubmit} className="space-y-4 mt-3">
+              {/* Presets Selection */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  เลือกธนาคาร / บัญชียอดนิยม
+                </label>
+                <div className="grid grid-cols-3 gap-2 max-h-36 overflow-y-auto p-1 bg-gray-50 rounded-2xl border border-gray-100">
+                  {bankPresets.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleSelectPreset(preset)}
+                      className={`p-2 rounded-xl text-left border text-[11px] font-semibold transition truncate flex items-center gap-1.5 ${
+                        selectedPreset?.id === preset.id
+                          ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-2xs'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: preset.color }}
+                      />
+                      <span className="truncate">{preset.name.split(' ')[0]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Wallet Name */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  ชื่อกระเป๋า / บัญชี <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="เช่น กสิกรเงินเดือน, เงินสดติดตัว"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Wallet Type */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">ประเภทบัญชี</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['bank', 'cash', 'ewallet', 'credit'] as WalletType[]).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setType(t)}
+                      className={`py-2 px-3 rounded-xl border text-xs font-semibold transition text-center ${
+                        type === t
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {getWalletTypeLabel(t)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Color Picker */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">สีประจำกระเป๋า</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-0.5"
+                  />
+                  <input
+                    type="text"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-xs uppercase font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Opening Balance */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  ยอดเงินเริ่มต้น (Opening Balance)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-2.5 text-sm text-gray-400 font-bold">฿</span>
+                  <input
+                    type="number"
+                    step="any"
+                    value={openingBalance}
+                    onChange={(e) => setOpeningBalance(e.target.value)}
+                    placeholder="0.00 (ใส่ยอดติดลบได้หากเป็นหนี้บัตร)"
+                    className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">
+                  * ยอดเงินเริ่มต้นจะถูกนำมาคำนวณเป็นยอดคงเหลือปัจจุบันทันที
+                </p>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-50 transition"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition disabled:opacity-50"
+                >
+                  {isSubmitting ? 'กำลังบันทึก...' : 'สร้างกระเป๋า'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Wallet */}
+      {editingWallet && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-5 max-w-sm w-full shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <h3 className="font-bold text-base text-gray-900">แก้ไขกระเป๋าเงิน</h3>
+              <button
+                onClick={() => setEditingWallet(null)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {errorMessage && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl mt-3">
+                {errorMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleEditSubmit} className="space-y-4 mt-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  ชื่อกระเป๋า / บัญชี
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">สีประจำกระเป๋า</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={editColor}
+                    onChange={(e) => setEditColor(e.target.value)}
+                    className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-0.5"
+                  />
+                  <input
+                    type="text"
+                    value={editColor}
+                    onChange={(e) => setEditColor(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-xs uppercase font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingWallet(null)}
+                  className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-50 transition"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition disabled:opacity-50"
+                >
+                  {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

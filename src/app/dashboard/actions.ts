@@ -10,14 +10,16 @@ export async function addExpense(formData: FormData) {
   if (!user) throw new Error('Not logged in')
 
   const amount = Number(formData.get('amount'))
-  const note = formData.get('note') as string
+  const note = (formData.get('note') as string)?.trim() || null
   const bucketId = formData.get('bucket_id') as string
-  const slipUrl = formData.get('slip_url') as string || null
-  const receiver = formData.get('receiver') as string || null
+  const walletId = (formData.get('wallet_id') as string) || null
+  const slipUrl = (formData.get('slip_url') as string) || null
+  const receiver = (formData.get('receiver') as string)?.trim() || null
 
-  if (!bucketId || amount <= 0) throw new Error('Invalid input')
+  if (!bucketId || isNaN(amount) || amount <= 0) throw new Error('Invalid input')
 
-  const { error } = await supabase.rpc('process_expense', {
+  // 1. Try Calling updated process_expense RPC with p_wallet_id
+  const { data: rpcTxId, error: rpcError } = await supabase.rpc('process_expense', {
     p_user_id: user.id,
     p_bucket_id: bucketId,
     p_amount: amount,
@@ -25,12 +27,36 @@ export async function addExpense(formData: FormData) {
     p_note: note,
     p_date: new Date().toISOString(),
     p_slip_url: slipUrl,
-    p_receiver: receiver
+    p_receiver: receiver,
+    p_wallet_id: walletId
   })
 
-  if (error) {
-    console.error('Error adding expense:', error)
-    throw new Error('Failed to deduct expense')
+  if (rpcError) {
+    console.warn('RPC process_expense with p_wallet_id returned error, attempting fallback:', rpcError.message)
+    // Fallback: call 8-argument RPC and update wallet separately
+    const { error: fallbackError } = await supabase.rpc('process_expense', {
+      p_user_id: user.id,
+      p_bucket_id: bucketId,
+      p_amount: amount,
+      p_category: 'expense',
+      p_note: note,
+      p_date: new Date().toISOString(),
+      p_slip_url: slipUrl,
+      p_receiver: receiver
+    })
+
+    if (fallbackError) {
+      console.error('Error adding expense with fallback:', fallbackError)
+      throw new Error('Failed to deduct expense: ' + fallbackError.message)
+    }
+
+    // Update wallet balance directly if walletId provided
+    if (walletId) {
+      const { data: w } = await supabase.from('wallets').select('balance').eq('id', walletId).single()
+      if (w) {
+        await supabase.from('wallets').update({ balance: Number(w.balance) - amount }).eq('id', walletId)
+      }
+    }
   }
 
   revalidatePath('/dashboard', 'layout')
@@ -42,9 +68,12 @@ export async function addIncome(formData: FormData) {
   if (!user) throw new Error('Not logged in')
 
   const amount = Number(formData.get('amount'))
-  const note = formData.get('note') as string
+  const note = (formData.get('note') as string)?.trim() || null
+  const walletId = (formData.get('wallet_id') as string) || null
+  const allocationMode = (formData.get('allocation_mode') as string) || 'auto' // 'auto' | 'single'
+  const singleBucketId = (formData.get('single_bucket_id') as string) || null
 
-  if (amount <= 0) throw new Error('Invalid input')
+  if (isNaN(amount) || amount <= 0) throw new Error('Invalid input')
 
   // 1. Fetch user's buckets
   const { data: buckets } = await supabase
@@ -52,13 +81,15 @@ export async function addIncome(formData: FormData) {
     .select('*')
     .eq('user_id', user.id)
 
-  if (!buckets) throw new Error('No buckets found')
+  if (!buckets || buckets.length === 0) throw new Error('No buckets found')
 
   // 2. Insert Income Transaction
   const { data: tx, error: txError } = await supabase
     .from('transactions')
     .insert({
       user_id: user.id,
+      wallet_id: walletId,
+      bucket_id: allocationMode === 'single' ? singleBucketId : null,
       type: 'income',
       amount: amount,
       category: 'income',
@@ -67,31 +98,246 @@ export async function addIncome(formData: FormData) {
     .select()
     .single()
 
-  if (txError) throw new Error('Failed to create transaction')
+  if (txError) {
+    console.error('Create transaction error:', txError)
+    throw new Error('Failed to create transaction: ' + txError.message)
+  }
 
-  // 3. Allocate to buckets (Client/Server loop since no RPC for income yet)
-  // เหมาะสมกว่าถ้าทำใน RPC แต่สำหรับ Prototype สามารถใช้ loop ได้
-  for (const bucket of buckets) {
-    const allocatedAmount = (amount * bucket.allocation_percentage) / 100
-    if (allocatedAmount <= 0) continue;
+  // 3. Update Destination Wallet Balance
+  if (walletId) {
+    const { data: w } = await supabase.from('wallets').select('balance').eq('id', walletId).single()
+    if (w) {
+      await supabase.from('wallets').update({ balance: Number(w.balance) + amount }).eq('id', walletId)
+    }
+  }
 
-    // Insert allocation log
+  // 4. Allocate to buckets
+  if (allocationMode === 'single' && singleBucketId) {
+    // 100% allocation to designated bucket
     await supabase.from('allocations').insert({
       user_id: user.id,
       income_transaction_id: tx.id,
-      bucket_id: bucket.id,
-      amount: allocatedAmount
+      bucket_id: singleBucketId,
+      amount: amount
     })
 
-    // Update bucket balance
-    await supabase
-      .from('buckets')
-      .update({ balance: Number(bucket.balance) + allocatedAmount })
-      .eq('id', bucket.id)
-      .eq('user_id', user.id)
+    const targetBucket = buckets.find(b => b.id === singleBucketId)
+    if (targetBucket) {
+      await supabase
+        .from('buckets')
+        .update({ balance: Number(targetBucket.balance) + amount })
+        .eq('id', singleBucketId)
+        .eq('user_id', user.id)
+
+      // Auto-transfer to linked wallet
+      if (targetBucket.default_wallet_id && walletId && targetBucket.default_wallet_id !== walletId) {
+        await supabase.rpc('process_transfer', {
+          p_user_id: user.id,
+          p_from_wallet_id: walletId,
+          p_to_wallet_id: targetBucket.default_wallet_id,
+          p_amount: amount,
+          p_fee: 0,
+          p_note: 'โอนเข้าบัญชีที่ผูกไว้อัตโนมัติ',
+          p_date: new Date().toISOString()
+        })
+      }
+    }
+  } else {
+    // Standard percentage-based allocation
+    for (const bucket of buckets) {
+      const allocatedAmount = (amount * bucket.allocation_percentage) / 100
+      if (allocatedAmount <= 0) continue
+
+      await supabase.from('allocations').insert({
+        user_id: user.id,
+        income_transaction_id: tx.id,
+        bucket_id: bucket.id,
+        amount: allocatedAmount
+      })
+
+      await supabase
+        .from('buckets')
+        .update({ balance: Number(bucket.balance) + allocatedAmount })
+        .eq('id', bucket.id)
+        .eq('user_id', user.id)
+
+      // Auto-transfer to linked wallet
+      if (bucket.default_wallet_id && walletId && bucket.default_wallet_id !== walletId) {
+        await supabase.rpc('process_transfer', {
+          p_user_id: user.id,
+          p_from_wallet_id: walletId,
+          p_to_wallet_id: bucket.default_wallet_id,
+          p_amount: allocatedAmount,
+          p_fee: 0,
+          p_note: 'จัดสรรรายรับอัตโนมัติ',
+          p_date: new Date().toISOString()
+        })
+      }
+    }
   }
 
   revalidatePath('/dashboard', 'layout')
+}
+
+export async function transferMoney(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not logged in')
+
+  const fromWalletId = formData.get('from_wallet_id') as string
+  const toWalletId = formData.get('to_wallet_id') as string
+  const amount = Number(formData.get('amount'))
+  const rawFee = formData.get('transfer_fee')
+  const fee = rawFee ? Number(rawFee) : 0
+  const note = (formData.get('note') as string)?.trim() || null
+  const date = (formData.get('date') as string) || new Date().toISOString()
+
+  if (!fromWalletId || !toWalletId || fromWalletId === toWalletId) {
+    return { success: false, message: 'กรุณาเลือกกระเป๋าต้นทางและปลายทางที่ต่างกัน' }
+  }
+  if (isNaN(amount) || amount <= 0) {
+    return { success: false, message: 'จำนวนเงินที่โอนต้องมากกว่า 0 บาท' }
+  }
+  if (isNaN(fee) || fee < 0) {
+    return { success: false, message: 'ค่าธรรมเนียมต้องไม่ติดลบ' }
+  }
+
+  // 1. Try atomic PostgreSQL RPC first
+  const { error: rpcError } = await supabase.rpc('process_transfer', {
+    p_user_id: user.id,
+    p_from_wallet_id: fromWalletId,
+    p_to_wallet_id: toWalletId,
+    p_amount: amount,
+    p_fee: fee,
+    p_note: note,
+    p_date: date
+  })
+
+  if (rpcError) {
+    console.warn('process_transfer RPC returned error, using fallback transaction:', rpcError.message)
+    // Fallback: update balances directly
+    const { data: fromW } = await supabase.from('wallets').select('balance').eq('id', fromWalletId).single()
+    const { data: toW } = await supabase.from('wallets').select('balance').eq('id', toWalletId).single()
+
+    if (!fromW || !toW) {
+      return { success: false, message: 'ไม่พบกระเป๋าเงินที่ระบุ' }
+    }
+
+    // Deduct source (amount + fee)
+    await supabase.from('wallets').update({ balance: Number(fromW.balance) - (amount + fee) }).eq('id', fromWalletId)
+    // Credit destination (amount)
+    await supabase.from('wallets').update({ balance: Number(toW.balance) + amount }).eq('id', toWalletId)
+
+    // Insert transfer transaction
+    const { error: insertError } = await supabase.from('transactions').insert({
+      user_id: user.id,
+      wallet_id: fromWalletId,
+      to_wallet_id: toWalletId,
+      type: 'transfer',
+      amount: amount,
+      transfer_fee: fee,
+      category: 'โอนเงินระหว่างบัญชี',
+      note: note,
+      transaction_date: date
+    })
+
+    if (insertError) {
+      console.error('Fallback insert error:', insertError)
+      return { success: false, message: 'เกิดข้อผิดพลาดในการบันทึกรายการโอน: ' + insertError.message }
+    }
+  }
+
+  revalidatePath('/dashboard/wallets')
+  revalidatePath('/dashboard', 'layout')
+  return { success: true, message: 'โอนเงินสำเร็จ' }
+}
+
+export async function createWallet(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not logged in')
+
+  const name = (formData.get('name') as string)?.trim()
+  const type = (formData.get('type') as string) || 'bank'
+  const bankName = (formData.get('bank_name') as string) || null
+  const color = (formData.get('color') as string) || '#10b981'
+  const icon = (formData.get('icon') as string) || 'wallet'
+  const rawOpening = formData.get('opening_balance')
+  const openingBalance = rawOpening ? Number(rawOpening) : 0
+
+  if (!name) {
+    return { success: false, message: 'กรุณาระบุชื่อกระเป๋าเงิน' }
+  }
+
+  const { data, error } = await supabase.from('wallets').insert({
+    user_id: user.id,
+    name,
+    type,
+    bank_name: bankName,
+    color,
+    icon,
+    opening_balance: openingBalance,
+    balance: openingBalance,
+  }).select().single()
+
+  if (error) {
+    console.error('Create wallet error:', error)
+    return { success: false, message: 'ไม่สามารถสร้างกระเป๋าเงินได้: ' + error.message }
+  }
+
+  revalidatePath('/dashboard/wallets')
+  revalidatePath('/dashboard', 'layout')
+  return { success: true, message: 'สร้างกระเป๋าเงินสำเร็จ', data }
+}
+
+export async function updateWallet(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not logged in')
+
+  const walletId = formData.get('wallet_id') as string
+  const name = (formData.get('name') as string)?.trim()
+  const color = (formData.get('color') as string) || '#10b981'
+  const icon = (formData.get('icon') as string) || 'wallet'
+
+  if (!walletId || !name) {
+    return { success: false, message: 'ข้อมูลไม่ถูกต้อง' }
+  }
+
+  const { error } = await supabase.from('wallets').update({
+    name,
+    color,
+    icon,
+    updated_at: new Date().toISOString()
+  }).eq('id', walletId).eq('user_id', user.id)
+
+  if (error) {
+    console.error('Update wallet error:', error)
+    return { success: false, message: 'ไม่สามารถแก้ไขกระเป๋าเงินได้' }
+  }
+
+  revalidatePath('/dashboard/wallets')
+  revalidatePath('/dashboard', 'layout')
+  return { success: true, message: 'บันทึกการแก้ไขเรียบร้อย' }
+}
+
+export async function archiveWallet(walletId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not logged in')
+
+  const { error } = await supabase.from('wallets').update({
+    is_archived: true,
+    updated_at: new Date().toISOString()
+  }).eq('id', walletId).eq('user_id', user.id)
+
+  if (error) {
+    return { success: false, message: 'ไม่สามารถเก็บกระเป๋าเงินได้' }
+  }
+
+  revalidatePath('/dashboard/wallets')
+  revalidatePath('/dashboard', 'layout')
+  return { success: true, message: 'จัดเก็บกระเป๋าเงินเรียบร้อย' }
 }
 
 export async function moveToTrash(transactionId: string) {
@@ -184,7 +430,7 @@ export async function updateUserPassword(formData: FormData) {
   return { success: true, message: 'เปลี่ยนรหัสผ่านใหม่เรียบร้อยแล้ว' }
 }
 
-export async function updateBucketBudget(bucketId: string, monthlyBudget: number | null) {
+export async function updateBucketSettings(bucketId: string, monthlyBudget: number | null, defaultWalletId: string | null) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('กรุณาเข้าสู่ระบบก่อนดำเนินการ')
@@ -195,17 +441,20 @@ export async function updateBucketBudget(bucketId: string, monthlyBudget: number
 
   const { error } = await supabase
     .from('buckets')
-    .update({ monthly_budget: monthlyBudget })
+    .update({ 
+      monthly_budget: monthlyBudget,
+      default_wallet_id: defaultWalletId
+    })
     .eq('id', bucketId)
     .eq('user_id', user.id)
 
   if (error) {
-    console.error('Update Bucket Budget Error:', error)
-    return { success: false, message: 'ไม่สามารถบันทึกเพดานงบประมาณได้' }
+    console.error('Update Bucket Settings Error:', error)
+    return { success: false, message: 'ไม่สามารถบันทึกการตั้งค่าถังงบประมาณได้' }
   }
 
   revalidatePath('/dashboard', 'layout')
-  return { success: true, message: 'บันทึกงบประมาณเรียบร้อยแล้ว' }
+  return { success: true, message: 'บันทึกการตั้งค่าเรียบร้อยแล้ว' }
 }
 
 export async function createRecurringSchedule(formData: FormData) {
@@ -218,6 +467,7 @@ export async function createRecurringSchedule(formData: FormData) {
   const category = (formData.get('category') as string)?.trim() || (type === 'income' ? 'รายรับประจำ' : 'ค่าใช้จ่ายประจำ')
   const note = (formData.get('note') as string)?.trim() || null
   const bucketId = (formData.get('bucket_id') as string) || null
+  const walletId = (formData.get('wallet_id') as string) || null
   const frequency = (formData.get('frequency') as RecurringFrequency) || 'monthly'
   const rawDayOfMonth = formData.get('day_of_month')
   const dayOfMonth = rawDayOfMonth ? Number(rawDayOfMonth) : null
@@ -251,6 +501,7 @@ export async function createRecurringSchedule(formData: FormData) {
       user_id: user.id,
       type,
       bucket_id: type === 'expense' ? bucketId : null,
+      wallet_id: walletId,
       amount,
       category,
       note,
@@ -286,6 +537,7 @@ export async function updateRecurringSchedule(id: string, formData: FormData) {
   const category = (formData.get('category') as string)?.trim() || (type === 'income' ? 'รายรับประจำ' : 'ค่าใช้จ่ายประจำ')
   const note = (formData.get('note') as string)?.trim() || null
   const bucketId = (formData.get('bucket_id') as string) || null
+  const walletId = (formData.get('wallet_id') as string) || null
   const frequency = (formData.get('frequency') as RecurringFrequency) || 'monthly'
   const rawDayOfMonth = formData.get('day_of_month')
   const dayOfMonth = rawDayOfMonth ? Number(rawDayOfMonth) : null
@@ -318,6 +570,7 @@ export async function updateRecurringSchedule(id: string, formData: FormData) {
     .update({
       type,
       bucket_id: type === 'expense' ? bucketId : null,
+      wallet_id: walletId,
       amount,
       category,
       note,

@@ -48,6 +48,14 @@ interface BucketItem {
   balance: number
 }
 
+interface WalletItem {
+  id: string
+  name: string
+  color?: string | null
+  type?: string | null
+  balance: number
+}
+
 const COMMON_EXPENSE_CATEGORIES = [
   'ค่าใช้จ่ายประจำ',
   'ค่าเช่าห้อง/คอนโด',
@@ -72,6 +80,8 @@ export default function RecurringPage() {
   const router = useRouter()
   const [schedules, setSchedules] = useState<RecurringSchedule[]>([])
   const [buckets, setBuckets] = useState<BucketItem[]>([])
+  const [wallets, setWallets] = useState<WalletItem[]>([])
+  const [walletId, setWalletId] = useState('')
   const [loading, setLoading] = useState(true)
   const [filterType, setFilterType] = useState<'all' | 'expense' | 'income'>('all')
 
@@ -125,7 +135,22 @@ export default function RecurringPage() {
       }
     }
 
-    // 2. Fetch Recurring Schedules
+    // 2. Fetch Wallets
+    const { data: walletsData } = await supabase
+      .from('wallets')
+      .select('id, name, color, type, balance')
+      .eq('user_id', user.id)
+      .eq('is_archived', false)
+      .order('is_default', { ascending: false })
+
+    if (walletsData && walletsData.length > 0) {
+      setWallets(walletsData)
+      if (!walletId) {
+        setWalletId(walletsData[0].id)
+      }
+    }
+
+    // 3. Fetch Recurring Schedules
     const { data: schedulesData, error } = await supabase
       .from('recurring_schedules')
       .select(`
@@ -156,6 +181,7 @@ export default function RecurringPage() {
     setNote('')
     setCategory('ค่าใช้จ่ายประจำ')
     setBucketId(buckets[0]?.id || '')
+    setWalletId(wallets[0]?.id || '')
     setFrequency('monthly')
     setDayOfMonth('1')
     setDayOfWeek('1')
@@ -174,6 +200,7 @@ export default function RecurringPage() {
     setNote(schedule.note || '')
     setCategory(schedule.category || (schedule.type === 'income' ? 'รายรับประจำ' : 'ค่าใช้จ่ายประจำ'))
     setBucketId(schedule.bucket_id || buckets[0]?.id || '')
+    setWalletId(schedule.wallet_id || wallets[0]?.id || '')
     setFrequency(schedule.frequency)
     setDayOfMonth(schedule.day_of_month ? String(schedule.day_of_month) : '1')
     setDayOfWeek(schedule.day_of_week !== null && schedule.day_of_week !== undefined ? String(schedule.day_of_week) : '1')
@@ -196,6 +223,7 @@ export default function RecurringPage() {
     formData.append('note', note)
     formData.append('category', category)
     formData.append('bucket_id', bucketId)
+    if (walletId) formData.append('wallet_id', walletId)
     formData.append('frequency', frequency)
     if (frequency === 'monthly') {
       formData.append('day_of_month', dayOfMonth)
@@ -627,7 +655,7 @@ export default function RecurringPage() {
               {/* Bucket (Required for expense) */}
               {formType === 'expense' && (
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 block mb-1">ตัดยอดจากกระเป๋าเงิน *</label>
+                  <label className="text-xs font-semibold text-gray-700 block mb-1">หักจากถังงบประมาณ (Bucket Envelope) *</label>
                   <select
                     value={bucketId}
                     onChange={(e) => setBucketId(e.target.value)}
@@ -637,6 +665,26 @@ export default function RecurringPage() {
                     {buckets.map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.name} (คงเหลือ ฿{Number(b.balance).toLocaleString()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Wallet Selection */}
+              {wallets.length > 0 && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-700 block mb-1">
+                    {formType === 'expense' ? 'ตัดเงินจริงจากกระเป๋า / บัญชี (Wallet)' : 'รับเงินเข้ากระเป๋า / บัญชี (Wallet)'}
+                  </label>
+                  <select
+                    value={walletId}
+                    onChange={(e) => setWalletId(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+                  >
+                    {wallets.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name} (คงเหลือ ฿{Number(w.balance).toLocaleString()})
                       </option>
                     ))}
                   </select>

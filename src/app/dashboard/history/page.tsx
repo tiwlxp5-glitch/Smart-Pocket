@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { ScrollText, ArrowDownCircle, ArrowUpCircle, Trash2 } from 'lucide-react'
+import { ScrollText, ArrowDownCircle, ArrowUpCircle, Trash2, ArrowRightLeft } from 'lucide-react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { th } from 'date-fns/locale'
@@ -15,6 +15,9 @@ interface HistoryItem {
   receiver: string | null
   transaction_date: string
   slip_url: string | null
+  wallet_id?: string | null
+  to_wallet_id?: string | null
+  transfer_fee?: number | null
   buckets?: { name?: string } | { name?: string }[] | null
 }
 
@@ -22,11 +25,19 @@ export default async function HistoryPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // ดึงข้อมูลกระเป๋าเงินสำหรับแสดงชื่อ
+  const { data: userWallets } = await supabase
+    .from('wallets')
+    .select('id, name, color, type')
+    .eq('user_id', user?.id)
+
+  const walletMap = new Map((userWallets || []).map((w) => [w.id, w]))
+
   // ดึงข้อมูลจริงจากฐานข้อมูล (เอาเฉพาะที่ยังไม่ถูกลบ)
   const { data: transactions } = await supabase
     .from('transactions')
     .select(`
-      id, type, amount, note, receiver, transaction_date, slip_url,
+      id, type, amount, note, receiver, transaction_date, slip_url, wallet_id, to_wallet_id, transfer_fee,
       buckets ( name )
     `)
     .eq('user_id', user?.id)
@@ -57,38 +68,93 @@ export default async function HistoryPage() {
         ) : (
           (transactions as unknown as HistoryItem[]).map((item) => {
             const bucketName = Array.isArray(item.buckets) ? item.buckets[0]?.name : item.buckets?.name
+            const fromWallet = item.wallet_id ? walletMap.get(item.wallet_id) : null
+            const toWallet = item.to_wallet_id ? walletMap.get(item.to_wallet_id) : null
+            const isTransfer = item.type === 'transfer'
+
             return (
             <div key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                    item.type === 'income' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
+                <div className="flex items-center gap-3.5">
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
+                    isTransfer
+                      ? 'bg-blue-100 text-blue-600'
+                      : item.type === 'income'
+                      ? 'bg-emerald-100 text-emerald-600'
+                      : 'bg-rose-100 text-rose-600'
                   }`}>
-                    {item.type === 'income' ? <ArrowDownCircle size={24} /> : <ArrowUpCircle size={24} />}
+                    {isTransfer ? (
+                      <ArrowRightLeft size={20} />
+                    ) : item.type === 'income' ? (
+                      <ArrowDownCircle size={22} />
+                    ) : (
+                      <ArrowUpCircle size={22} />
+                    )}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{item.note || (item.type === 'income' ? 'รับเงิน' : 'จ่ายเงิน')}</p>
-                    {item.receiver && (
-                      <p className="text-sm text-gray-600 mt-0.5">ถึง: {item.receiver}</p>
+                    <p className="font-bold text-gray-900 text-sm">
+                      {isTransfer
+                        ? item.note || 'โอนเงินระหว่างบัญชี'
+                        : item.note || (item.type === 'income' ? 'รับเงิน' : 'จ่ายเงิน')}
+                    </p>
+
+                    {isTransfer ? (
+                      <p className="text-xs text-blue-700 font-semibold mt-0.5">
+                        {fromWallet?.name || 'บัญชีต้นทาง'} ➔ {toWallet?.name || 'บัญชีปลายทาง'}
+                      </p>
+                    ) : (
+                      item.receiver && <p className="text-xs text-gray-600 mt-0.5">ถึง: {item.receiver}</p>
                     )}
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-gray-500">
+
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <span className="text-[11px] text-gray-400">
                         {formatDistanceToNow(new Date(item.transaction_date), { addSuffix: true, locale: th })}
                       </span>
-                      <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                      <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                        {bucketName || 'จัดสรรแล้ว'}
-                      </span>
+
+                      {/* Wallet Badge */}
+                      {fromWallet && !isTransfer && (
+                        <>
+                          <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                          <span
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1"
+                            style={{
+                              backgroundColor: `${fromWallet.color || '#10b981'}15`,
+                              color: fromWallet.color || '#10b981',
+                            }}
+                          >
+                            {fromWallet.name}
+                          </span>
+                        </>
+                      )}
+
+                      {/* Bucket Badge */}
+                      {!isTransfer && (
+                        <>
+                          <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                          <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                            {bucketName || 'จัดสรรแล้ว'}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
                 
-                <div className="text-right">
-                  <p className={`font-bold text-lg ${
-                    item.type === 'income' ? 'text-emerald-600' : 'text-gray-900'
+                <div className="text-right shrink-0">
+                  <p className={`font-black text-base ${
+                    isTransfer
+                      ? 'text-blue-600'
+                      : item.type === 'income'
+                      ? 'text-emerald-600'
+                      : 'text-gray-900'
                   }`}>
-                    {item.type === 'income' ? '+' : '-'}฿{Number(item.amount).toLocaleString('th-TH')}
+                    {isTransfer ? '' : item.type === 'income' ? '+' : '-'}฿{Number(item.amount).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
+                  {isTransfer && Number(item.transfer_fee) > 0 && (
+                    <p className="text-[10px] text-gray-400">
+                      ค่าธรรมเนียม ฿{Number(item.transfer_fee).toLocaleString()}
+                    </p>
+                  )}
                 </div>
               </div>
 

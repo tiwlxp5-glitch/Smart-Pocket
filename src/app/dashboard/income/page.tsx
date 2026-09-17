@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowDownCircle, PieChart, CheckCircle2, ChevronLeft } from 'lucide-react'
+import { ArrowDownCircle, PieChart, CheckCircle2, ChevronLeft, Wallet as WalletIcon, Check, Layers } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { addIncome } from '../actions'
 import { createBrowserClient } from '@supabase/ssr'
+import { Wallet as WalletTypeInterface } from '@/types/database'
+import { getWalletTypeLabel } from '@/utils/walletHelper'
 
 interface Bucket {
   id: string
@@ -14,11 +16,16 @@ interface Bucket {
   color?: string | null
   balance: number
   allocation_percentage?: number
+  default_wallet_id?: string | null
 }
 
 export default function IncomePage() {
   const router = useRouter()
   const [buckets, setBuckets] = useState<Bucket[]>([])
+  const [wallets, setWallets] = useState<WalletTypeInterface[]>([])
+  const [selectedWalletId, setSelectedWalletId] = useState<string>('')
+  const [allocationMode, setAllocationMode] = useState<'auto' | 'single'>('auto')
+  const [selectedBucketId, setSelectedBucketId] = useState<string>('')
   const [amount, setAmount] = useState<string>('')
   const [note, setNote] = useState('')
   const [showSplitter, setShowSplitter] = useState(false)
@@ -29,17 +36,45 @@ export default function IncomePage() {
   const numAmount = Number(amount) || 0
 
   useEffect(() => {
-    const fetchBuckets = async () => {
+    const fetchData = async () => {
       const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
-      const { data } = await supabase.from('buckets').select('*').order('created_at')
-      if (data) setBuckets(data)
+      // Fetch buckets
+      const { data: bucketData } = await supabase.from('buckets').select('*').order('created_at')
+      if (bucketData) {
+        setBuckets(bucketData)
+        if (bucketData.length > 0) setSelectedBucketId(bucketData[0].id)
+      }
+
+      // Fetch wallets
+      const { data: walletData } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('is_archived', false)
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: true })
+
+      if (walletData && walletData.length > 0) {
+        setWallets(walletData)
+        setSelectedWalletId(walletData[0].id)
+      }
+
       setIsLoading(false)
     }
-    fetchBuckets()
+    fetchData()
   }, [])
+
+  // Auto-select wallet when a single bucket is selected
+  useEffect(() => {
+    if (allocationMode === 'single' && selectedBucketId && buckets.length > 0) {
+      const bucket = buckets.find(b => b.id === selectedBucketId)
+      if (bucket?.default_wallet_id) {
+        setSelectedWalletId(bucket.default_wallet_id)
+      }
+    }
+  }, [selectedBucketId, buckets, allocationMode])
 
   const handleAllocate = (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,13 +89,18 @@ export default function IncomePage() {
       const formData = new FormData()
       formData.append('amount', numAmount.toString())
       formData.append('note', note)
+      if (selectedWalletId) formData.append('wallet_id', selectedWalletId)
+      formData.append('allocation_mode', allocationMode)
+      if (allocationMode === 'single' && selectedBucketId) {
+        formData.append('single_bucket_id', selectedBucketId)
+      }
       
       try {
         await addIncome(formData)
         setIsSuccess(true)
         setTimeout(() => {
           router.push('/dashboard')
-        }, 2000)
+        }, 1500)
       } catch (error) {
         alert('เกิดข้อผิดพลาดในการบันทึกรายรับ')
         setIsSaving(false)
@@ -68,34 +108,44 @@ export default function IncomePage() {
     }
   }
 
+  const selectedWallet = wallets.find((w) => w.id === selectedWalletId)
+  const targetSingleBucket = buckets.find((b) => b.id === selectedBucketId)
+
   if (isSuccess) {
     return (
       <div className="min-h-screen p-6 flex flex-col items-center justify-center bg-gray-50 text-center pb-20">
         <CheckCircle2 size={80} className="text-emerald-500 mb-6 animate-bounce" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">จัดสรรเงินสำเร็จ!</h2>
-        <p className="text-gray-500">ระบบได้แบ่งเงินเข้ากระเป๋าต่างๆ เรียบร้อยแล้ว</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">บันทึกรายรับสำเร็จ!</h2>
+        <p className="text-gray-500">
+          เงินเข้าบัญชี {selectedWallet?.name || 'หลัก'} และจัดสรรงบประมาณเรียบร้อยแล้ว
+        </p>
       </div>
     )
   }
 
   return (
     <main className="p-6 pb-24 bg-gray-50 min-h-screen">
-      <header className="flex items-center gap-4 mb-8">
+      <header className="flex items-center gap-4 mb-6">
         <Link href="/dashboard" className="p-2 bg-white rounded-full shadow-sm border border-gray-100 text-gray-600">
           <ChevronLeft size={24} />
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">บันทึกรายรับ</h1>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 leading-tight">บันทึกรายรับ</h1>
+          <p className="text-xs text-gray-500">เงินเดือน โบนัส หรือรายรับอื่นๆ</p>
+        </div>
       </header>
 
       {!showSplitter ? (
-        <form onSubmit={handleAllocate} className="flex flex-col gap-6">
+        <form onSubmit={handleAllocate} className="flex flex-col gap-5">
+          {/* Amount Card */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
             <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
               <ArrowDownCircle size={32} />
             </div>
-            <p className="text-gray-500 mb-2">ยอดเงินที่ได้รับ (บาท)</p>
+            <p className="text-gray-500 mb-2 text-xs font-semibold">ยอดเงินที่ได้รับ (บาท)</p>
             <input
               type="number"
+              step="any"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
@@ -105,77 +155,192 @@ export default function IncomePage() {
             />
           </div>
 
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-            <label className="block text-sm font-medium text-gray-700 mb-2">บันทึกช่วยจำ (หมวดหมู่)</label>
+          {/* Wallet Selector */}
+          <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-xs font-bold text-gray-700">
+                เงินเข้ากระเป๋า / บัญชีไหน (Wallet)
+              </label>
+              <Link href="/dashboard/wallets" className="text-[11px] text-blue-600 font-semibold hover:underline">
+                + เพิ่มบัญชี
+              </Link>
+            </div>
+
+            {wallets.length === 0 ? (
+              <p className="text-xs text-gray-400 py-1">ใช้บัญชีเงินสดหลัก</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-2">
+                {wallets.map((w) => {
+                  const isSelected = selectedWalletId === w.id
+                  return (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() => setSelectedWalletId(w.id)}
+                      className={`flex items-center justify-between p-3 rounded-2xl border-2 transition text-left ${
+                        isSelected
+                          ? 'border-emerald-500 bg-emerald-50/50 shadow-2xs'
+                          : 'border-gray-100 bg-gray-50/50 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs"
+                          style={{ backgroundColor: w.color || '#10b981' }}
+                        />
+                        <div>
+                          <p className="text-xs font-bold text-gray-900 leading-tight">{w.name}</p>
+                          <p className="text-[10px] text-gray-500">{getWalletTypeLabel(w.type)}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold text-gray-700">
+                        ฿{Number(w.balance).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Allocation Mode Selector */}
+          <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+            <label className="block text-xs font-bold text-gray-700 mb-2">
+              การจัดสรรงบประมาณ (Envelope Allocation)
+            </label>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setAllocationMode('auto')}
+                className={`py-2.5 px-3 rounded-2xl border text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  allocationMode === 'auto'
+                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-2xs'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <PieChart size={14} /> แบ่งตาม % อัตโนมัติ
+              </button>
+              <button
+                type="button"
+                onClick={() => setAllocationMode('single')}
+                className={`py-2.5 px-3 rounded-2xl border text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  allocationMode === 'single'
+                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-2xs'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Layers size={14} /> เลือกถังงบโดยเฉพาะ
+              </button>
+            </div>
+
+            {allocationMode === 'single' && (
+              <div className="space-y-2 pt-1 border-t border-gray-100">
+                <p className="text-[11px] text-gray-500 mb-1">เลือกถังงบที่ต้องการใส่เงินก้อนนี้เต็มจำนวน (100%):</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {buckets.map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => setSelectedBucketId(b.id)}
+                      className={`p-3 rounded-xl border text-left flex items-center justify-between text-xs font-semibold transition ${
+                        selectedBucketId === b.id
+                          ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 shadow-2xs'
+                          : 'border-gray-100 bg-gray-50 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span>{b.name}</span>
+                      <span className="text-gray-500">คงเหลือ ฿{Number(b.balance).toLocaleString()}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Note Input */}
+          <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+            <label className="block text-xs font-bold text-gray-700 mb-2">บันทึกช่วยจำ (Note)</label>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="เช่น เงินเดือน, โบนัส, ขายของ"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900"
+              placeholder="เช่น เงินเดือนประจำเดือน, งานฟรีแลนซ์, ปันผล"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm text-gray-900"
             />
           </div>
 
           <button
             type="submit"
             disabled={numAmount <= 0 || isLoading}
-            className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-emerald-700 transition disabled:opacity-50 disabled:bg-gray-400 flex items-center justify-center gap-2"
+            className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-base hover:bg-emerald-700 transition disabled:opacity-50 disabled:bg-gray-400 flex items-center justify-center gap-2 shadow-md active:scale-[0.99]"
           >
-            <PieChart size={20} />
-            {isLoading ? 'กำลังโหลด...' : 'จัดสรรเงินอัตโนมัติ'}
+            <PieChart size={18} />
+            {isLoading ? 'กำลังโหลด...' : 'ตรวจสอบและจัดสรรเงิน'}
           </button>
         </form>
       ) : (
         <div className="animate-in slide-in-from-bottom-10 fade-in duration-300">
           <div className="bg-emerald-600 rounded-3xl p-6 text-white shadow-lg mb-6">
-            <p className="text-emerald-100 text-sm mb-1">ยอดเงินรอจัดสรร</p>
-            <h2 className="text-3xl font-extrabold mb-4">฿{numAmount.toLocaleString('th-TH')}</h2>
-            <div className="bg-white/20 p-3 rounded-xl text-sm flex gap-2 items-center">
-              <PieChart size={18} />
-              ระบบกำลังแบ่งเงินตามแผนที่คุณตั้งไว้
+            <p className="text-emerald-100 text-xs mb-1">ยอดเงินรับเข้า</p>
+            <h2 className="text-3xl font-black mb-3">฿{numAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</h2>
+            <div className="bg-white/20 p-3 rounded-2xl text-xs flex gap-2 items-center">
+              <WalletIcon size={16} />
+              <span>เข้ากระเป๋า: <strong>{selectedWallet?.name || 'บัญชีหลัก'}</strong></span>
             </div>
           </div>
 
-          <h3 className="font-bold text-gray-900 mb-4 text-lg">สรุปการจัดสรรเงิน</h3>
-          <div className="flex flex-col gap-3 mb-8">
-            {buckets.map((bucket) => {
-              const allocatedAmount = (numAmount * Number(bucket.allocation_percentage)) / 100
-              
-              return (
-                <div key={bucket.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center gap-4">
-                  <div 
-                    className="w-4 h-12 rounded-full shrink-0"
-                    style={{ backgroundColor: bucket.color || '#3B82F6' }}
-                  ></div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900">{bucket.name}</p>
-                    <p className="text-xs text-gray-500">{bucket.allocation_percentage}% ของรายรับ</p>
+          <h3 className="font-bold text-gray-900 mb-3 text-base">สรุปการจัดสรรงบประมาณ</h3>
+          
+          {allocationMode === 'single' ? (
+            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-xs mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-bold text-sm text-gray-900">{targetSingleBucket?.name}</span>
+                <span className="font-black text-emerald-600 text-base">
+                  +฿{numAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400">กำหนดเข้าถังนี้ 100%</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3 mb-8">
+              {buckets.map((bucket) => {
+                const allocated = (numAmount * (bucket.allocation_percentage || 0)) / 100
+                return (
+                  <div key={bucket.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: bucket.color || '#10b981' }}
+                      />
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-sm">{bucket.name}</h4>
+                        <p className="text-[11px] text-gray-400">สัดส่วน {bucket.allocation_percentage}%</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-emerald-600 text-sm">
+                        +฿{allocated.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-emerald-600 text-lg">
-                      +฿{allocatedAmount.toLocaleString('th-TH')}
-                    </p>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button
               onClick={() => setShowSplitter(false)}
-              disabled={isSaving}
-              className="flex-1 bg-white text-gray-600 border border-gray-200 py-4 rounded-2xl font-bold hover:bg-gray-50 transition disabled:opacity-50"
+              className="flex-1 py-3.5 border border-gray-300 rounded-2xl text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 transition"
             >
-              แก้ไขยอด
+              แก้ไขข้อมูล
             </button>
             <button
               onClick={handleConfirm}
               disabled={isSaving}
-              className="flex-[2] bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-2 py-3.5 bg-emerald-600 text-white rounded-2xl text-xs font-bold hover:bg-emerald-700 transition shadow-md disabled:opacity-50"
             >
-              <CheckCircle2 size={20} />
-              {isSaving ? 'กำลังบันทึก...' : 'ยืนยันการบันทึก'}
+              {isSaving ? 'กำลังบันทึก...' : 'ยืนยันการบันทึกรายรับ'}
             </button>
           </div>
         </div>

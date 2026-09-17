@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ArrowUpCircle, CheckCircle2, ChevronLeft, ShieldCheck, TrendingUp, Coffee, ScanLine, Loader2, AlertTriangle, Wallet } from 'lucide-react'
+import { ArrowUpCircle, CheckCircle2, ChevronLeft, ShieldCheck, TrendingUp, Coffee, ScanLine, Loader2, AlertTriangle, Wallet as WalletIcon, Building2, Banknote, CreditCard, Smartphone } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { addExpense } from '../actions'
 import { createBrowserClient } from '@supabase/ssr'
 import { extractSlipData } from './extract-action'
+import { Wallet as WalletTypeInterface } from '@/types/database'
+import { getWalletTypeLabel, detectBankFromText } from '@/utils/walletHelper'
 
 interface Bucket {
   id: string
@@ -16,11 +18,14 @@ interface Bucket {
   balance: number
   allocation_percentage?: number
   monthly_budget?: number | null
+  default_wallet_id?: string | null
 }
 
 export default function ExpensePage() {
   const router = useRouter()
   const [buckets, setBuckets] = useState<Bucket[]>([])
+  const [wallets, setWallets] = useState<WalletTypeInterface[]>([])
+  const [selectedWalletId, setSelectedWalletId] = useState<string>('')
   const [bucketExpenses, setBucketExpenses] = useState<Record<string, number>>({})
   const [amount, setAmount] = useState<string>('')
   const [note, setNote] = useState('')
@@ -51,6 +56,19 @@ export default function ExpensePage() {
         if (data.length > 0) setSelectedBucketId(data[data.length - 1].id)
       }
 
+      // Fetch Wallets
+      const { data: walletData } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('is_archived', false)
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: true })
+
+      if (walletData && walletData.length > 0) {
+        setWallets(walletData)
+        setSelectedWalletId(walletData[0].id)
+      }
+
       if (user) {
         const startOfMonthStr = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
         const { data: txs } = await supabase
@@ -75,6 +93,16 @@ export default function ExpensePage() {
     }
     fetchBucketsAndExpenses()
   }, [supabase])
+
+  // Auto-select wallet if bucket has a default_wallet_id
+  useEffect(() => {
+    if (selectedBucketId && buckets.length > 0) {
+      const bucket = buckets.find(b => b.id === selectedBucketId)
+      if (bucket?.default_wallet_id) {
+        setSelectedWalletId(bucket.default_wallet_id)
+      }
+    }
+  }, [selectedBucketId, buckets])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -137,6 +165,26 @@ export default function ExpensePage() {
       if (extracted.amount) setAmount(extracted.amount.toString())
       if (extracted.note) setNote(extracted.note)
       if (extracted.receiver) setReceiver(extracted.receiver)
+
+      // Auto-match Wallet based on sender_bank or note
+      if (extracted.sender_bank && wallets.length > 0) {
+        const bankMatch = wallets.find(
+          (w) =>
+            (w.bank_name && w.bank_name.toLowerCase() === extracted.sender_bank.toLowerCase()) ||
+            (w.name && w.name.toLowerCase().includes(extracted.sender_bank.toLowerCase()))
+        )
+        if (bankMatch) {
+          setSelectedWalletId(bankMatch.id)
+        }
+      } else if (extracted.note && wallets.length > 0) {
+        const preset = detectBankFromText(extracted.note)
+        if (preset) {
+          const bankMatch = wallets.find(
+            (w) => w.bank_name === preset.code || w.name.toLowerCase().includes(preset.code)
+          )
+          if (bankMatch) setSelectedWalletId(bankMatch.id)
+        }
+      }
     } catch (error) {
       console.error(error)
       alert('อ่านสลิปไม่สำเร็จ กรุณากรอกข้อมูลเองครับ')
@@ -173,6 +221,7 @@ export default function ExpensePage() {
       formData.append('note', note)
       formData.append('receiver', receiver)
       formData.append('bucket_id', selectedBucketId)
+      if (selectedWalletId) formData.append('wallet_id', selectedWalletId)
       if (finalSlipUrl) formData.append('slip_url', finalSlipUrl)
       
       try {
@@ -301,15 +350,65 @@ export default function ExpensePage() {
           </div>
         </div>
 
+        {/* Wallet Selector */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-          <h3 className="block text-sm font-medium text-gray-700 mb-4">หักจากกระเป๋าเงิน</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="block text-sm font-bold text-gray-900">จ่ายจากกระเป๋า / บัญชี (Wallet)</h3>
+            <Link href="/dashboard/wallets" className="text-xs text-blue-600 font-semibold hover:underline">
+              + จัดการบัญชี
+            </Link>
+          </div>
+          {wallets.length === 0 ? (
+            <p className="text-xs text-gray-400 py-2">ใช้กระเป๋าหลักเริ่มต้น</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-2.5">
+              {wallets.map((w) => {
+                const isSelected = selectedWalletId === w.id
+                return (
+                  <label
+                    key={w.id}
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
+                      isSelected ? 'border-rose-500 bg-rose-50/50 shadow-2xs' : 'border-gray-100 bg-gray-50/50 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="wallet"
+                        value={w.id}
+                        checked={isSelected}
+                        onChange={() => setSelectedWalletId(w.id)}
+                        className="hidden"
+                      />
+                      <span
+                        className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs"
+                        style={{ backgroundColor: w.color || '#10b981' }}
+                      />
+                      <div>
+                        <span className="text-xs font-bold text-gray-900 block">{w.name}</span>
+                        <span className="text-[10px] text-gray-500">{getWalletTypeLabel(w.type)}</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-gray-700">
+                      ฿{Number(w.balance).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Bucket (Budget Envelope) Selector */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+          <h3 className="block text-sm font-bold text-gray-900 mb-4">หักจากถังงบประมาณ (Bucket Envelope)</h3>
           {buckets.length === 0 ? (
-            <p className="text-center text-gray-400 py-4">กำลังโหลดกระเป๋าเงิน...</p>
+            <p className="text-center text-gray-400 py-4">กำลังโหลดถังงบประมาณ...</p>
           ) : (
             <div className="flex flex-col gap-3">
               {buckets.map(bucket => {
                 const isSelected = selectedBucketId === bucket.id
-                const Icon = bucket.icon === 'shield' ? ShieldCheck : bucket.icon === 'trending-up' ? TrendingUp : bucket.icon === 'wallet' ? Wallet : Coffee
+                const Icon = bucket.icon === 'shield' ? ShieldCheck : bucket.icon === 'trending-up' ? TrendingUp : bucket.icon === 'wallet' ? WalletIcon : Coffee
                 const bucketMonthlyLimit = bucket.monthly_budget ? Number(bucket.monthly_budget) : null
                 const bucketSpent = bucketExpenses[bucket.id] || 0
                 
