@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { th } from 'date-fns/locale'
 import { moveToTrash } from '../actions'
 import { ExportModal } from './ExportModal'
+import { SlipLightbox } from '@/components/SlipLightbox'
 
 interface HistoryItem {
   id: string
@@ -94,9 +95,7 @@ export default async function HistoryPage() {
               {/* ส่วนสลิปและปุ่มลบ */}
               <div className="flex items-center justify-between pt-3 border-t border-gray-50 mt-1">
                 {item.slip_url ? (
-                  <a href={item.slip_url} target="_blank" rel="noreferrer" className="text-xs text-blue-500 hover:underline">
-                    ดูรูปสลิป
-                  </a>
+                  <SlipLightbox slipUrl={item.slip_url} />
                 ) : (
                   <div></div>
                 )}

@@ -33,6 +33,7 @@ export default function ExpensePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [slipFile, setSlipFile] = useState<File | null>(null)
+  const [compressedSlipBlob, setCompressedSlipBlob] = useState<Blob | null>(null)
   const [slipPreview, setSlipPreview] = useState<string | null>(null)
 
   const numAmount = Number(amount) || 0
@@ -80,11 +81,12 @@ export default function ExpensePage() {
     if (!file) return
 
     setSlipFile(file)
+    setCompressedSlipBlob(null)
     setIsScanning(true)
     
     try {
       // 1. บีบอัดรูปก่อนส่ง (แก้ปัญหา Vercel โหลดรูปจากกล้องมือถือไม่ผ่านเพราะไฟล์ใหญ่เกิน 4.5MB)
-      const compressImage = (file: File): Promise<string> => {
+      const compressImage = (file: File): Promise<{ dataUrl: string; blob: Blob }> => {
         return new Promise((resolve, reject) => {
           const reader = new FileReader()
           reader.onload = (e) => {
@@ -104,7 +106,16 @@ export default function ExpensePage() {
               canvas.height = height
               const ctx = canvas.getContext('2d')
               ctx?.drawImage(img, 0, 0, width, height)
-              resolve(canvas.toDataURL('image/jpeg', 0.7))
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.7)
+              // แปลง dataURL → Blob เพื่อ upload ขึ้น Storage แทนไฟล์ต้นฉบับ
+              canvas.toBlob(
+                (blob) => {
+                  if (blob) resolve({ dataUrl, blob })
+                  else reject(new Error('Blob conversion failed'))
+                },
+                'image/jpeg',
+                0.7
+              )
             }
             img.onerror = reject
             img.src = e.target?.result as string
@@ -114,8 +125,9 @@ export default function ExpensePage() {
         })
       }
 
-      const compressedDataUrl = await compressImage(file)
+      const { dataUrl: compressedDataUrl, blob: compressedBlob } = await compressImage(file)
       setSlipPreview(compressedDataUrl) // โชว์รูปพรีวิวจากที่บีบอัดแล้ว
+      setCompressedSlipBlob(compressedBlob) // เก็บ Blob สำหรับ upload ขึ้น Storage
       
       const base64Data = compressedDataUrl.split(',')[1]
       
@@ -130,6 +142,7 @@ export default function ExpensePage() {
       alert('อ่านสลิปไม่สำเร็จ กรุณากรอกข้อมูลเองครับ')
       setSlipPreview(null)
       setSlipFile(null)
+      setCompressedSlipBlob(null)
     } finally {
       setIsScanning(false)
     }
@@ -142,13 +155,12 @@ export default function ExpensePage() {
       
       let finalSlipUrl = ''
       
-      // อัพโหลดรูปภาพขึ้น Supabase Storage (ถ้ามีการแนบสลิป)
-      if (slipFile) {
-        const fileExt = slipFile.name.split('.').pop()
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+      // อัพโหลดรูปภาพที่บีบอัดแล้วขึ้น Supabase Storage (ประหยัดพื้นที่ กว่าไฟล์ต้นฉบับ)
+      if (compressedSlipBlob) {
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('slips')
-          .upload(fileName, slipFile)
+          .upload(fileName, compressedSlipBlob, { contentType: 'image/jpeg' })
           
         if (!uploadError && uploadData) {
           const { data } = supabase.storage.from('slips').getPublicUrl(uploadData.path)
