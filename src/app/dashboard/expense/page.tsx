@@ -1,16 +1,25 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ArrowUpCircle, CheckCircle2, ChevronLeft, ShieldCheck, TrendingUp, Coffee, ScanLine, Loader2, FileImage } from 'lucide-react'
+import { ArrowUpCircle, CheckCircle2, ChevronLeft, ShieldCheck, TrendingUp, Coffee, ScanLine, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { addExpense } from '../actions'
 import { createBrowserClient } from '@supabase/ssr'
 import { extractSlipData } from './extract-action'
 
+interface Bucket {
+  id: string
+  name: string
+  icon?: string | null
+  color?: string | null
+  balance: number
+  allocation_percentage?: number
+}
+
 export default function ExpensePage() {
   const router = useRouter()
-  const [buckets, setBuckets] = useState<any[]>([])
+  const [buckets, setBuckets] = useState<Bucket[]>([])
   const [amount, setAmount] = useState<string>('')
   const [note, setNote] = useState('')
   const [receiver, setReceiver] = useState('')

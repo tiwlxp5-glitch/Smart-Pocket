@@ -5,6 +5,16 @@ import { formatDistanceToNow } from 'date-fns'
 import { th } from 'date-fns/locale'
 import { restoreFromTrash } from '../../actions'
 
+interface TrashItem {
+  id: string
+  type: string
+  amount: number
+  note: string | null
+  transaction_date: string
+  deleted_at: string
+  buckets?: { name?: string } | { name?: string }[] | null
+}
+
 export default async function TrashPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -47,7 +57,7 @@ export default async function TrashPage() {
             <p>ถังขยะว่างเปล่า</p>
           </div>
         ) : (
-          transactions.map((item: any) => (
+          (transactions as unknown as TrashItem[]).map((item) => (
             <div key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-rose-100 flex flex-col gap-3 opacity-75 hover:opacity-100 transition">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">

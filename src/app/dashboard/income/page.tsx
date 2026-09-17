@@ -7,9 +7,18 @@ import { useRouter } from 'next/navigation'
 import { addIncome } from '../actions'
 import { createBrowserClient } from '@supabase/ssr'
 
+interface Bucket {
+  id: string
+  name: string
+  icon?: string | null
+  color?: string | null
+  balance: number
+  allocation_percentage?: number
+}
+
 export default function IncomePage() {
   const router = useRouter()
-  const [buckets, setBuckets] = useState<any[]>([])
+  const [buckets, setBuckets] = useState<Bucket[]>([])
   const [amount, setAmount] = useState<string>('')
   const [note, setNote] = useState('')
   const [showSplitter, setShowSplitter] = useState(false)

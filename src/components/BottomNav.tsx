@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ArrowDownCircle, ArrowUpCircle, ScrollText } from 'lucide-react'
+import { LayoutDashboard, ArrowDownCircle, ArrowUpCircle, ScrollText, PieChart } from 'lucide-react'
 
 export function BottomNav() {
   const pathname = usePathname()
@@ -11,6 +11,7 @@ export function BottomNav() {
     { name: 'หน้าแรก', href: '/dashboard', icon: LayoutDashboard },
     { name: 'รับเงิน', href: '/dashboard/income', icon: ArrowDownCircle, color: 'text-emerald-500' },
     { name: 'จ่ายเงิน', href: '/dashboard/expense', icon: ArrowUpCircle, color: 'text-rose-500' },
+    { name: 'สถิติ', href: '/dashboard/analytics', icon: PieChart },
     { name: 'ประวัติ', href: '/dashboard/history', icon: ScrollText },
   ]
 

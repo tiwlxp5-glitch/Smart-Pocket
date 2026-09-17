@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
-import { Wallet, ShieldCheck, TrendingUp, Coffee, LogOut } from 'lucide-react'
+import { ShieldCheck, TrendingUp, Coffee, LogOut, PieChart, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
 
 // Dummy fallback data if DB is empty or not connected
 const fallbackBuckets = [
@@ -17,6 +18,27 @@ export default async function DashboardPage() {
   
   if (!buckets || buckets.length === 0) {
     buckets = fallbackBuckets
+  }
+
+  // ดึงรายการสรุปประจำเดือนนี้
+  const now = new Date()
+  const startOfMonthStr = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  
+  const { data: monthTransactions } = user ? await supabase
+    .from('transactions')
+    .select('type, amount')
+    .eq('user_id', user.id)
+    .is('deleted_at', null)
+    .gte('transaction_date', startOfMonthStr) : { data: null }
+
+  let monthIncome = 0
+  let monthExpense = 0
+  if (monthTransactions) {
+    monthTransactions.forEach((tx) => {
+      const amt = Number(tx.amount) || 0
+      if (tx.type === 'income') monthIncome += amt
+      else if (tx.type === 'expense') monthExpense += amt
+    })
   }
 
   const totalBalance = buckets.reduce((sum, b) => sum + (Number(b.balance) || 0), 0)
@@ -50,6 +72,32 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Quick Analytics Card */}
+      <Link 
+        href="/dashboard/analytics"
+        className="block bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-8 hover:shadow-md hover:border-blue-200 transition group"
+      >
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-2 text-blue-600 font-bold text-sm">
+            <PieChart size={18} />
+            <span>สถิติการเงินเดือนนี้</span>
+          </div>
+          <span className="text-xs text-blue-600 font-semibold group-hover:translate-x-0.5 transition flex items-center gap-0.5">
+            ดูกราฟวิเคราะห์ <ChevronRight size={14} />
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-2xl">
+          <div>
+            <p className="text-[10px] text-gray-500">รับเข้าเดือนนี้</p>
+            <p className="text-sm font-bold text-emerald-600">+฿{monthIncome.toLocaleString('th-TH')}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-500">จ่ายออกเดือนนี้</p>
+            <p className="text-sm font-bold text-rose-600">-฿{monthExpense.toLocaleString('th-TH')}</p>
+          </div>
+        </div>
+      </Link>
 
       <h3 className="font-bold text-gray-900 mb-4 text-lg">กระเป๋าเงินของคุณ</h3>
       

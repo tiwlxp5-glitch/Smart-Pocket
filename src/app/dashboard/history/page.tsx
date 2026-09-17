@@ -1,10 +1,20 @@
 import { createClient } from '@/utils/supabase/server'
-import { ScrollText, ArrowDownCircle, ArrowUpCircle, Trash2, ArchiveRestore } from 'lucide-react'
+import { ScrollText, ArrowDownCircle, ArrowUpCircle, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { th } from 'date-fns/locale'
 import { moveToTrash } from '../actions'
-import { revalidatePath } from 'next/cache'
+
+interface HistoryItem {
+  id: string
+  type: string
+  amount: number
+  note: string | null
+  receiver: string | null
+  transaction_date: string
+  slip_url: string | null
+  buckets?: { name?: string } | { name?: string }[] | null
+}
 
 export default async function HistoryPage() {
   const supabase = await createClient()
@@ -40,7 +50,9 @@ export default async function HistoryPage() {
             <p>ยังไม่มีประวัติการทำรายการ</p>
           </div>
         ) : (
-          transactions.map((item: any) => (
+          (transactions as unknown as HistoryItem[]).map((item) => {
+            const bucketName = Array.isArray(item.buckets) ? item.buckets[0]?.name : item.buckets?.name
+            return (
             <div key={item.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -60,7 +72,7 @@ export default async function HistoryPage() {
                       </span>
                       <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                       <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                        {item.buckets?.name || 'จัดสรรแล้ว'}
+                        {bucketName || 'จัดสรรแล้ว'}
                       </span>
                     </div>
                   </div>
@@ -96,7 +108,7 @@ export default async function HistoryPage() {
                 </form>
               </div>
             </div>
-          ))
+          )})
         )}
       </div>
       
