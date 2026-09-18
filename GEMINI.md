@@ -58,6 +58,7 @@
   - Mode 1: รวมบัญชี (1 Wallet, 3 Buckets ผูก Wallet เดียวกัน)
   - Mode 2: แยกบัญชี (3 Wallets, 3 Buckets ผูกแยกกัน 1:1)
   - Auto Redirect ให้ผู้ใช้ใหม่ตั้งค่าให้เสร็จก่อนเข้า Dashboard
+  - **Bug Fix (Onboarding Duplication)**: แก้ไขให้ Onboarding ทำการค้นหาและอัปเดต (Upsert) กระเป๋าเงินและถังเงินเดิม แทนการลบทิ้งแล้วสร้างใหม่ เพื่อป้องกันปัญหาถังเงินซ้ำซ้อนสำหรับผู้ใช้เก่าที่มีข้อมูลอยู่แล้ว
 
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **104/104 tests** (100% pass rate) ครอบคลุม M4 + M5 + M6.

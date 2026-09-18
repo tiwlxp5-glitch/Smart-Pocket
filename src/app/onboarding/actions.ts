@@ -21,35 +21,83 @@ export async function completeOnboarding(formData: FormData) {
     throw new Error('สัดส่วนเปอร์เซ็นต์รวมกันต้องได้ 100%')
   }
 
-  // Clear existing default wallets and buckets created by handle_new_user
-  await supabase.from('buckets').delete().eq('user_id', user.id)
-  await supabase.from('wallets').delete().eq('user_id', user.id)
+  // ---------------------------------------------------------
+  // Helper: Get existing wallet or create new one
+  // ---------------------------------------------------------
+  async function getOrCreateWallet(bankId: string, bankName: string, isDefault: boolean, color: string) {
+    const { data: existing } = await supabase
+      .from('wallets')
+      .select('id')
+      .eq('user_id', user!.id)
+      .eq('bank_name', bankId)
+      .eq('type', 'bank')
+      .limit(1)
+      .maybeSingle()
+    
+    if (existing) {
+      if (isDefault) {
+         await supabase.from('wallets').update({ is_default: true }).eq('id', existing.id)
+      }
+      return existing.id
+    }
+    
+    const { data: newWallet } = await supabase.from('wallets').insert({
+      user_id: user!.id,
+      name: bankName,
+      type: 'bank',
+      bank_name: bankId,
+      color,
+      icon: 'wallet',
+      opening_balance: 0,
+      balance: 0,
+      is_default: isDefault
+    }).select('id').single()
+    return newWallet?.id
+  }
+
+  // ---------------------------------------------------------
+  // Helper: Upsert bucket by name
+  // ---------------------------------------------------------
+  async function upsertBucket(bucketName: string, icon: string, color: string, percentage: number, walletId: string | undefined) {
+    if (!walletId) return
+
+    const { data: existing } = await supabase
+      .from('buckets')
+      .select('id')
+      .eq('user_id', user!.id)
+      .eq('name', bucketName)
+      .limit(1)
+      .maybeSingle()
+      
+    if (existing) {
+      // Update existing bucket
+      await supabase.from('buckets').update({
+        allocation_percentage: percentage,
+        default_wallet_id: walletId
+      }).eq('id', existing.id)
+    } else {
+      // Create new bucket if not found
+      await supabase.from('buckets').insert({
+        user_id: user!.id,
+        name: bucketName,
+        icon,
+        color,
+        allocation_percentage: percentage,
+        default_wallet_id: walletId
+      })
+    }
+  }
 
   if (mode === 'single') {
     const bankId = formData.get('single_bank') as string
     const bankName = formData.get('single_bank_name') as string
 
-    // 1. Create 1 Wallet
-    const { data: wallet } = await supabase.from('wallets').insert({
-      user_id: user.id,
-      name: bankName,
-      type: 'bank',
-      bank_name: bankId,
-      color: '#3B82F6',
-      icon: 'wallet',
-      opening_balance: 0,
-      balance: 0,
-      is_default: true
-    }).select().single()
+    const walletId = await getOrCreateWallet(bankId, bankName, true, '#3B82F6')
 
-    // 2. Create 3 Buckets linking to the same single wallet
-    if (wallet) {
-      await supabase.from('buckets').insert([
-        { user_id: user.id, name: 'เงินใช้ชีวิตประจำวัน', icon: 'coffee', color: '#3B82F6', allocation_percentage: pDaily, default_wallet_id: wallet.id },
-        { user_id: user.id, name: 'เงินลงทุน', icon: 'trending-up', color: '#10B981', allocation_percentage: pInvest, default_wallet_id: wallet.id },
-        { user_id: user.id, name: 'เงินสำรองฉุกเฉิน', icon: 'shield', color: '#F59E0B', allocation_percentage: pEmergency, default_wallet_id: wallet.id }
-      ])
-    }
+    await upsertBucket('เงินใช้ชีวิตประจำวัน', 'coffee', '#3B82F6', pDaily, walletId)
+    await upsertBucket('เงินลงทุน', 'trending-up', '#10B981', pInvest, walletId)
+    await upsertBucket('เงินสำรองฉุกเฉิน', 'shield', '#F59E0B', pEmergency, walletId)
+
   } else {
     // Mode Split
     const wDailyId = formData.get('split_daily_bank') as string
@@ -61,21 +109,13 @@ export async function completeOnboarding(formData: FormData) {
     const wEmergencyId = formData.get('split_emergency_bank') as string
     const wEmergencyName = formData.get('split_emergency_name') as string
 
-    // 1. Create 3 Wallets
-    const { data: wallets } = await supabase.from('wallets').insert([
-      { user_id: user.id, name: wDailyName, type: 'bank', bank_name: wDailyId, color: '#3B82F6', icon: 'wallet', opening_balance: 0, balance: 0, is_default: true },
-      { user_id: user.id, name: wInvestName, type: 'bank', bank_name: wInvestId, color: '#10B981', icon: 'wallet', opening_balance: 0, balance: 0, is_default: false },
-      { user_id: user.id, name: wEmergencyName, type: 'bank', bank_name: wEmergencyId, color: '#F59E0B', icon: 'wallet', opening_balance: 0, balance: 0, is_default: false }
-    ]).select()
+    const wDaily_id = await getOrCreateWallet(wDailyId, wDailyName, true, '#3B82F6')
+    const wInvest_id = await getOrCreateWallet(wInvestId, wInvestName, false, '#10B981')
+    const wEmergency_id = await getOrCreateWallet(wEmergencyId, wEmergencyName, false, '#F59E0B')
 
-    // 2. Create 3 Buckets linked respectively
-    if (wallets && wallets.length === 3) {
-      await supabase.from('buckets').insert([
-        { user_id: user.id, name: 'เงินใช้ชีวิตประจำวัน', icon: 'coffee', color: '#3B82F6', allocation_percentage: pDaily, default_wallet_id: wallets[0].id },
-        { user_id: user.id, name: 'เงินลงทุน', icon: 'trending-up', color: '#10B981', allocation_percentage: pInvest, default_wallet_id: wallets[1].id },
-        { user_id: user.id, name: 'เงินสำรองฉุกเฉิน', icon: 'shield', color: '#F59E0B', allocation_percentage: pEmergency, default_wallet_id: wallets[2].id }
-      ])
-    }
+    await upsertBucket('เงินใช้ชีวิตประจำวัน', 'coffee', '#3B82F6', pDaily, wDaily_id)
+    await upsertBucket('เงินลงทุน', 'trending-up', '#10B981', pInvest, wInvest_id)
+    await upsertBucket('เงินสำรองฉุกเฉิน', 'shield', '#F59E0B', pEmergency, wEmergency_id)
   }
 
   // Mark as onboarded
