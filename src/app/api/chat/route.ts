@@ -8,16 +8,33 @@ const google = createGoogleGenerativeAI({
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { messages, context } = await req.json();
+  try {
+    const { messages, context } = await req.json();
 
-  const normalizedMessages = messages.map((m: any) => ({
-    ...m,
-    parts: m.parts || [{ type: 'text', text: m.content || '' }]
-  }));
+    // Normalize messages to ensure they have 'parts' array
+    const normalizedMessages = messages.map((m: any) => ({
+      ...m,
+      parts: m.parts || [{ type: 'text', text: m.content || '' }]
+    }));
 
-  const modelMessages = await convertToModelMessages(normalizedMessages);
+    // FIX: Strip leading assistant messages (welcome message from client-side)
+    // Gemini API requires conversation to start with role: 'user'
+    let filteredMessages = normalizedMessages;
+    while (filteredMessages.length > 0 && filteredMessages[0].role === 'assistant') {
+      filteredMessages = filteredMessages.slice(1);
+    }
 
-  const systemPrompt = `
+    // Safety: if no user messages remain, return a friendly error
+    if (filteredMessages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'ไม่มีข้อความจากผู้ใช้' }),
+        { status: 400, headers: { 'content-type': 'application/json' } }
+      );
+    }
+
+    const modelMessages = await convertToModelMessages(filteredMessages);
+
+    const systemPrompt = `
 คุณคือ "Smart Pocket Advisor" ผู้เชี่ยวชาญการเงินส่วนตัวของผู้ใช้งาน
 บุคลิก: เป็นเพื่อนสนิทที่เก่งเรื่องเงิน คุยเป็นกันเอง ใช้ภาษาไทย สุภาพแต่อบอุ่น
 
@@ -39,13 +56,24 @@ export async function POST(req: Request) {
 - ✅ จัดรูปแบบด้วย Markdown: ย่อหน้า, **ตัวหนา**, รายการ, Emoji
   `;
 
-  const result = await streamText({
-    model: google('gemini-3.6-flash'),
-    system: systemPrompt,
-    messages: modelMessages,
-  });
+    const result = await streamText({
+      model: google('gemini-3.5-flash'),
+      system: systemPrompt,
+      messages: modelMessages,
+    });
 
-  return createUIMessageStreamResponse({
-    stream: toUIMessageStream(result),
-  });
+    // FIX: toUIMessageStream requires { stream: ReadableStream } not the result object
+    return createUIMessageStreamResponse({
+      stream: toUIMessageStream({ stream: result.stream }),
+    });
+  } catch (error: any) {
+    console.error('[Smart Advisor API Error]', error);
+    return new Response(
+      JSON.stringify({ 
+        error: 'เกิดข้อผิดพลาดในการเชื่อมต่อ AI กรุณาลองใหม่อีกครั้ง',
+        detail: process.env.NODE_ENV === 'development' ? error.message : undefined
+      }),
+      { status: 500, headers: { 'content-type': 'application/json' } }
+    );
+  }
 }

@@ -34,7 +34,7 @@ export async function parseSmartAddText(text: string) {
 
     // 2. Initialize Gemini
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' })
 
     const walletsStr = JSON.stringify(wallets)
     const bucketsStr = JSON.stringify(buckets)

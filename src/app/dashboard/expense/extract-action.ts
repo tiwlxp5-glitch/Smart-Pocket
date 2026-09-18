@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 export async function extractSlipData(base64Image: string, mimeType: string) {
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' })
 
     const prompt = `
       คุณคือผู้เชี่ยวชาญด้านการอ่านสลิปโอนเงินของไทย
