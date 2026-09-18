@@ -70,13 +70,13 @@
   - เพิ่ม Global Animations: `slide-up`, `fade-in` เวลาโหลดหน้าใหม่ผ่าน `template.tsx`.
   - เพิ่ม Tactile Feedback (iOS Spring): ใส่เอฟเฟกต์ยุบตัว (`active:scale-[0.98]`) ในปุ่มและ Card ต่างๆ (Wallets, Buckets, BottomNav).
   - เพิ่ม Loading Spinner (`Loader2` จาก lucide-react) เวลาผู้ใช้กดบันทึกหรือโอนเงินเพื่อแจ้งสถานะการทำงานชัดเจน.
-- **Milestone 8 (Mobile App Icon Studio & 4 Handcrafted Vector Concepts)**:
-  - ออกแบบไอคอนแอพสำหรับติดตั้งลงบนมือถือ (PWA / Mobile App Icon 1:1) ทั้งหมด 4 สไตล์ (100% Handcrafted Non-AI Vector SVG):
-    1. `app-icon-dual-flow.svg`: Dual Flow Balance (คลื่นลูกศรคู่สมดุล รายรับ-รายจ่าย)
-    2. `app-icon-pocket-fold.svg`: Geometric Pocket Fold (กระเป๋าสตางค์มินิมอล 2 เลเยอร์)
-    3. `app-icon-baht-split.svg`: Digital Baht & Split Scale (เหรียญบาทดิจิทัลผสานแบ่งครึ่งสมดุล)
-    4. `app-icon-monogram-s.svg`: Monogram 'S' Smart Flow (ตัวอักษร S สไตล์ Fintech สากล)
-  - สร้างหน้า Interactive Mobile Mockup Studio (`/icon-preview`) พร้อม Phone Simulator บนหน้าจอ iPhone/Android จริง, Wallpaper Switcher, และแถบทดสอบ Micro-Scale Legibility (32px, 48px, 64px, 96px, 128px).
+- **Milestone 8 (Mobile App Icon Studio & Handcrafted Vector Concepts)**:
+  - ออกแบบไอคอนแอพสำหรับติดตั้งลงบนมือถือ (PWA / Mobile App Icon 1:1) ในโทนของ UI ภายในแอพจริง (In-App Tone) 4 สไตล์ (100% Non-AI Vector SVG):
+    1. `app-icon-dashboard-blue.svg`: Dashboard Royal Blue (ถอดแบบจากการ์ดยอดเงินหลัก)
+    2. `app-icon-clean-buckets.svg`: Clean White & 3 Buckets (คลีนการ์ดขาว + 3 ถังงบประมาณ)
+    3. `app-icon-cashflow-pills.svg`: In-Out Cashflow Balance (การ์ดรับ-จ่าย +฿ / −฿ สไตล์หน้าสรุป)
+    4. `app-icon-smart-wallet-app.svg`: Smart Pocket Pure Minimal (กระเป๋าไอคอนแอพ คลีนๆ สบายตา)
+  - สร้างและอัปเดตหน้า Interactive Mobile Mockup Studio (`/icon-preview`) แสดงผลบน iPhone Simulator จริง พร้อม Wallpaper Switcher และ Micro-scale Legibility Test (32px - 128px).
 
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **104/104 tests** (100% pass rate) ครอบคลุม M4 + M5 + M6.

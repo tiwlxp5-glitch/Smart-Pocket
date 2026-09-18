@@ -3,6 +3,7 @@ import { ShieldCheck, TrendingUp, Coffee, Settings, PieChart, ChevronRight, Aler
 import Link from 'next/link'
 import { calculateMonthlyCommitment } from '@/utils/recurringHelper'
 import { WalletCard } from '@/components/WalletCard'
+import { DashboardWalletDeleteButton } from '@/components/DashboardWalletDeleteButton'
 
 // Dummy fallback data if DB is empty or not connected
 const fallbackBuckets = [
@@ -223,8 +224,13 @@ export default async function DashboardPage() {
 
         <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2 snap-x">
           {wallets.map((w) => (
-            <div key={w.id} className="min-w-[210px] max-w-[230px] snap-start shrink-0">
+            <div key={w.id} className="min-w-[210px] max-w-[230px] snap-start shrink-0 relative group">
               <WalletCard wallet={w} />
+              {!w.is_default && (
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DashboardWalletDeleteButton walletId={w.id} walletName={w.name} />
+                </div>
+              )}
             </div>
           ))}
           <Link

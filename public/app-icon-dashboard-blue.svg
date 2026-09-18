@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <!-- Background: Exact gradient from app's Total Balance card (slate-900 via blue-900 to indigo-950) -->
+    <linearGradient id="db-card-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="50%" stop-color="#1E3A8A"/>
+      <stop offset="100%" stop-color="#1E1B4B"/>
+    </linearGradient>
+
+    <!-- Border highlight -->
+    <linearGradient id="db-border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#3B82F6" stop-opacity="0.1"/>
+    </linearGradient>
+
+    <!-- Income Emerald Gradient -->
+    <linearGradient id="db-green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <!-- Expense Rose Gradient -->
+    <linearGradient id="db-rose" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FB7185"/>
+      <stop offset="100%" stop-color="#E11D48"/>
+    </linearGradient>
+
+    <!-- Frosted Glass Wallet Gradient -->
+    <linearGradient id="db-glass" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.08"/>
+    </linearGradient>
+
+    <!-- Soft Drop Shadows -->
+    <filter id="db-shadow-wallet" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+
+    <filter id="db-glow-green" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#10B981" flood-opacity="0.5"/>
+    </filter>
+
+    <filter id="db-glow-rose" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#F43F5E" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <style>
+    .font-db {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Prompt', sans-serif;
+    }
+  </style>
+
+  <!-- Base Squircle -->
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#db-card-bg)" stroke="url(#db-border)" stroke-width="2.5"/>
+
+  <!-- Ambient Light Orb (Matches app's blur-xl orb) -->
+  <circle cx="390" cy="390" r="140" fill="#3B82F6" opacity="0.22" filter="blur(30px)"/>
+
+  <!-- Central Frosted Wallet Container -->
+  <g transform="translate(136, 156)" filter="url(#db-shadow-wallet)">
+    <!-- Main Wallet Body -->
+    <rect width="240" height="190" rx="34" fill="url(#db-glass)" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="2"/>
+    
+    <!-- Wallet Flap / Top Seam -->
+    <path d="M 0 54 C 80 76, 160 76, 240 54" fill="none" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="2"/>
+
+    <!-- Wallet Clasp / Badge -->
+    <rect x="180" y="80" width="55" height="44" rx="14" fill="#1E3A8A" stroke="#60A5FA" stroke-width="2"/>
+    <circle cx="204" cy="102" r="5" fill="#38BDF8"/>
+
+    <!-- Mini 3-Segment Allocation Bar inside Wallet (Like app's budget) -->
+    <g transform="translate(30, 134)">
+      <rect width="130" height="6" rx="3" fill="#1E293B" opacity="0.6"/>
+      <rect width="65" height="6" rx="3" fill="#3B82F6"/>
+      <rect x="68" width="40" height="6" rx="3" fill="#10B981"/>
+      <rect x="110" width="20" height="6" rx="3" fill="#F59E0B"/>
+    </g>
+  </g>
+
+  <!-- ==================================================== -->
+  <!-- FLOATING INCOME BADGE (+฿)                          -->
+  <!-- Green Pill entering the wallet from top-left         -->
+  <!-- ==================================================== -->
+  <g transform="translate(86, 116)" filter="url(#db-glow-green)">
+    <rect width="130" height="60" rx="20" fill="url(#db-green)" stroke="#A7F3D0" stroke-width="1.5"/>
+    <text x="65" y="40" class="font-db" font-size="28" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="-0.5">+฿</text>
+  </g>
+
+  <!-- Flow Curve into Wallet -->
+  <path d="M 151 176 C 151 210, 175 220, 200 220" fill="none" stroke="#34D399" stroke-width="6" stroke-linecap="round" stroke-dasharray="4 6" opacity="0.8"/>
+
+  <!-- ==================================================== -->
+  <!-- FLOATING EXPENSE BADGE (−฿)                         -->
+  <!-- Rose Pill leaving the wallet to bottom-right        -->
+  <!-- ==================================================== -->
+  <g transform="translate(296, 316)" filter="url(#db-glow-rose)">
+    <rect width="130" height="60" rx="20" fill="url(#db-rose)" stroke="#FECDD3" stroke-width="1.5"/>
+    <text x="65" y="40" class="font-db" font-size="28" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="-0.5">−฿</text>
+  </g>
+
+  <!-- Flow Curve out of Wallet -->
+  <path d="M 312 280 C 335 280, 361 290, 361 316" fill="none" stroke="#FB7185" stroke-width="6" stroke-linecap="round" stroke-dasharray="4 6" opacity="0.8"/>
+</svg>

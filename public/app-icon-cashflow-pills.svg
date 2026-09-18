@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <!-- Background Gradient (Brand Royal Blue) -->
+    <linearGradient id="cp-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="50%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+
+    <!-- Border Glow -->
+    <linearGradient id="cp-border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#93C5FD" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#60A5FA" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- Emerald Income Gradient (Matches app's text-emerald-600) -->
+    <linearGradient id="cp-income" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <!-- Rose Expense Gradient (Matches app's text-rose-600) -->
+    <linearGradient id="cp-expense" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FB7185"/>
+      <stop offset="100%" stop-color="#E11D48"/>
+    </linearGradient>
+
+    <!-- Shadows -->
+    <filter id="cp-card-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0F172A" flood-opacity="0.28"/>
+    </filter>
+
+    <filter id="cp-pill-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <style>
+    .font-cp {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Prompt', sans-serif;
+    }
+  </style>
+
+  <!-- Base Squircle in Royal Blue -->
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#cp-bg)" stroke="url(#cp-border)" stroke-width="2.5"/>
+
+  <!-- Subtle Ambient Glow -->
+  <circle cx="256" cy="180" r="160" fill="#60A5FA" opacity="0.25"/>
+
+  <!-- ==================================================== -->
+  <!-- CENTRAL WHITE APP CARD (Matches app's bg-white)      -->
+  <!-- ==================================================== -->
+  <g transform="translate(86, 96)" filter="url(#cp-card-shadow)">
+    <rect width="340" height="320" rx="36" fill="#FFFFFF"/>
+
+    <!-- Header Section inside Card -->
+    <g transform="translate(30, 28)">
+      <circle cx="20" cy="20" r="20" fill="#EFF6FF"/>
+      <!-- App Wallet Icon (Exact icon from Lucide Wallet in app) -->
+      <rect x="9" y="12" width="22" height="16" rx="4" fill="none" stroke="#2563EB" stroke-width="2.2"/>
+      <path d="M 23 18 L 31 18" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="26" cy="20" r="1.5" fill="#2563EB"/>
+
+      <text x="50" y="20" class="font-cp" font-size="16" font-weight="800" fill="#0F172A">Smart Pocket</text>
+      <text x="50" y="34" class="font-cp" font-size="11" font-weight="600" fill="#64748B">รายรับ • รายจ่าย</text>
+    </g>
+
+    <!-- ==================================================== -->
+    <!-- 1. INCOME BAR: +฿ รับเข้าเดือนนี้ (Emerald)          -->
+    <!-- ==================================================== -->
+    <g transform="translate(24, 95)" filter="url(#cp-pill-shadow)">
+      <rect width="292" height="85" rx="22" fill="url(#cp-income)"/>
+      <text x="24" y="34" class="font-cp" font-size="12" font-weight="700" fill="#D1FAE5">รับเข้า (INCOME)</text>
+      <text x="24" y="66" class="font-cp" font-size="28" font-weight="900" fill="#FFFFFF">+฿ 55,000</text>
+      <!-- Upward Growth Arrow -->
+      <circle cx="252" cy="42" r="22" fill="#FFFFFF" opacity="0.2"/>
+      <path d="M 244 48 L 258 34 M 258 34 L 248 34 M 258 34 L 258 44" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- ==================================================== -->
+    <!-- 2. EXPENSE BAR: −฿ จ่ายออกเดือนนี้ (Rose)           -->
+    <!-- ==================================================== -->
+    <g transform="translate(24, 205)" filter="url(#cp-pill-shadow)">
+      <rect width="292" height="85" rx="22" fill="url(#cp-expense)"/>
+      <text x="24" y="34" class="font-cp" font-size="12" font-weight="700" fill="#FFE4E6">จ่ายออก (EXPENSE)</text>
+      <text x="24" y="66" class="font-cp" font-size="28" font-weight="900" fill="#FFFFFF">−฿ 12,500</text>
+      <!-- Downward Arrow -->
+      <circle cx="252" cy="42" r="22" fill="#FFFFFF" opacity="0.2"/>
+      <path d="M 244 36 L 258 50 M 258 50 L 248 50 M 258 50 L 258 40" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

@@ -18,49 +18,49 @@ interface IconConcept {
 
 const CONCEPTS: IconConcept[] = [
   {
-    id: 'dual-flow',
-    name: 'แบบที่ 1: Dual Flow Balance',
-    title: 'คลื่นลูกศรคู่สมดุล',
-    subtitle: 'กระแสเงินเข้า-ออก ไหลเวียนอย่างสมบูรณ์แบบ',
-    file: '/app-icon-dual-flow.svg',
-    conceptDescription: 'เส้นสายเรขาคณิตมนลื่นไหลสองขั้ว เส้นเขียว (+) วนเข้าแทนรายรับ และเส้นชมพู (−) วนออกแทนรายจ่าย ตัดกันเป็นวงรอบสมดุล มีฮับกระเป๋าเงินอยู่ตรงกลาง',
-    tags: ['Fintech Flow', 'Continuous Loop', 'Dynamic Balance'],
-    highlights: ['อ่านง่ายแม้อยู่ในขนาดเล็ก', 'สื่อถึงการเงินหมุนเวียนคล่องตัว', 'ฮับกระเป๋าตรงกลางชัดเจน']
+    id: 'dashboard-blue',
+    name: 'แบบที่ 1: Dashboard Royal Blue',
+    title: 'ถอดแบบจากการ์ดยอดเงินหลัก',
+    subtitle: 'สีน้ำเงินกรมท่าลึก ลายการ์ดยอดเงินรวมของแอพ + เหรียญรับ/จ่าย',
+    file: '/app-icon-dashboard-blue.svg',
+    conceptDescription: 'ใช้พาเลตต์สีและ Gradient เดียวกับการ์ดแสดงยอดเงินรวมในหน้าแรกของแอพ (slate-900 via blue-900 to indigo-950) ผสานกระเป๋ากระจกฝ้าโมเดิร์น พร้อมป้าย +฿ รายรับสีเขียวมรกต และ −฿ รายจ่ายสีชมพูคอรัล',
+    tags: ['In-App Palette', 'Total Balance Card', 'Frosted Wallet'],
+    highlights: ['สีเดียวกับการ์ดยอดเงินหลักในแอพ 100%', 'มีแถบสัดส่วน Pocket Split ด้านใน', 'ป้าย +฿ และ −฿ ชัดเจนสะดุดตา']
   },
   {
-    id: 'pocket-fold',
-    name: 'แบบที่ 2: Geometric Pocket Fold',
-    title: 'กระเป๋าสตางค์มินิมอล 2 เลเยอร์',
-    subtitle: 'การจัดสรรเงินแบบ Pocket ในสไตล์โมเดิร์น',
-    file: '/app-icon-pocket-fold.svg',
-    conceptDescription: 'รูปทรงกระเป๋าสตางค์ดิจิทัลแบบพับสองมิติ เลเยอร์บนมีช่องรับการ์ดสีเขียวมรกต (+) และเลเยอร์ล่างมีช่องจัดสรรรายจ่ายสีชมพู (−) พร้อมสลักหมุดอัจฉริยะตรงกลาง',
-    tags: ['Geometric Modern', 'Pocket Metaphor', 'Layered Depth'],
-    highlights: ['ตรงกับชื่อแอพ Smart Pocket มากที่สุด', 'โครงสร้างกระเป๋าดูพรีเมียมหรูหรา', 'แบ่งสัดส่วนเงินเข้า-ออกเป็นระเบียบ']
+    id: 'clean-buckets',
+    name: 'แบบที่ 2: Clean White & 3 Buckets',
+    title: 'คลีนการ์ดขาว + ถังงบ 3 สี',
+    subtitle: 'การ์ดขาวคลีนสไตล์ UI ภายในแอพ + ถังงบ 3 สีของระบบ',
+    file: '/app-icon-clean-buckets.svg',
+    conceptDescription: 'โทนสีขาวคลีนสะอาดตาเหมือนการ์ดในหน้า Dashboard โดดเด่นด้วยกระเป๋าเงินสี Royal Blue และแท็บงบประมาณ 3 ถังหลักของระบบ Smart Pocket (ส้มสำรองฉุกเฉิน, เขียวลงทุน, ฟ้าใช้ชีวิต)',
+    tags: ['Clean White Card', '3-Bucket Envelopes', 'Friendly Minimal'],
+    highlights: ['ตรงกับระบบแบ่ง 3 ถังงบของแอพ', 'พื้นขาวสะอาด สบายตา เข้ากับมือถือทุกเครื่อง', 'กระเป๋า Royal Blue เอกลักษณ์ของแบรนด์']
   },
   {
-    id: 'baht-split',
-    name: 'แบบที่ 3: Digital Baht & Split Scale',
-    title: 'เหรียญบาทดิจิทัลสมดุล',
-    subtitle: 'สัญลักษณ์เงินบาทไทยผสานการแบ่งครึ่งรายรับ-รายจ่าย',
-    file: '/app-icon-baht-split.svg',
-    conceptDescription: 'สัญลักษณ์สกุลเงินบาท (฿) สไตล์ Neo-Fintech แบ่งครึ่งซีกด้วยแกนดิจิทัล ซีกซ้ายเขียวแทนรายรับ (+) ซีกขวาชมพูแทนรายจ่าย (−) เข้าใจได้ทันทีโดยไม่ต้องคิด',
-    tags: ['Thai Baht ฿', 'High Recognition', 'Dual Split'],
-    highlights: ['คนไทยเห็นแล้วรู้ทันทีว่าเป็นแอพบัญชีเงินบาท', 'ความชัดเจนระดับสูงสุดในจอขนาดเล็ก', 'คู่สีเขียว-แดงตัดกับพื้นหลัง Midnight ชัดเจน']
+    id: 'cashflow-pills',
+    name: 'แบบที่ 3: In-Out Cashflow Balance',
+    title: 'การ์ดรับเข้า-จ่ายออกเดือนนี้',
+    subtitle: 'ถอดแบบจากการ์ดสรุปสถิติการเงินเดือนนี้ในหน้า Dashboard',
+    file: '/app-icon-cashflow-pills.svg',
+    conceptDescription: 'จำลองการ์ดสถิติการเงินเดือนนี้ของแอพมาเป็นไอคอนย่อส่วน บนพื้นหลัง Royal Blue มีแถบรับเข้าสีเขียว (+฿ 55,000) และจ่ายออกสีชมพู (−฿ 12,500) ชัดเจนแม้มองจากระยะไกล',
+    tags: ['Monthly Analytics', 'Royal Blue Brand', 'High Contrast'],
+    highlights: ['ถอดแบบจากวิดเจ็ตสรุปรายรับ-รายจ่ายของแอพ', 'อ่านรู้เรื่องทันทีว่าคือแอพรายรับรายจ่าย', 'คู่สีเขียว-ชมพูบนน้ำเงิน Royal Blue เด่นชัดมาก']
   },
   {
-    id: 'monogram-s',
-    name: 'แบบที่ 4: Monogram "S" Smart Flow',
-    title: 'โมโนแกรมตัว S สไตล์แบรนด์สากล',
-    subtitle: 'ตัวอักษร Smart Pocket สไตล์ Stripe และ Wise',
-    file: '/app-icon-monogram-s.svg',
-    conceptDescription: 'ตัวอักษร S ของ Smart Pocket ที่สร้างขึ้นจากริบบิ้นสองเส้น เส้นบนพุ่งขึ้นเป็นลูกศรสร้างความมั่งคั่ง (Income) เส้นล่างพุ่งลงเป็นลูกศรการใช้จ่ายอย่างฉลาด (Expense)',
-    tags: ['Global Monogram', 'Minimal Lettermark', 'Silicon Valley Vibe'],
-    highlights: ['เรียบหรูระดับแบรนด์การเงินระดับโลก', 'รูปทรงตัว S เป็นเอกลักษณ์เฉพาะตัว', 'เหมาะสำหรับทำเป็น Brand Icon ระยะยาว']
+    id: 'smart-wallet-app',
+    name: 'แบบที่ 4: Smart Pocket Pure Minimal',
+    title: 'กระเป๋าไอคอนแอพ คลีนๆ สบายตา',
+    subtitle: 'ไอคอนกระเป๋าเงินสไตล์ Header และ Bottom Nav ของแอพจริง',
+    file: '/app-icon-smart-wallet-app.svg',
+    conceptDescription: 'เน้นความเรียบง่ายเป็นกันเองเหมือนไอคอนกระเป๋าใน Header และ Bottom Nav ของแอพ กระเป๋าสีขาวมนสะอาดบนพื้นหลัง Royal Blue พร้อมเหรียญเขียวรับ (+) และเหรียญชมพูจ่าย (−) เคียงข้าง',
+    tags: ['App Header & Nav', 'Pure Minimal', 'Friendly Wallet'],
+    highlights: ['ไอคอนกระเป๋าทรงเดียวกับที่ใช้ในตัวแอพ', 'จุดสี 3 ถังงบที่ตัวกระเป๋า', 'ดูเป็นมิตร ใช้งานง่าย ไม่ซับซ้อน']
   }
 ]
 
 export default function IconPreviewPage() {
-  const [selectedId, setSelectedId] = useState<string>('dual-flow')
+  const [selectedId, setSelectedId] = useState<string>('dashboard-blue')
   const [phoneWallpaper, setPhoneWallpaper] = useState<'slate' | 'aurora' | 'midnight'>('slate')
 
   const selectedConcept = CONCEPTS.find(c => c.id === selectedId) || CONCEPTS[0]
