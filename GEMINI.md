@@ -10,7 +10,7 @@
 - UI Prototyping completed (Landing Page, Login, Dashboard, Income/Expense forms, History).
 - Configured Supabase Auth and Database with RLS.
 - Soft-delete (Trash) system with 3-day lazy cleanup implemented.
-- AI Slip Scanner implemented using Gemini 3.5 Flash (extracts Amount, Note, Receiver, and Sender Bank).
+- AI Slip Scanner implemented using Gemini 3.8 Flash (extracts Amount, Note, Receiver, and Sender Bank).
 - App metadata and PWA settings updated for mobile installation ("รายรับรายจ่าย").
 - **Interactive Analytics & Charts System (`/dashboard/analytics`)**:
   - Time filters: สัปดาห์นี้, เดือนนี้, เดือนที่แล้ว, ปีนี้, ทั้งหมด.
@@ -120,7 +120,7 @@
     2. **`sendMessage()` ใช้ signature ผิด**: ส่ง UIMessage object เต็มรูปแบบ แต่ AI SDK 7 ต้องการ `{ text: string }` — แก้ให้ตรง API
     3. **`toUIMessageStream()` syntax ผิด**: ส่ง result object ทั้งก้อน แต่ต้องส่ง `{ stream: result.stream }` — แก้ให้ destructure ถูกต้อง
     4. **ไม่มี Error Handling เลย**: ไม่มี try/catch ใน API route + ไม่แสดง error ใน UI → ผู้ใช้เห็นแค่ loader หมุนแล้วหายไป — เพิ่ม Error UI + Retry button
-  - อัปเกรด AI Model ทุกจุดจาก `gemini-3.6-flash` (ไม่มีอยู่จริง) เป็น `gemini-3.5-flash` (stable, รองรับถึง 2027+)
+  - อัปเกรด AI Model ทุกจุดเป็น `gemini-3.8-flash` เพื่อหลีกเลี่ยงปัญหา 503 High Demand จากเวอร์ชัน 3.5-flash
   - ไฟล์ที่แก้ไข: `route.ts`, `SmartAdvisorChat.tsx`, `smart-add-action.ts`, `extract-action.ts`
 
 ## Automated Tests
