@@ -42,7 +42,7 @@ export default function IncomePage() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
       // Fetch buckets
-      const { data: bucketData } = await supabase.from('buckets').select('*').order('created_at')
+      const { data: bucketData } = await supabase.from('buckets').select('*').eq('is_archived', false).order('created_at')
       if (bucketData) {
         setBuckets(bucketData)
         if (bucketData.length > 0) setSelectedBucketId(bucketData[0].id)

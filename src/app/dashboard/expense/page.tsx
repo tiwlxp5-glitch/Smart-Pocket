@@ -50,7 +50,7 @@ export default function ExpensePage() {
   useEffect(() => {
     const fetchBucketsAndExpenses = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      const { data } = await supabase.from('buckets').select('*').order('created_at')
+      const { data } = await supabase.from('buckets').select('*').eq('is_archived', false).order('created_at')
       if (data) {
         setBuckets(data)
         if (data.length > 0) setSelectedBucketId(data[data.length - 1].id)

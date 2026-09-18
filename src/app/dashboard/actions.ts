@@ -75,11 +75,12 @@ export async function addIncome(formData: FormData) {
 
   if (isNaN(amount) || amount <= 0) throw new Error('Invalid input')
 
-  // 1. Fetch user's buckets
+  // 1. Fetch user's active buckets
   const { data: buckets } = await supabase
     .from('buckets')
     .select('*')
     .eq('user_id', user.id)
+    .eq('is_archived', false)
 
   if (!buckets || buckets.length === 0) throw new Error('No buckets found')
 
@@ -395,7 +396,10 @@ export async function deleteWallet(walletId: string) {
   }
 
   if (count === 0) {
-    // Hard Delete
+    // Hard delete linked bucket first (to avoid ON DELETE SET NULL losing the reference)
+    await supabase.from('buckets').delete().eq('default_wallet_id', walletId).eq('user_id', user.id)
+
+    // Hard Delete Wallet
     const { error: deleteError } = await supabase
       .from('wallets')
       .delete()
@@ -406,8 +410,9 @@ export async function deleteWallet(walletId: string) {
       console.error('Delete wallet error:', deleteError)
       return { success: false, message: 'ไม่สามารถลบกระเป๋าเงินได้' }
     }
-    
+
     revalidatePath('/dashboard/wallets')
+    revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard', 'layout')
     return { success: true, message: 'ลบกระเป๋าเงินเรียบร้อยแล้ว' }
   } else {
@@ -430,14 +435,15 @@ export async function deleteWallet(walletId: string) {
       return { success: false, message: 'ไม่สามารถซ่อนกระเป๋าเงินได้' }
     }
 
-    // Auto-unlink from buckets
+    // Soft delete (archive) linked bucket
     await supabase
       .from('buckets')
-      .update({ default_wallet_id: null, updated_at: new Date().toISOString() })
+      .update({ is_archived: true, updated_at: new Date().toISOString() })
       .eq('default_wallet_id', walletId)
       .eq('user_id', user.id)
 
     revalidatePath('/dashboard/wallets')
+    revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard', 'layout')
     return { success: true, message: 'ซ่อนกระเป๋าเงินเรียบร้อยแล้ว' }
   }
