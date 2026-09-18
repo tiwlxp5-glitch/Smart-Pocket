@@ -134,6 +134,56 @@ export function WalletsClientManager({
     return w.type === filterType
   })
 
+  const { groupedWallets, independentWallets } = React.useMemo(() => {
+    const groups: Record<string, Wallet[]> = {}
+    const independents: Wallet[] = []
+
+    const tempGroups: Record<string, Wallet[]> = {}
+    filteredWallets.forEach(w => {
+      const bn = w.bank_name
+      if (bn && bn !== 'cash' && bn !== 'credit_general' && bn !== 'none') {
+        if (!tempGroups[bn]) tempGroups[bn] = []
+        tempGroups[bn].push(w)
+      } else {
+        independents.push(w)
+      }
+    })
+
+    Object.entries(tempGroups).forEach(([bn, wallets]) => {
+      if (wallets.length > 1) {
+        groups[bn] = wallets
+      } else {
+        independents.push(wallets[0])
+      }
+    })
+
+    return { groupedWallets: groups, independentWallets: independents }
+  }, [filteredWallets])
+
+  const renderWalletCard = (wallet: Wallet) => (
+    <div key={wallet.id} className="relative group">
+      <WalletCard wallet={wallet} />
+      <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={() => handleOpenEdit(wallet)}
+          className="p-1.5 rounded-lg bg-black/30 hover:bg-black/50 text-white backdrop-blur-md transition shadow-2xs"
+          title="แก้ไขกระเป๋า"
+        >
+          <Edit2 size={13} />
+        </button>
+        {!wallet.is_default && (
+          <button
+            onClick={() => handleDelete(wallet.id, wallet.name)}
+            className="p-1.5 rounded-lg bg-black/30 hover:bg-black/50 text-white backdrop-blur-md transition shadow-2xs"
+            title="ลบ/ซ่อนกระเป๋า"
+          >
+            <Archive size={13} />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+
   return (
     <div>
       {/* Category Tabs & Add Button */}
@@ -201,29 +251,33 @@ export function WalletsClientManager({
 
       {/* Wallets Grid */}
       <div className="grid grid-cols-1 gap-3.5">
-        {filteredWallets.map((wallet) => (
-          <div key={wallet.id} className="relative group">
-            <WalletCard wallet={wallet} />
-            <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
-              <button
-                onClick={() => handleOpenEdit(wallet)}
-                className="p-1.5 rounded-lg bg-black/30 hover:bg-black/50 text-white backdrop-blur-md transition shadow-2xs"
-                title="แก้ไขกระเป๋า"
-              >
-                <Edit2 size={13} />
-              </button>
-              {!wallet.is_default && (
-                <button
-                  onClick={() => handleDelete(wallet.id, wallet.name)}
-                  className="p-1.5 rounded-lg bg-black/30 hover:bg-black/50 text-white backdrop-blur-md transition shadow-2xs"
-                  title="ลบ/ซ่อนกระเป๋า"
-                >
-                  <Archive size={13} />
-                </button>
-              )}
+        {Object.entries(groupedWallets).map(([bankCode, groupWallets]) => {
+          const bankPreset = bankPresets.find(p => p.code === bankCode)
+          const bankName = bankPreset ? bankPreset.name.split(' (')[0] : bankCode
+          const totalGroupBalance = groupWallets.reduce((sum, w) => sum + (Number(w.balance) || 0), 0)
+          
+          return (
+            <div key={bankCode} className="rounded-[24px] border border-gray-200 bg-gray-50/70 p-2.5 shadow-sm">
+              <div className="flex items-center justify-between px-2 pb-2 mb-2 border-b border-gray-200/80">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: bankPreset?.color || '#94a3b8' }} />
+                  <span className="text-sm font-black text-gray-800">{bankName}</span>
+                </div>
+                <div className="text-right flex items-baseline gap-1.5">
+                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Total</span>
+                  <span className="text-sm font-black text-gray-900">
+                    ฿{totalGroupBalance.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-2.5">
+                {groupWallets.map(wallet => renderWalletCard(wallet))}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
+
+        {independentWallets.map((wallet) => renderWalletCard(wallet))}
 
         {filteredWallets.length === 0 && (
           <div className="p-8 text-center bg-gray-50 border border-dashed border-gray-200 rounded-3xl">
