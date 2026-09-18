@@ -26,7 +26,7 @@ export function BottomNav() {
             <Link 
               key={tab.href} 
               href={tab.href}
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-90 transition-transform duration-200 ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
             >
               <Icon size={24} className={tab.color && !isActive ? tab.color : ''} strokeWidth={isActive ? 2.5 : 2} />
               <span className={`text-[10px] font-medium ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>

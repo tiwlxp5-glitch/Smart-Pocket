@@ -367,7 +367,7 @@ export default function ExpensePage() {
                 return (
                   <label
                     key={w.id}
-                    className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all cursor-pointer active:scale-[0.98] duration-200 ${
                       isSelected ? 'border-rose-500 bg-rose-50/50 shadow-2xs' : 'border-gray-100 bg-gray-50/50 hover:bg-gray-100'
                     }`}
                   >
@@ -415,7 +415,7 @@ export default function ExpensePage() {
                 return (
                   <label 
                     key={bucket.id}
-                    className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                    className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer active:scale-[0.98] duration-200 ${
                       isSelected ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-gray-50 hover:bg-gray-100'
                     }`}
                   >
@@ -498,9 +498,16 @@ export default function ExpensePage() {
         <button
           type="submit"
           disabled={numAmount <= 0 || !selectedBucketId || isScanning || isLoading}
-          className="w-full bg-rose-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-rose-700 transition disabled:opacity-50 disabled:bg-gray-400 flex items-center justify-center gap-2"
+          className="w-full bg-rose-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-rose-700 transition-all active:scale-[0.98] duration-200 disabled:opacity-50 disabled:bg-gray-400 flex items-center justify-center gap-2"
         >
-          {isLoading ? 'กำลังบันทึก...' : 'ยืนยันการจ่ายเงิน'}
+          {isLoading ? (
+            <>
+              <Loader2 className="animate-spin" size={24} />
+              กำลังบันทึก...
+            </>
+          ) : (
+            'ยืนยันการจ่ายเงิน'
+          )}
         </button>
       </form>
     </main>

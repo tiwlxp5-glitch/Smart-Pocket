@@ -45,7 +45,7 @@ export function WalletCard({
     return (
       <div
         onClick={onClick}
-        className={`p-3 rounded-2xl border transition cursor-pointer flex items-center justify-between gap-3 ${
+        className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 active:scale-[0.98] duration-200 ${
           isSelected
             ? 'border-blue-500 bg-blue-50/50 shadow-xs'
             : 'border-gray-100 bg-white hover:border-gray-300'
@@ -77,7 +77,7 @@ export function WalletCard({
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-3xl p-4 transition-all duration-200 cursor-pointer text-white shadow-md flex flex-col justify-between select-none ${
+      className={`relative overflow-hidden rounded-3xl p-4 transition-all duration-200 cursor-pointer text-white shadow-md flex flex-col justify-between select-none active:scale-[0.98] ${
         isSelected ? 'ring-3 ring-blue-500 ring-offset-2 scale-[1.02]' : 'hover:scale-[1.01]'
       }`}
       style={{

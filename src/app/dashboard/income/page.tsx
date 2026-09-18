@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowDownCircle, PieChart, CheckCircle2, ChevronLeft, Wallet as WalletIcon, Check, Layers } from 'lucide-react'
+import { ArrowDownCircle, PieChart, CheckCircle2, ChevronLeft, Wallet as WalletIcon, Check, Layers, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { addIncome } from '../actions'
@@ -177,7 +177,7 @@ export default function IncomePage() {
                       key={w.id}
                       type="button"
                       onClick={() => setSelectedWalletId(w.id)}
-                      className={`flex items-center justify-between p-3 rounded-2xl border-2 transition text-left ${
+                      className={`flex items-center justify-between p-3 rounded-2xl border-2 transition-all active:scale-[0.98] duration-200 text-left ${
                         isSelected
                           ? 'border-emerald-500 bg-emerald-50/50 shadow-2xs'
                           : 'border-gray-100 bg-gray-50/50 hover:bg-gray-100'
@@ -238,11 +238,11 @@ export default function IncomePage() {
                 <p className="text-[11px] text-gray-500 mb-1">เลือกถังงบที่ต้องการใส่เงินก้อนนี้เต็มจำนวน (100%):</p>
                 <div className="grid grid-cols-1 gap-2">
                   {buckets.map((b) => (
-                    <button
-                      key={b.id}
-                      type="button"
-                      onClick={() => setSelectedBucketId(b.id)}
-                      className={`p-3 rounded-xl border text-left flex items-center justify-between text-xs font-semibold transition ${
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => setSelectedBucketId(b.id)}
+                      className={`p-3 rounded-xl border text-left flex items-center justify-between text-xs font-semibold transition-all active:scale-[0.98] duration-200 ${
                         selectedBucketId === b.id
                           ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 shadow-2xs'
                           : 'border-gray-100 bg-gray-50 text-gray-700 hover:bg-gray-100'
@@ -338,9 +338,16 @@ export default function IncomePage() {
             <button
               onClick={handleConfirm}
               disabled={isSaving}
-              className="flex-2 py-3.5 bg-emerald-600 text-white rounded-2xl text-xs font-bold hover:bg-emerald-700 transition shadow-md disabled:opacity-50"
+              className="flex-2 py-3.5 bg-emerald-600 text-white rounded-2xl text-xs font-bold hover:bg-emerald-700 transition-all active:scale-[0.98] duration-200 shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isSaving ? 'กำลังบันทึก...' : 'ยืนยันการบันทึกรายรับ'}
+              {isSaving ? (
+                <>
+                  <Loader2 className="animate-spin" size={16} />
+                  กำลังบันทึก...
+                </>
+              ) : (
+                'ยืนยันการบันทึกรายรับ'
+              )}
             </button>
           </div>
         </div>

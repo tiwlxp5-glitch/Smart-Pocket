@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Wallet } from '@/types/database'
 import { getWalletTypeLabel, validateTransfer } from '@/utils/walletHelper'
 import { transferMoney } from '@/app/dashboard/actions'
-import { ArrowUpDown, ArrowRight, ArrowRightLeft, Sparkles, CheckCircle2 } from 'lucide-react'
+import { ArrowUpDown, ArrowRight, ArrowRightLeft, Sparkles, CheckCircle2, Loader2 } from 'lucide-react'
 
 interface Props {
   wallets: Wallet[]
@@ -273,14 +273,22 @@ export function TransferFormClient({ wallets }: Props) {
         </div>
       )}
 
-      {/* Submit Button */}
       <button
         type="submit"
         disabled={isSubmitting || numAmount <= 0}
-        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm rounded-2xl shadow-md transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.99]"
+        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm rounded-2xl shadow-md transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98]"
       >
-        <ArrowRightLeft size={16} />
-        {isSubmitting ? 'กำลังดำเนินการโอน...' : 'ยืนยันการโอนเงิน'}
+        {isSubmitting ? (
+          <>
+            <Loader2 className="animate-spin" size={16} />
+            กำลังดำเนินการโอน...
+          </>
+        ) : (
+          <>
+            <ArrowRightLeft size={16} />
+            ยืนยันการโอนเงิน
+          </>
+        )}
       </button>
     </form>
   )
