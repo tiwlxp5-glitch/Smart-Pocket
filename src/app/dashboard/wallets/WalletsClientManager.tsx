@@ -325,12 +325,12 @@ export function WalletsClientManager({
               {/* Color Picker */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">สีประจำกระเป๋า</label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-2">
                   <input
                     type="color"
                     value={color}
                     onChange={(e) => setColor(e.target.value)}
-                    className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-0.5"
+                    className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-0.5 shrink-0"
                   />
                   <input
                     type="text"
@@ -338,6 +338,19 @@ export function WalletsClientManager({
                     onChange={(e) => setColor(e.target.value)}
                     className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-xs uppercase font-mono"
                   />
+                </div>
+                {/* Palette */}
+                <div className="flex flex-wrap gap-2">
+                  {['#138f2d', '#4e2a84', '#1e3a8a', '#00a5e5', '#eb1985', '#ffbe00', '#ff8200', '#002d63', '#10b981', '#64748b'].map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setColor(c)}
+                      className={`w-6 h-6 rounded-full border-2 shadow-xs transition-transform hover:scale-110 ${color === c ? 'border-gray-900 scale-110' : 'border-transparent'}`}
+                      style={{ backgroundColor: c }}
+                      title={c}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -451,12 +464,12 @@ export function WalletsClientManager({
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">สีประจำกระเป๋า</label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-2">
                   <input
                     type="color"
                     value={editColor}
                     onChange={(e) => setEditColor(e.target.value)}
-                    className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-0.5"
+                    className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-0.5 shrink-0"
                   />
                   <input
                     type="text"
@@ -464,6 +477,19 @@ export function WalletsClientManager({
                     onChange={(e) => setEditColor(e.target.value)}
                     className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-xs uppercase font-mono"
                   />
+                </div>
+                {/* Palette */}
+                <div className="flex flex-wrap gap-2">
+                  {['#138f2d', '#4e2a84', '#1e3a8a', '#00a5e5', '#eb1985', '#ffbe00', '#ff8200', '#002d63', '#10b981', '#64748b'].map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setEditColor(c)}
+                      className={`w-6 h-6 rounded-full border-2 shadow-xs transition-transform hover:scale-110 ${editColor === c ? 'border-gray-900 scale-110' : 'border-transparent'}`}
+                      style={{ backgroundColor: c }}
+                      title={c}
+                    />
+                  ))}
                 </div>
               </div>
 

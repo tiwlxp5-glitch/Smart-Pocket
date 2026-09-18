@@ -24,7 +24,7 @@ export default function IncomePage() {
   const [buckets, setBuckets] = useState<Bucket[]>([])
   const [wallets, setWallets] = useState<WalletTypeInterface[]>([])
   const [selectedWalletId, setSelectedWalletId] = useState<string>('')
-  const [allocationMode, setAllocationMode] = useState<'auto' | 'single'>('auto')
+  const [allocationMode, setAllocationMode] = useState<'auto' | 'single'>('single')
   const [selectedBucketId, setSelectedBucketId] = useState<string>('')
   const [amount, setAmount] = useState<string>('')
   const [note, setNote] = useState('')
@@ -159,11 +159,13 @@ export default function IncomePage() {
           <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-3">
               <label className="block text-xs font-bold text-gray-700">
-                เงินเข้ากระเป๋า / บัญชีไหน (Wallet)
+                {allocationMode === 'auto' ? 'สรุปเงินเข้าแต่ละบัญชี (Wallet Breakdown)' : 'เงินเข้ากระเป๋า / บัญชีไหน (Wallet)'}
               </label>
-              <Link href="/dashboard/wallets" className="text-[11px] text-blue-600 font-semibold hover:underline">
-                + เพิ่มบัญชี
-              </Link>
+              {allocationMode !== 'auto' && (
+                <Link href="/dashboard/wallets" className="text-[11px] text-blue-600 font-semibold hover:underline">
+                  + เพิ่มบัญชี
+                </Link>
+              )}
             </div>
 
             {wallets.length === 0 ? (
@@ -172,6 +174,20 @@ export default function IncomePage() {
               <div className="grid grid-cols-1 gap-2">
                 {wallets.map((w) => {
                   const isSelected = selectedWalletId === w.id
+                  
+                  // Calculate incoming amount for this wallet in auto mode
+                  let incomingAmount = 0
+                  if (allocationMode === 'auto') {
+                    buckets.forEach(b => {
+                      if (b.default_wallet_id === w.id) {
+                        incomingAmount += (numAmount * (b.allocation_percentage || 0)) / 100
+                      }
+                    })
+                  }
+
+                  // If auto mode and this wallet gets 0, and it's not the main selected wallet, we might still want to show it, 
+                  // but to match the mockup we show all of them with their incoming splits.
+                  
                   return (
                     <button
                       key={w.id}
@@ -194,12 +210,21 @@ export default function IncomePage() {
                         </div>
                       </div>
                       <span className="text-xs font-bold text-gray-700">
-                        ฿{Number(w.balance).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                        {allocationMode === 'auto' 
+                          ? `+฿${incomingAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`
+                          : `฿${Number(w.balance).toLocaleString('th-TH', { minimumFractionDigits: 2 })}`
+                        }
                       </span>
                     </button>
                   )
                 })}
               </div>
+            )}
+            
+            {allocationMode === 'auto' && (
+              <p className="text-[10px] text-gray-400 mt-2 text-center">
+                * บัญชีกรอบสีเขียวคือบัญชีที่รับเงินก้อนแรกก่อนระบบจะโอนแยกอัตโนมัติ
+              </p>
             )}
           </div>
 
@@ -299,29 +324,64 @@ export default function IncomePage() {
                   +฿{numAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
                 </span>
               </div>
-              <p className="text-xs text-gray-400">กำหนดเข้าถังนี้ 100%</p>
+              <p className="text-xs text-gray-400 mb-2">กำหนดเข้าถังนี้ 100%</p>
+              {(() => {
+                const linkedWallet = wallets.find(w => w.id === targetSingleBucket?.default_wallet_id)
+                if (linkedWallet) {
+                  return (
+                    <div className="pt-3 mt-2 border-t border-gray-50 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full shadow-2xs" style={{ backgroundColor: linkedWallet.color || '#10b981' }} />
+                        <span className="text-xs text-gray-600 font-medium">
+                          เข้ากระเป๋า: <strong style={{ color: linkedWallet.color || '#10b981' }}>{linkedWallet.name}</strong>
+                        </span>
+                      </div>
+                      {linkedWallet.id !== selectedWalletId && (
+                        <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold border border-emerald-100">โอนอัตโนมัติ</span>
+                      )}
+                    </div>
+                  )
+                }
+                return null
+              })()}
             </div>
           ) : (
             <div className="flex flex-col gap-3 mb-8">
               {buckets.map((bucket) => {
                 const allocated = (numAmount * (bucket.allocation_percentage || 0)) / 100
+                const linkedWallet = wallets.find(w => w.id === bucket.default_wallet_id)
                 return (
-                  <div key={bucket.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: bucket.color || '#10b981' }}
-                      />
-                      <div>
-                        <h4 className="font-bold text-gray-900 text-sm">{bucket.name}</h4>
-                        <p className="text-[11px] text-gray-400">สัดส่วน {bucket.allocation_percentage}%</p>
+                  <div key={bucket.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-3 h-3 rounded-full shrink-0"
+                          style={{ backgroundColor: bucket.color || '#10b981' }}
+                        />
+                        <div>
+                          <h4 className="font-bold text-gray-900 text-sm">{bucket.name}</h4>
+                          <p className="text-[11px] text-gray-400">สัดส่วน {bucket.allocation_percentage}%</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-bold text-emerald-600 text-sm">
+                          +฿{allocated.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span className="font-bold text-emerald-600 text-sm">
-                        +฿{allocated.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
+                    {linkedWallet && (
+                      <div className="pt-3 mt-1 border-t border-gray-50 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full shadow-2xs" style={{ backgroundColor: linkedWallet.color || '#10b981' }} />
+                          <span className="text-xs text-gray-600 font-medium">
+                            เข้ากระเป๋า: <strong style={{ color: linkedWallet.color || '#10b981' }}>{linkedWallet.name}</strong>
+                          </span>
+                        </div>
+                        {linkedWallet.id !== selectedWalletId && (
+                           <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold border border-emerald-100">โอนอัตโนมัติ</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )
               })}
