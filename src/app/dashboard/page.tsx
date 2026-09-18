@@ -5,7 +5,7 @@ import { calculateMonthlyCommitment } from '@/utils/recurringHelper'
 import { WalletCard } from '@/components/WalletCard'
 import { DashboardWalletDeleteButton } from '@/components/DashboardWalletDeleteButton'
 import { BANK_PRESETS, getWalletTypeLabel } from '@/utils/walletHelper'
-import { SmartAddFAB } from '@/components/SmartAddFAB'
+
 
 // Dummy fallback data if DB is empty or not connected
 const fallbackBuckets = [
@@ -432,7 +432,7 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      <SmartAddFAB wallets={wallets} buckets={buckets} />
+      
     </main>
   )
 }

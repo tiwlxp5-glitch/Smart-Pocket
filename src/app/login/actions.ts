@@ -15,6 +15,7 @@ export async function login(formData: FormData) {
   })
 
   if (error) {
+    console.error('Login Error:', error)
     let thError = 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
     if (error.message.includes('Invalid login credentials')) {
       thError = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
@@ -45,6 +46,7 @@ export async function signup(formData: FormData) {
   })
 
   if (error) {
+    console.error('Signup Error:', error)
     let thError = 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
     if (error.message.includes('User already registered')) {
       thError = 'อีเมลนี้มีผู้ใช้งานแล้ว'

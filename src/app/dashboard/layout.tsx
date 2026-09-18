@@ -1,4 +1,5 @@
 import { BottomNav } from '@/components/BottomNav'
+import { SmartAdvisorChat } from '@/components/SmartAdvisorChat'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -20,12 +21,17 @@ export default async function DashboardLayout({
     redirect('/onboarding')
   }
 
+  // Fetch data for Smart AI context globally
+  const { data: wallets } = await supabase.from('wallets').select('*').eq('user_id', user.id).order('created_at', { ascending: true })
+  const { data: buckets } = await supabase.from('buckets').select('*').eq('user_id', user.id).order('created_at', { ascending: true })
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <div className="max-w-md mx-auto bg-white min-h-screen shadow-sm">
         {children}
       </div>
       <BottomNav />
+      <SmartAdvisorChat wallets={wallets || []} buckets={buckets || []} />
     </div>
   )
 }
