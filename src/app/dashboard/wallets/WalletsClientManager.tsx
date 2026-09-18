@@ -33,6 +33,7 @@ export function WalletsClientManager({
   const [color, setColor] = useState(bankPresets[0].color)
   const [bankName, setBankName] = useState(bankPresets[0].code)
   const [openingBalance, setOpeningBalance] = useState('')
+  const [cashBalance, setCashBalance] = useState('')
   const [allocationPercentage, setAllocationPercentage] = useState('0')
   const [monthlyBudget, setMonthlyBudget] = useState('')
 
@@ -53,6 +54,7 @@ export function WalletsClientManager({
   const handleOpenCreate = () => {
     handleSelectPreset(bankPresets[0])
     setOpeningBalance('')
+    setCashBalance('')
     setAllocationPercentage('0')
     setMonthlyBudget('')
     setErrorMessage(null)
@@ -85,6 +87,7 @@ export function WalletsClientManager({
     formData.append('bank_name', bankName)
     formData.append('color', color)
     formData.append('opening_balance', openingBalance || '0')
+    formData.append('cash_balance', cashBalance || '0')
     formData.append('allocation_percentage', allocationPercentage)
     if (monthlyBudget) formData.append('monthly_budget', monthlyBudget)
 
@@ -411,7 +414,7 @@ export function WalletsClientManager({
               {/* Opening Balance */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  ยอดยกมาเริ่มต้น (Opening Balance)
+                  ยอดเงินในบัญชี (เงินโอน)
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-2.5 text-sm text-gray-400 font-bold">฿</span>
@@ -425,6 +428,26 @@ export function WalletsClientManager({
                   />
                 </div>
               </div>
+
+              {/* Cash Balance */}
+              {type === 'bank' && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    ยอดเงินสดติดตัว (ของบัญชีนี้)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-2.5 text-sm text-gray-400 font-bold">฿</span>
+                    <input
+                      type="number"
+                      step="any"
+                      value={cashBalance}
+                      onChange={(e) => setCashBalance(e.target.value)}
+                      placeholder="0.00 (ใส่ยอดเงินสดที่มี, ปล่อยว่างได้)"
+                      className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Allocation Percentage & Monthly Budget */}
               <div className="grid grid-cols-2 gap-3">

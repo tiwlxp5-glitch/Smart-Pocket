@@ -313,6 +313,8 @@ export async function createWallet(formData: FormData) {
   const icon = (formData.get('icon') as string) || 'wallet'
   const rawOpening = formData.get('opening_balance')
   const openingBalance = rawOpening ? Number(rawOpening) : 0
+  const rawCash = formData.get('cash_balance')
+  const cashBalance = rawCash ? Number(rawCash) : 0
   const rawAllocation = formData.get('allocation_percentage')
   const allocationPercentage = rawAllocation ? Number(rawAllocation) : 0
   const rawBudget = formData.get('monthly_budget')
@@ -356,6 +358,34 @@ export async function createWallet(formData: FormData) {
     // We don't rollback wallet here to keep it simple, but we should log it
   }
 
+  // 3. Insert Cash Wallet (If applicable)
+  if (type === 'bank' && cashBalance > 0) {
+    const cashName = `${name} (เงินสด)`
+    const { data: cashWalletData, error: cashWalletError } = await supabase.from('wallets').insert({
+      user_id: user.id,
+      name: cashName,
+      type: 'cash',
+      bank_name: bankName,
+      color,
+      icon,
+      opening_balance: cashBalance,
+      balance: cashBalance,
+    }).select().single()
+
+    if (!cashWalletError && cashWalletData) {
+      await supabase.from('buckets').insert({
+        user_id: user.id,
+        name: cashName,
+        icon,
+        color,
+        allocation_percentage: 0, // Keep 0 to avoid messing up 100% allocation logic
+        monthly_budget: null,
+        default_wallet_id: cashWalletData.id,
+        balance: cashBalance
+      })
+    }
+  }
+
   revalidatePath('/dashboard/wallets')
   revalidatePath('/dashboard/settings')
   revalidatePath('/dashboard', 'layout')
@@ -380,6 +410,9 @@ export async function updateWallet(formData: FormData) {
     return { success: false, message: 'ข้อมูลไม่ถูกต้อง' }
   }
 
+  // 0. Fetch current wallet
+  const { data: currentWallet } = await supabase.from('wallets').select('type, bank_name').eq('id', walletId).single()
+
   // 1. Update Wallet
   const { error: walletError } = await supabase.from('wallets').update({
     name,
@@ -402,6 +435,33 @@ export async function updateWallet(formData: FormData) {
     monthly_budget: monthlyBudget,
     updated_at: new Date().toISOString()
   }).eq('default_wallet_id', walletId).eq('user_id', user.id)
+
+  // 3. Update Paired Cash Wallet (if applicable)
+  if (currentWallet?.type === 'bank' && currentWallet?.bank_name) {
+    const cashName = `${name} (เงินสด)`
+    const { data: cashWallet } = await supabase.from('wallets')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('type', 'cash')
+      .eq('bank_name', currentWallet.bank_name)
+      .single()
+
+    if (cashWallet) {
+      await supabase.from('wallets').update({
+        name: cashName,
+        color,
+        icon,
+        updated_at: new Date().toISOString()
+      }).eq('id', cashWallet.id)
+
+      await supabase.from('buckets').update({
+        name: cashName,
+        color,
+        icon,
+        updated_at: new Date().toISOString()
+      }).eq('default_wallet_id', cashWallet.id)
+    }
+  }
 
   revalidatePath('/dashboard/wallets')
   revalidatePath('/dashboard/settings')
