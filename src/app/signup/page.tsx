@@ -15,7 +15,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
           <p className="text-gray-500 text-sm mt-1">เริ่มต้นจัดการเงินของคุณง่ายๆ</p>
         </div>
 
-        <form className="flex flex-col gap-4">
+        <form action={signup} className="flex flex-col gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="full_name">
               ชื่อ-นามสกุล
@@ -62,15 +62,15 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
 
           <div className="flex flex-col gap-4 mt-4">
             <button
-              formAction={signup}
-              className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+              type="submit"
+              className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors active:scale-95"
             >
               สมัครสมาชิก
             </button>
             
-            <div className="text-center text-sm text-gray-500">
+            <div className="text-center text-sm text-gray-500 mt-2">
               มีบัญชีอยู่แล้ว?{' '}
-              <Link href="/login" className="text-blue-600 font-medium hover:underline">
+              <Link href="/login" className="text-blue-600 font-medium hover:underline p-2 inline-block">
                 เข้าสู่ระบบ
               </Link>
             </div>

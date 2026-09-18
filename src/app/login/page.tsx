@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <p className="text-gray-500 text-sm mt-1">จัดการเงินง่ายๆ แบบอัตโนมัติ</p>
         </div>
 
-        <form className="flex flex-col gap-4">
+        <form action={login} className="flex flex-col gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">
               อีเมล
@@ -50,15 +50,15 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
           <div className="flex flex-col gap-4 mt-4">
             <button
-              formAction={login}
-              className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+              type="submit"
+              className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors active:scale-95"
             >
               เข้าสู่ระบบ
             </button>
             
-            <div className="text-center text-sm text-gray-500">
+            <div className="text-center text-sm text-gray-500 mt-2">
               ยังไม่มีบัญชี?{' '}
-              <Link href="/signup" className="text-blue-600 font-medium hover:underline">
+              <Link href="/signup" className="text-blue-600 font-medium hover:underline p-2 inline-block">
                 สมัครสมาชิก
               </Link>
             </div>
