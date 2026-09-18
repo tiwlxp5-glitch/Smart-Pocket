@@ -1,8 +1,9 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useCallback } from 'react'
 import { Filter } from 'lucide-react'
+import Link from 'next/link'
 
 interface Wallet {
   id: string
@@ -11,7 +12,7 @@ interface Wallet {
 }
 
 export function HistoryFilter({ wallets }: { wallets: Wallet[] }) {
-  const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
 
   const currentType = searchParams.get('type') || 'all'
@@ -35,44 +36,44 @@ export function HistoryFilter({ wallets }: { wallets: Wallet[] }) {
       
       {/* 1. ประเภทรายการ (Main Category) */}
       <div className="flex bg-white border border-gray-200 p-1 rounded-xl shadow-sm">
-        <button
-          onClick={() => router.push(`?${createQueryString('type', 'all')}`)}
-          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all active:scale-[0.98] ${
+        <Link
+          href={`${pathname}?${createQueryString('type', 'all')}`}
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg text-center transition-all active:scale-[0.98] ${
             currentType === 'all' 
               ? 'bg-gray-100 text-gray-900 shadow-sm' 
               : 'text-gray-500 hover:bg-gray-50'
           }`}
         >
           ทั้งหมด
-        </button>
-        <button
-          onClick={() => router.push(`?${createQueryString('type', 'income')}`)}
-          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all active:scale-[0.98] ${
+        </Link>
+        <Link
+          href={`${pathname}?${createQueryString('type', 'income')}`}
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg text-center transition-all active:scale-[0.98] ${
             currentType === 'income' 
               ? 'bg-emerald-50 text-emerald-700 shadow-sm' 
               : 'text-gray-500 hover:bg-gray-50'
           }`}
         >
           รายรับ
-        </button>
-        <button
-          onClick={() => router.push(`?${createQueryString('type', 'expense')}`)}
-          className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all active:scale-[0.98] ${
+        </Link>
+        <Link
+          href={`${pathname}?${createQueryString('type', 'expense')}`}
+          className={`flex-1 py-2 text-sm font-semibold rounded-lg text-center transition-all active:scale-[0.98] ${
             currentType === 'expense' 
               ? 'bg-rose-50 text-rose-700 shadow-sm' 
               : 'text-gray-500 hover:bg-gray-50'
           }`}
         >
           รายจ่าย
-        </button>
+        </Link>
       </div>
 
       {/* 2. บัญชี/ธนาคาร (Sub Category) */}
       <div className="flex items-center gap-2">
         <Filter size={16} className="text-gray-400 shrink-0" />
-        <div className="flex overflow-x-auto pb-1 -mx-6 px-6 sm:mx-0 sm:px-0 scrollbar-hide gap-2 flex-nowrap w-full">
-          <button
-            onClick={() => router.push(`?${createQueryString('wallet_id', 'all')}`)}
+        <div className="flex overflow-x-auto pb-1 -mx-6 px-6 sm:mx-0 sm:px-0 gap-2 flex-nowrap w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <Link
+            href={`${pathname}?${createQueryString('wallet_id', 'all')}`}
             className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all active:scale-[0.95] ${
               currentWallet === 'all' 
                 ? 'bg-blue-50 border-blue-200 text-blue-700' 
@@ -80,12 +81,12 @@ export function HistoryFilter({ wallets }: { wallets: Wallet[] }) {
             }`}
           >
             ทุกบัญชี
-          </button>
+          </Link>
           
           {wallets.map(w => (
-            <button
+            <Link
               key={w.id}
-              onClick={() => router.push(`?${createQueryString('wallet_id', w.id)}`)}
+              href={`${pathname}?${createQueryString('wallet_id', w.id)}`}
               className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all active:scale-[0.95] shadow-2xs ${
                 currentWallet === w.id 
                   ? 'border-transparent text-white' 
@@ -98,7 +99,7 @@ export function HistoryFilter({ wallets }: { wallets: Wallet[] }) {
               }
             >
               {w.name}
-            </button>
+            </Link>
           ))}
         </div>
       </div>

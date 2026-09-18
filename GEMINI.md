@@ -104,6 +104,10 @@
   - เพิ่ม Global CSS Rule บังคับให้ข้อความในช่องกรอกข้อมูลเป็นสีดำเข้ม (`#111827`) เสมอ เพื่อให้คอนทราสต์ตัดกับพื้นหลังการ์ดที่เป็น `bg-white` อย่างชัดเจน ช่วยให้อ่านง่ายขึ้นในทุกสภาพแสง
 - **Milestone 13.2 (Dashboard UI Refinement)**:
   - ปรับดีไซน์ส่วน "กระเป๋าและบัญชี" ในหน้า Dashboard จาก Horizontal Carousel ขนาดใหญ่ ให้เป็น Vertical List แบบ Compact เรียบง่ายสบายตา เพื่อประหยัดพื้นที่บนหน้าจอมือถือและดูสะอาดขึ้น
+- **Milestone 13.3 (History Page Categorization & Wallet Filters)**:
+  - เพิ่มระบบ Filter ในหน้าประวัติการเงิน (`/dashboard/history`) แบบจัดหมวดหมู่ (Tabs: ทั้งหมด, รายรับ, รายจ่าย)
+  - เพิ่ม Filter ย่อยสำหรับเจาะจงเฉพาะ "ธนาคาร/กระเป๋าเงิน" ที่ต้องการดูประวัติ
+  - ใช้ URL Query Params (`searchParams`) ในการจัดการ State เพื่อให้แชร์ลิงก์ได้ และไม่กระทบการดึงข้อมูลจาก Server Components แบบเดิม (ปลอดภัยจาก Hydration Error 100%)
 
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **104/104 tests** (100% pass rate) ครอบคลุม M4 + M5 + M6.
