@@ -175,7 +175,7 @@ export function ExportModal({ transactions }: ExportModalProps) {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 px-3 py-1.5 rounded-full transition shadow-2xs"
+        className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 px-3 py-1.5 rounded-full transition shadow-2xs whitespace-nowrap shrink-0"
         title="ส่งออกรายงานเป็นไฟล์ Excel หรือ CSV"
       >
         <FileSpreadsheet size={15} />

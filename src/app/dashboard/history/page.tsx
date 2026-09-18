@@ -46,14 +46,14 @@ export default async function HistoryPage() {
 
   return (
     <main className="p-6 pb-24 min-h-screen bg-gray-50">
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex flex-wrap items-center justify-between gap-3 mb-8">
         <div className="flex items-center gap-2">
-          <ScrollText size={28} className="text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">ประวัติการเงิน</h1>
+          <ScrollText size={28} className="text-blue-600 shrink-0" />
+          <h1 className="text-2xl font-bold text-gray-900 whitespace-nowrap">ประวัติการเงิน</h1>
         </div>
         <div className="flex items-center gap-2">
           <ExportModal transactions={(transactions || []) as unknown as HistoryItem[]} />
-          <Link href="/dashboard/history/trash" className="flex items-center gap-1.5 text-xs font-semibold text-rose-500 bg-rose-50 px-3 py-1.5 rounded-full hover:bg-rose-100 transition shadow-2xs">
+          <Link href="/dashboard/history/trash" className="flex items-center gap-1.5 text-xs font-semibold text-rose-500 bg-rose-50 px-3 py-1.5 rounded-full hover:bg-rose-100 transition shadow-2xs whitespace-nowrap shrink-0">
             <Trash2 size={15} />
             ถังขยะ
           </Link>

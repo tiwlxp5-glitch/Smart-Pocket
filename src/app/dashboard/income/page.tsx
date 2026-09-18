@@ -17,6 +17,7 @@ interface Bucket {
   balance: number
   allocation_percentage?: number
   default_wallet_id?: string | null
+  created_at?: string
 }
 
 export default function IncomePage() {
@@ -68,6 +69,27 @@ export default function IncomePage() {
         setWallets(walletData)
         if (!aiWallet) {
           setSelectedWalletId(walletData[0].id)
+        }
+      }
+
+      if (bucketData && walletData) {
+        // Sort buckets based on their default_wallet_id matching the wallets array order
+        const sortedBuckets = [...bucketData].sort((a, b) => {
+          const aIndex = walletData.findIndex(w => w.id === a.default_wallet_id)
+          const bIndex = walletData.findIndex(w => w.id === b.default_wallet_id)
+          const safeAIndex = aIndex >= 0 ? aIndex : 999
+          const safeBIndex = bIndex >= 0 ? bIndex : 999
+          if (safeAIndex !== safeBIndex) return safeAIndex - safeBIndex
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        })
+        setBuckets(sortedBuckets)
+        if (sortedBuckets.length > 0 && !aiBucket) {
+          setSelectedBucketId(sortedBuckets[0].id)
+        }
+      } else if (bucketData) {
+        setBuckets(bucketData)
+        if (bucketData.length > 0 && !aiBucket) {
+          setSelectedBucketId(bucketData[0].id)
         }
       }
 
