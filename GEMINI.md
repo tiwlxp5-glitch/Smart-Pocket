@@ -83,7 +83,7 @@
   - สร้าง `SmartAddFAB.tsx` แบบ Floating Action Button รองรับ Web Speech API สำหรับพูดบันทึก
   - เชื่อมต่อฟอร์ม Income, Expense และ Transfer ผ่าน URL Parameters เพื่อ Pre-fill ข้อมูลจาก AI พร้อมรอให้ผู้ใช้กดยืนยันเพื่อความปลอดภัย (Prevent AI Hallucination)
 
-## Automated Tests
+- **Milestone 11 (Smart Advisor Chat & UI Polish)**:\n  - อัปเกรดระบบ AI จากเดิมที่เป็นเพียงการบันทึกรายการ (Smart Add) ให้กลายเป็นระบบแชทผู้เชี่ยวชาญการเงินเต็มรูปแบบ (Expert Advisor) ที่สามารถพูดคุยและวิเคราะห์ข้อมูลการเงินของผู้ใช้ได้แบบ Real-time\n  - ย้ายปุ่ม AI ไปอยู่ตรงกลางของ Bottom Navigation bar (FAB ใหม่อยู่ตรงกลาง)\n  - รองรับการเรนเดอร์ Markdown เต็มรูปแบบ (ReactMarkdown + remarkGfm) ทำให้จัดหน้าตาการตอบกลับด้วยย่อหน้า, ตัวหนา, และ List ได้อย่างสวยงาม\n  - เพิ่มฟีเจอร์ตรวจจับชื่อธนาคารจากข้อความแชท (เช่น กรุงไทย, KBank) และใส่สีตัวหนังสือให้ตรงกับสีแบรนด์ธนาคารอัตโนมัติ เพื่อให้อ่านง่ายและดูเป็นมืออาชีพมากขึ้น\n\n## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **104/104 tests** (100% pass rate) ครอบคลุม M4 + M5 + M6.
 
 ## Next Steps
