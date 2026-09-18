@@ -132,7 +132,7 @@ export async function addIncome(formData: FormData) {
 
       // Auto-transfer to linked wallet
       if (targetBucket.default_wallet_id && walletId && targetBucket.default_wallet_id !== walletId) {
-        await supabase.rpc('process_transfer', {
+        const { error: rpcError } = await supabase.rpc('process_transfer', {
           p_user_id: user.id,
           p_from_wallet_id: walletId,
           p_to_wallet_id: targetBucket.default_wallet_id,
@@ -141,6 +141,30 @@ export async function addIncome(formData: FormData) {
           p_note: 'โอนเข้าบัญชีที่ผูกไว้อัตโนมัติ',
           p_date: new Date().toISOString()
         })
+        
+        if (rpcError) {
+          console.warn('Auto-transfer RPC error (fallback triggered):', rpcError.message)
+          // Fallback: update balances directly
+          const { data: fromW } = await supabase.from('wallets').select('balance').eq('id', walletId).single()
+          const { data: toW } = await supabase.from('wallets').select('balance').eq('id', targetBucket.default_wallet_id).single()
+
+          if (fromW && toW) {
+            await supabase.from('wallets').update({ balance: Number(fromW.balance) - amount }).eq('id', walletId)
+            await supabase.from('wallets').update({ balance: Number(toW.balance) + amount }).eq('id', targetBucket.default_wallet_id)
+
+            await supabase.from('transactions').insert({
+              user_id: user.id,
+              wallet_id: walletId,
+              to_wallet_id: targetBucket.default_wallet_id,
+              type: 'transfer',
+              amount: amount,
+              transfer_fee: 0,
+              category: 'โอนเงินระหว่างบัญชี',
+              note: 'โอนเข้าบัญชีที่ผูกไว้อัตโนมัติ',
+              transaction_date: new Date().toISOString()
+            })
+          }
+        }
       }
     }
   } else {
@@ -164,7 +188,7 @@ export async function addIncome(formData: FormData) {
 
       // Auto-transfer to linked wallet
       if (bucket.default_wallet_id && walletId && bucket.default_wallet_id !== walletId) {
-        await supabase.rpc('process_transfer', {
+        const { error: rpcError } = await supabase.rpc('process_transfer', {
           p_user_id: user.id,
           p_from_wallet_id: walletId,
           p_to_wallet_id: bucket.default_wallet_id,
@@ -173,6 +197,30 @@ export async function addIncome(formData: FormData) {
           p_note: 'จัดสรรรายรับอัตโนมัติ',
           p_date: new Date().toISOString()
         })
+        
+        if (rpcError) {
+          console.warn('Auto-transfer RPC error (fallback triggered):', rpcError.message)
+          // Fallback: update balances directly
+          const { data: fromW } = await supabase.from('wallets').select('balance').eq('id', walletId).single()
+          const { data: toW } = await supabase.from('wallets').select('balance').eq('id', bucket.default_wallet_id).single()
+
+          if (fromW && toW) {
+            await supabase.from('wallets').update({ balance: Number(fromW.balance) - allocatedAmount }).eq('id', walletId)
+            await supabase.from('wallets').update({ balance: Number(toW.balance) + allocatedAmount }).eq('id', bucket.default_wallet_id)
+
+            await supabase.from('transactions').insert({
+              user_id: user.id,
+              wallet_id: walletId,
+              to_wallet_id: bucket.default_wallet_id,
+              type: 'transfer',
+              amount: allocatedAmount,
+              transfer_fee: 0,
+              category: 'โอนเงินระหว่างบัญชี',
+              note: 'จัดสรรรายรับอัตโนมัติ',
+              transaction_date: new Date().toISOString()
+            })
+          }
+        }
       }
     }
   }
