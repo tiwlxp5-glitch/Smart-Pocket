@@ -94,10 +94,11 @@
   - **BottomNav ปุ่มกลาง** เปลี่ยนเป็นปุ่ม `+` เปิด QuickActionModal (ทดแทน AI FAB เดิม)
   - **สร้าง `OpenAIAdvisorButton.tsx`** — ปุ่มไอคอน Bot ใน Dashboard Header (มุมบนขวา) เพื่อเปิด Chat
   - **ลบ `SmartAddFAB.tsx`** — ถูกแทนที่อย่างสมบูรณ์โดย QuickActionModal
-- **Milestone 13 (Smart Bank-Specific Cash Wallets)**:
+- **Milestone 13 (Smart Bank-Specific Cash Wallets & Dual Balance Setup)**:
   - เพิ่มระบบ Smart UI Grouping ในหน้า `/dashboard/wallets`
   - หากสร้างกระเป๋าเงินสด (Cash) และเลือกไอคอนธนาคารที่ตรงกับกระเป๋าดิจิทัลที่มีอยู่แล้ว ระบบจะทำการ Group ทั้ง 2 กระเป๋าไว้ใน Card Container เดียวกันอัตโนมัติ
   - แสดงผลรวม (Total Bank Net Worth) ของแต่ละธนาคารได้อย่างชัดเจนโดยไม่ต้องแก้ Database Schema (ปลอดภัย 100%)
+  - **Dual Balance Setup**: ปรับปรุงหน้าสร้าง/แก้ไขบัญชีให้สามารถตั้งค่าทั้ง "ยอดเงินในบัญชี (เงินโอน)" และ "ยอดเงินสดติดตัว" ได้ในฟอร์มเดียวกัน โดยระบบหลังบ้านจะแยกสร้างและจัดการเป็น 2 กระเป๋าให้อัตโนมัติ ลดความซ้ำซ้อนให้ผู้ใช้
 
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **104/104 tests** (100% pass rate) ครอบคลุม M4 + M5 + M6.
