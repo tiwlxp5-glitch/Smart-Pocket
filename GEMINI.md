@@ -52,6 +52,12 @@
   - หน้า Setting (`/dashboard/settings`): เพิ่ม Dropdown เลือกกระเป๋าเงินผูกกับถังงบ.
   - **Auto-Select**: เมื่อเลือกถังงบในหน้าบันทึกรายจ่าย (Expense) หรือรายรับแบบ Single (Income) ระบบจะเลือกกระเป๋าเงินที่ผูกไว้อัตโนมัติ.
   - **Auto-Transfer**: เมื่อบันทึกรายรับ (Income) และกระจายเงินลงถัง หากถังนั้นผูกกับกระเป๋าเงินอื่นที่ไม่ได้เป็นกระเป๋าหลักรับเงิน ระบบจะรัน `process_transfer` เพื่อโอนเงินเข้าบัญชีจริงอัตโนมัติ (Statement ตรงเป๊ะ).
+- **Milestone 6.2 (Hybrid Wallet Deletion)**:
+  - รองรับการลบกระเป๋าเงินแบบปลอดภัยด้วยตรรกะ **Hybrid Delete**:
+    - หากกระเป๋าไม่เคยมีรายการ (0 transactions) -> ลบถาวร (Hard Delete) เพื่อลดขยะจากผู้ใช้กรอกผิด
+    - หากกระเป๋ามีรายการแล้ว (> 0 transactions) -> จะซ่อนกระเป๋า (Soft Delete / Archive) เพื่อรักษาประวัติรายการเก่า แต่บังคับให้เคลียร์ยอดเงิน (Balance = 0) ก่อนซ่อน เพื่อไม่ให้ Net Worth ผิดเพี้ยน
+  - ระบบจะป้องกันไม่ให้ลบ "กระเป๋าหลัก (Default Wallet)" เพื่อป้องกันการทำงานผิดพลาดของระบบ
+  - **Auto-Unlink Buckets**: เมื่อลบกระเป๋าแล้ว ระบบจะปลดกระเป๋าออกจากการผูกกับถังงบ (Linked Wallets) ให้อัตโนมัติ
 - **Milestone 7 (Onboarding System)**:
   - เพิ่มฟิลด์ `is_onboarded` ในตาราง `profiles`
   - สร้างหน้า Onboarding Wizard (`/onboarding`) ให้ผู้ใช้ใหม่เลือกรูปแบบจัดการเงิน
@@ -59,6 +65,18 @@
   - Mode 2: แยกบัญชี (3 Wallets, 3 Buckets ผูกแยกกัน 1:1)
   - Auto Redirect ให้ผู้ใช้ใหม่ตั้งค่าให้เสร็จก่อนเข้า Dashboard
   - **Bug Fix (Onboarding Duplication)**: แก้ไขให้ Onboarding ทำการค้นหาและอัปเดต (Upsert) กระเป๋าเงินและถังเงินเดิม แทนการลบทิ้งแล้วสร้างใหม่ เพื่อป้องกันปัญหาถังเงินซ้ำซ้อนสำหรับผู้ใช้เก่าที่มีข้อมูลอยู่แล้ว
+- **Milestone 7.1 (UI Performance & Animations)**:
+  - เพิ่มหน้า `loading.tsx` เป็น Skeleton screen ช่วยลดเวลาแอปหน่วง (Blocking) ระหว่างเปลี่ยนหน้า (Page Transitions).
+  - เพิ่ม Global Animations: `slide-up`, `fade-in` เวลาโหลดหน้าใหม่ผ่าน `template.tsx`.
+  - เพิ่ม Tactile Feedback (iOS Spring): ใส่เอฟเฟกต์ยุบตัว (`active:scale-[0.98]`) ในปุ่มและ Card ต่างๆ (Wallets, Buckets, BottomNav).
+  - เพิ่ม Loading Spinner (`Loader2` จาก lucide-react) เวลาผู้ใช้กดบันทึกหรือโอนเงินเพื่อแจ้งสถานะการทำงานชัดเจน.
+- **Milestone 8 (Mobile App Icon Studio & 4 Handcrafted Vector Concepts)**:
+  - ออกแบบไอคอนแอพสำหรับติดตั้งลงบนมือถือ (PWA / Mobile App Icon 1:1) ทั้งหมด 4 สไตล์ (100% Handcrafted Non-AI Vector SVG):
+    1. `app-icon-dual-flow.svg`: Dual Flow Balance (คลื่นลูกศรคู่สมดุล รายรับ-รายจ่าย)
+    2. `app-icon-pocket-fold.svg`: Geometric Pocket Fold (กระเป๋าสตางค์มินิมอล 2 เลเยอร์)
+    3. `app-icon-baht-split.svg`: Digital Baht & Split Scale (เหรียญบาทดิจิทัลผสานแบ่งครึ่งสมดุล)
+    4. `app-icon-monogram-s.svg`: Monogram 'S' Smart Flow (ตัวอักษร S สไตล์ Fintech สากล)
+  - สร้างหน้า Interactive Mobile Mockup Studio (`/icon-preview`) พร้อม Phone Simulator บนหน้าจอ iPhone/Android จริง, Wallpaper Switcher, และแถบทดสอบ Micro-Scale Legibility (32px, 48px, 64px, 96px, 128px).
 
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **104/104 tests** (100% pass rate) ครอบคลุม M4 + M5 + M6.

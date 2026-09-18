@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="pf-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="60%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+
+    <!-- Border Gradient -->
+    <linearGradient id="pf-border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#64748B" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#1E293B" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- Pocket Outer Flap Gradient -->
+    <linearGradient id="pf-flap" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+
+    <!-- Pocket Inner Body Gradient -->
+    <linearGradient id="pf-inner" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+
+    <!-- Green Card Gradient (Income) -->
+    <linearGradient id="pf-card-green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <!-- Rose Card Gradient (Expense) -->
+    <linearGradient id="pf-card-rose" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FB7185"/>
+      <stop offset="100%" stop-color="#E11D48"/>
+    </linearGradient>
+
+    <!-- Glow Filters -->
+    <filter id="glow-pf-green" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="-4" stdDeviation="12" flood-color="#10B981" flood-opacity="0.45"/>
+    </filter>
+
+    <filter id="glow-pf-rose" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#F43F5E" flood-opacity="0.45"/>
+    </filter>
+
+    <filter id="pf-shadow-pocket" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#020617" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Base Squircle -->
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#pf-bg)" stroke="url(#pf-border)" stroke-width="2.5"/>
+
+  <!-- Ambient Light Center -->
+  <circle cx="256" cy="256" r="160" fill="#3B82F6" opacity="0.08"/>
+
+  <!-- Pocket Group Container -->
+  <g transform="translate(106, 116)" filter="url(#pf-shadow-pocket)">
+    
+    <!-- ==================================================== -->
+    <!-- TOP CARD / TAB (INCOME - Green Glowing Slit)        -->
+    <!-- Peeking out from the top pocket slot                 -->
+    <!-- ==================================================== -->
+    <g transform="translate(45, 0)" filter="url(#glow-pf-green)">
+      <!-- Card Body -->
+      <rect width="210" height="70" rx="14" fill="url(#pf-card-green)"/>
+      <!-- Inner Chip Line -->
+      <rect x="20" y="18" width="36" height="6" rx="3" fill="#A7F3D0" opacity="0.9"/>
+      <!-- Plus Sign -->
+      <path d="M 175 14 L 175 28 M 168 21 L 182 21" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+      <!-- Inward Arrow Indicator -->
+      <path d="M 105 15 L 105 27 M 100 22 L 105 27 L 110 22" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- Main Back Wallet Shell -->
+    <rect x="15" y="45" width="270" height="235" rx="28" fill="url(#pf-inner)" stroke="#475569" stroke-width="2"/>
+
+    <!-- ==================================================== -->
+    <!-- MIDDLE POCKET FOLD (Geometric Diagonal Facet)        -->
+    <!-- ==================================================== -->
+    <path d="M 15 130 C 15 116, 26 105, 40 105 L 260 105 C 274 105, 285 116, 285 130 L 285 252 C 285 266, 274 280, 260 280 L 40 280 C 26 280, 15 266, 15 252 Z" 
+          fill="url(#pf-flap)" stroke="#64748B" stroke-width="1.5"/>
+
+    <!-- Geometric Diagonal Shadow Line across pocket -->
+    <path d="M 15 140 L 285 195" stroke="#0F172A" stroke-width="3" opacity="0.7"/>
+
+    <!-- ==================================================== -->
+    <!-- BOTTOM CARD / TAB (EXPENSE - Rose Glowing Slit)      -->
+    <!-- Organized in lower pocket partition                  -->
+    <!-- ==================================================== -->
+    <g transform="translate(45, 175)" filter="url(#glow-pf-rose)">
+      <!-- Card Front Edge -->
+      <rect width="210" height="60" rx="14" fill="url(#pf-card-rose)"/>
+      <!-- Minus Sign -->
+      <path d="M 168 22 L 182 22" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"/>
+      <!-- Outward Arrow Indicator -->
+      <path d="M 105 27 L 105 15 M 100 20 L 105 15 L 110 20" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Category Micro Dots -->
+      <circle cx="35" cy="22" r="4" fill="#FFE4E6"/>
+      <circle cx="50" cy="22" r="4" fill="#FFE4E6" opacity="0.6"/>
+      <circle cx="65" cy="22" r="4" fill="#FFE4E6" opacity="0.3"/>
+    </g>
+
+    <!-- Front Stitching/Bevel Edge (Clean Minimalist Line) -->
+    <rect x="30" y="70" width="240" height="195" rx="18" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.4"/>
+    
+    <!-- Smart Pocket Center Metal Badge / Button -->
+    <circle cx="150" cy="150" r="14" fill="#0F172A" stroke="#38BDF8" stroke-width="2.5"/>
+    <circle cx="150" cy="150" r="5" fill="#38BDF8"/>
+  </g>
+</svg>

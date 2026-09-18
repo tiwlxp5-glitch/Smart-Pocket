@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { Wallet, WalletType } from '@/types/database'
 import { BankPreset, getWalletTypeLabel } from '@/utils/walletHelper'
 import { WalletCard } from '@/components/WalletCard'
-import { createWallet, updateWallet, archiveWallet } from '@/app/dashboard/actions'
+import { createWallet, updateWallet, deleteWallet } from '@/app/dashboard/actions'
 import { Plus, Edit2, Archive, X, Check, Building2, Banknote, Smartphone, CreditCard } from 'lucide-react'
 
 interface Props {
@@ -99,11 +99,14 @@ export function WalletsClientManager({
     }
   }
 
-  const handleArchive = async (walletId: string, walletName: string) => {
-    if (!confirm(`คุณต้องการจัดเก็บกระเป๋า "${walletName}" ใช่หรือไม่?\n(ข้อมูลประวัติยังคงอยู่ แต่จะไม่แสดงในรายการเลือก)`)) {
+  const handleDelete = async (walletId: string, walletName: string) => {
+    if (!confirm(`คุณต้องการลบ/ซ่อนกระเป๋า "${walletName}" ใช่หรือไม่?\n(หากมีประวัติรายการ จะต้องโอนเงินออกให้เป็น 0 บาทก่อน)`)) {
       return
     }
-    await archiveWallet(walletId)
+    const res = await deleteWallet(walletId)
+    if (!res?.success) {
+      alert(res?.message || 'เกิดข้อผิดพลาดในการลบกระเป๋า')
+    }
   }
 
   const filteredWallets = initialWallets.filter((w) => {
@@ -191,9 +194,9 @@ export function WalletsClientManager({
               </button>
               {!wallet.is_default && (
                 <button
-                  onClick={() => handleArchive(wallet.id, wallet.name)}
+                  onClick={() => handleDelete(wallet.id, wallet.name)}
                   className="p-1.5 rounded-lg bg-black/30 hover:bg-black/50 text-white backdrop-blur-md transition shadow-2xs"
-                  title="จัดเก็บกระเป๋า"
+                  title="ลบ/ซ่อนกระเป๋า"
                 >
                   <Archive size={13} />
                 </button>

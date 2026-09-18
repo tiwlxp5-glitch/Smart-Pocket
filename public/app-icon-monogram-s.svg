@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="ms-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="60%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+
+    <!-- Border Gradient -->
+    <linearGradient id="ms-border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#64748B" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#1E293B" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <!-- Emerald Gradient (Top S-Curve / Income) -->
+    <linearGradient id="ms-green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6EE7B7"/>
+      <stop offset="40%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+
+    <!-- Rose Gradient (Bottom S-Curve / Expense) -->
+    <linearGradient id="ms-rose" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDA4AF"/>
+      <stop offset="40%" stop-color="#F43F5E"/>
+      <stop offset="100%" stop-color="#BE123C"/>
+    </linearGradient>
+
+    <!-- Glows -->
+    <filter id="glow-ms-green" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#10B981" flood-opacity="0.5"/>
+    </filter>
+
+    <filter id="glow-ms-rose" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#F43F5E" flood-opacity="0.5"/>
+    </filter>
+
+    <radialGradient id="ms-center-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Base Squircle -->
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#ms-bg)" stroke="url(#ms-border)" stroke-width="2.5"/>
+
+  <!-- Subtle Center Radial Glow -->
+  <circle cx="256" cy="256" r="180" fill="url(#ms-center-glow)"/>
+
+  <!-- ==================================================== -->
+  <!-- TOP RIBBON OF 'S': INCOME (Green Flowing Upward)     -->
+  <!-- ==================================================== -->
+  <g filter="url(#glow-ms-green)">
+    <!-- Main Upper Arch of S -->
+    <path d="M 170 240 C 170 170, 205 130, 266 130 C 325 130, 360 165, 360 215" 
+          fill="none" stroke="url(#ms-green)" stroke-width="28" stroke-linecap="round"/>
+    <!-- Upward Growth Arrowhead at Top-Right of S -->
+    <path d="M 336 195 L 360 170 L 384 195" 
+          fill="none" stroke="url(#ms-green)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Origin Pulse Dot at Middle -->
+    <circle cx="170" cy="240" r="14" fill="url(#ms-green)"/>
+  </g>
+
+  <!-- ==================================================== -->
+  <!-- BOTTOM RIBBON OF 'S': EXPENSE (Rose Flowing Downward) -->
+  <!-- ==================================================== -->
+  <g filter="url(#glow-ms-rose)">
+    <!-- Main Lower Arch of S -->
+    <path d="M 342 272 C 342 342, 307 382, 246 382 C 187 382, 152 347, 152 297" 
+          fill="none" stroke="url(#ms-rose)" stroke-width="28" stroke-linecap="round"/>
+    <!-- Downward Smart Spending Arrowhead at Bottom-Left of S -->
+    <path d="M 128 317 L 152 342 L 176 317" 
+          fill="none" stroke="url(#ms-rose)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Origin Pulse Dot at Middle -->
+    <circle cx="342" cy="272" r="14" fill="url(#ms-rose)"/>
+  </g>
+
+  <!-- ==================================================== -->
+  <!-- CENTRAL NEXUS: SMART POCKET PILL / CAPSULE          -->
+  <!-- Lies harmoniously in the diagonal crossing of 'S'   -->
+  <!-- ==================================================== -->
+  <g transform="translate(256, 256)">
+    <!-- Central Capsule / Card Slot -->
+    <rect x="-34" y="-12" width="68" height="24" rx="12" fill="#1E293B" stroke="#475569" stroke-width="2"/>
+    <circle cx="-14" cy="0" r="4" fill="#10B981"/>
+    <line x1="-4" y1="0" x2="4" y2="0" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="14" cy="0" r="4" fill="#F43F5E"/>
+  </g>
+</svg>

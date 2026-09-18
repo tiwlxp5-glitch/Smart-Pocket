@@ -321,23 +321,87 @@ export async function updateWallet(formData: FormData) {
   return { success: true, message: 'บันทึกการแก้ไขเรียบร้อย' }
 }
 
-export async function archiveWallet(walletId: string) {
+export async function deleteWallet(walletId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not logged in')
 
-  const { error } = await supabase.from('wallets').update({
-    is_archived: true,
-    updated_at: new Date().toISOString()
-  }).eq('id', walletId).eq('user_id', user.id)
+  // 1. Fetch wallet details
+  const { data: wallet, error: fetchError } = await supabase
+    .from('wallets')
+    .select('is_default, balance')
+    .eq('id', walletId)
+    .eq('user_id', user.id)
+    .single()
 
-  if (error) {
-    return { success: false, message: 'ไม่สามารถเก็บกระเป๋าเงินได้' }
+  if (fetchError || !wallet) {
+    return { success: false, message: 'ไม่พบข้อมูลกระเป๋าเงิน' }
   }
 
-  revalidatePath('/dashboard/wallets')
-  revalidatePath('/dashboard', 'layout')
-  return { success: true, message: 'จัดเก็บกระเป๋าเงินเรียบร้อย' }
+  // 2. Check if default wallet
+  if (wallet.is_default) {
+    return { success: false, message: 'ไม่สามารถลบกระเป๋าหลักได้ กรุณาเปลี่ยนกระเป๋าหลักเป็นใบอื่นก่อน' }
+  }
+
+  // 3. Count transactions
+  const { count, error: countError } = await supabase
+    .from('transactions')
+    .select('id', { count: 'exact', head: true })
+    .or(`wallet_id.eq.${walletId},to_wallet_id.eq.${walletId}`)
+    .eq('user_id', user.id)
+
+  if (countError) {
+    console.error('Count transactions error:', countError)
+    return { success: false, message: 'เกิดข้อผิดพลาดในการตรวจสอบประวัติรายการ' }
+  }
+
+  if (count === 0) {
+    // Hard Delete
+    const { error: deleteError } = await supabase
+      .from('wallets')
+      .delete()
+      .eq('id', walletId)
+      .eq('user_id', user.id)
+
+    if (deleteError) {
+      console.error('Delete wallet error:', deleteError)
+      return { success: false, message: 'ไม่สามารถลบกระเป๋าเงินได้' }
+    }
+    
+    revalidatePath('/dashboard/wallets')
+    revalidatePath('/dashboard', 'layout')
+    return { success: true, message: 'ลบกระเป๋าเงินเรียบร้อยแล้ว' }
+  } else {
+    // Soft Delete (Archive)
+    if (Number(wallet.balance) !== 0) {
+      return { success: false, message: 'ไม่สามารถลบได้เนื่องจากมียอดเงินคงเหลือ กรุณาโอนเงินออกให้เป็น 0 บาทก่อน' }
+    }
+
+    const { error: archiveError } = await supabase
+      .from('wallets')
+      .update({
+        is_archived: true,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', walletId)
+      .eq('user_id', user.id)
+
+    if (archiveError) {
+      console.error('Archive wallet error:', archiveError)
+      return { success: false, message: 'ไม่สามารถซ่อนกระเป๋าเงินได้' }
+    }
+
+    // Auto-unlink from buckets
+    await supabase
+      .from('buckets')
+      .update({ default_wallet_id: null, updated_at: new Date().toISOString() })
+      .eq('default_wallet_id', walletId)
+      .eq('user_id', user.id)
+
+    revalidatePath('/dashboard/wallets')
+    revalidatePath('/dashboard', 'layout')
+    return { success: true, message: 'ซ่อนกระเป๋าเงินเรียบร้อยแล้ว' }
+  }
 }
 
 export async function moveToTrash(transactionId: string) {
