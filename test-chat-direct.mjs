@@ -1,9 +1,8 @@
-// Direct test — reads .env.local manually and passes key directly
+// Test the new route logic directly (without Next.js)
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { streamText, toUIMessageStream, convertToModelMessages } from 'ai';
+import { streamText, toUIMessageStream, createUIMessageStreamResponse, convertToModelMessages } from 'ai';
 import { readFileSync } from 'fs';
 
-// Load env manually
 const envContent = readFileSync('.env.local', 'utf8');
 const envVars = {};
 envContent.split('\n').forEach(line => {
@@ -11,59 +10,58 @@ envContent.split('\n').forEach(line => {
   if (match) envVars[match[1].trim()] = match[2].trim();
 });
 
-const apiKey = envVars['GEMINI_API_KEY'] || envVars['GOOGLE_GENERATIVE_AI_API_KEY'];
-console.log('API Key found:', apiKey ? `YES (${apiKey.length} chars, starts: ${apiKey.substring(0, 8)}...)` : 'MISSING');
-
-if (!apiKey) {
-  console.error('No API key found in .env.local!');
-  process.exit(1);
-}
+const apiKey = envVars['GEMINI_API_KEY'];
+console.log('API Key:', apiKey ? `YES (${apiKey.length} chars)` : 'MISSING');
 
 const google = createGoogleGenerativeAI({ apiKey });
 
-async function testChat() {
-  console.log('\n=== Testing streamText + toUIMessageStream ===');
-  
+async function testNewRoute() {
+  console.log('\n=== Testing result.toUIMessageStreamResponse() approach ===');
+
   const messages = [
-    { id: '1', role: 'user', parts: [{ type: 'text', text: 'สวัสดีครับ' }] }
+    { id: '1', role: 'user', parts: [{ type: 'text', text: 'ตอนนี้การเงินผมเป็นยังไงบ้าง' }] }
   ];
+  const modelMessages = await convertToModelMessages(messages);
 
-  try {
-    const modelMessages = await convertToModelMessages(messages);
-    console.log('✓ convertToModelMessages OK');
+  const result = streamText({
+    model: google('gemini-3.8-flash'),
+    system: 'ตอบสั้นๆ 1 ประโยคเท่านั้น',
+    messages: modelMessages,
+    onError: (event) => {
+      console.error('onError callback:', event.error);
+    },
+  });
 
-    const result = await streamText({
-      model: google('gemini-3.8-flash'),
-      system: 'คุณคือ Smart Pocket Advisor ตอบเป็นภาษาไทย สั้นๆ 1-2 ประโยค',
-      messages: modelMessages,
-    });
-    console.log('✓ streamText returned');
+  console.log('streamText called (non-await)');
+  console.log('result type:', typeof result);
+  console.log('result.stream type:', typeof result.stream);
 
-    const uiStream = toUIMessageStream({ stream: result.stream });
-    console.log('✓ toUIMessageStream returned');
+  // Test the toUIMessageStreamResponse method
+  const response = result.toUIMessageStreamResponse();
+  console.log('response type:', typeof response);
+  console.log('response status:', response.status);
+  console.log('response headers:', Object.fromEntries(response.headers.entries()));
 
-    const reader = uiStream.getReader();
-    let chunks = 0;
-    
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks++;
-      const str = JSON.stringify(value);
-      
-      if (value.type === 'error') {
-        console.error(`\n❌ ERROR CHUNK: ${str}`);
-      } else if (chunks <= 10) {
-        console.log(`  Chunk ${chunks}: ${str.substring(0, 150)}`);
-      }
+  // Read the response body
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let chunks = 0;
+  let hasError = false;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const text = decoder.decode(value, { stream: true });
+    chunks++;
+    if (text.includes('"error"') || text.includes('"type":"error"')) {
+      console.error(`❌ Error chunk ${chunks}:`, text.substring(0, 300));
+      hasError = true;
+    } else if (chunks <= 5) {
+      console.log(`  Chunk ${chunks}: ${text.substring(0, 200)}`);
     }
-    
-    console.log(`\n${chunks > 2 ? '✅' : '❌'} Total chunks: ${chunks}`);
-    
-  } catch (error) {
-    console.error('\n❌ EXCEPTION:', error.message);
-    if (error.cause) console.error('Cause:', error.cause);
   }
+
+  console.log(`\n${hasError ? '❌' : '✅'} Done: ${chunks} chunks, error=${hasError}`);
 }
 
-testChat();
+testNewRoute().catch(console.error);

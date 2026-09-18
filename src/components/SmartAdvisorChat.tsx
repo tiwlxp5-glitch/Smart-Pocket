@@ -125,6 +125,24 @@ export function SmartAdvisorChat({ wallets, buckets }: { wallets: any[], buckets
                       </strong>
                     )
                   },
+                  em: ({ children, ...props }) => {
+                    const extractText = (child: any): string => {
+                      if (typeof child === 'string') return child
+                      if (Array.isArray(child)) return child.map(extractText).join('')
+                      if (child?.props?.children) return extractText(child.props.children)
+                      return ''
+                    }
+                    const text = extractText(children)
+                    const preset = detectBankFromText(text)
+                    return (
+                      <em
+                        {...props}
+                        style={preset ? { color: preset.color, fontStyle: 'normal', fontWeight: 600 } : {}}
+                      >
+                        {children}
+                      </em>
+                    )
+                  },
                 }}
               >
                 {part.text}
