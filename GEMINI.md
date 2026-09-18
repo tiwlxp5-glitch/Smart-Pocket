@@ -93,6 +93,7 @@ Run the following SQL in Supabase SQL Editor or `supabase db push`:
 supabase/schema_wallets.sql
 supabase/schema_linked_wallets.sql
 supabase/schema_onboarding.sql
+supabase/schema_fix_cascade_delete.sql
 ```
 
 

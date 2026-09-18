@@ -4,7 +4,7 @@
 
 -- 1. Profiles Table
 CREATE TABLE IF NOT EXISTS profiles (
-  id UUID REFERENCES auth.users(id) PRIMARY KEY,
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   full_name TEXT,
   avatar_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -18,7 +18,7 @@ CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.
 -- 2. Buckets Table (กระเป๋าเงินย่อย)
 CREATE TABLE IF NOT EXISTS buckets (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES profiles(id) NOT NULL,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   icon TEXT,
   color TEXT,
@@ -42,7 +42,7 @@ CREATE TYPE transaction_type AS ENUM ('income', 'expense', 'transfer');
 
 CREATE TABLE IF NOT EXISTS transactions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES profiles(id) NOT NULL,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   bucket_id UUID REFERENCES buckets(id), -- อาจจะเป็น null กรณี income ที่ยังไม่ได้จัดสรร
   type transaction_type NOT NULL,
   amount NUMERIC(15,2) NOT NULL,
@@ -61,7 +61,7 @@ CREATE POLICY "Users can delete own transactions" ON transactions FOR DELETE USI
 -- 4. Allocations Table (ประวัติการแยกเงินจากรายรับสู่กระเป๋าต่างๆ)
 CREATE TABLE IF NOT EXISTS allocations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES profiles(id) NOT NULL,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   income_transaction_id UUID REFERENCES transactions(id) ON DELETE CASCADE,
   bucket_id UUID REFERENCES buckets(id) ON DELETE CASCADE,
   amount NUMERIC(15,2) NOT NULL,
