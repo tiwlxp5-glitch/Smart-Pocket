@@ -302,99 +302,27 @@ export default function SettingsPage() {
           </form>
         </section>
 
-        {/* Section 3: Monthly Budget Limits */}
-        <section className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col gap-4">
+        {/* Section 3: Manage Wallets & Envelopes */}
+        <section className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col gap-3">
           <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
             <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <Wallet size={22} />
             </div>
             <div>
-              <h2 className="font-bold text-gray-900 text-base">งบประมาณรายเดือน (Monthly Budgets)</h2>
-              <p className="text-xs text-gray-500">กำหนดเพดานจ่ายต่อเดือนเพื่อรับการแจ้งเตือน</p>
+              <h2 className="font-bold text-gray-900 text-base">บัญชีธนาคารและถังงบประมาณ</h2>
+              <p className="text-xs text-gray-500">จัดการบัญชี สัดส่วนรายรับ และเพดานงบรายเดือน</p>
             </div>
           </div>
-
-          <div className="p-3 bg-blue-50/70 rounded-2xl border border-blue-100/80 text-xs text-blue-900 flex items-start gap-2">
-            <AlertCircle size={18} className="text-blue-600 shrink-0 mt-0.5" />
-            <span>
-              หากรายจ่ายในเดือนแตะ <strong>80%</strong> หรือเกิน <strong>100%</strong> ของงบประมาณ ระบบจะแสดงแถบเตือนสีส้ม/แดง เพื่อช่วยคุมวินัยทางการเงินทันที (เว้นว่างไว้หากไม่ต้องการจำกัดงบ)
-            </span>
-          </div>
-
-          {budgetFeedback && (
-            <div className="p-3 rounded-xl text-xs bg-emerald-50 text-emerald-700 flex items-center gap-2">
-              <CheckCircle2 size={16} />
-              <span>{budgetFeedback}</span>
+          <Link
+            href="/dashboard/wallets"
+            className="w-full py-3 px-4 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-700 rounded-2xl text-sm font-semibold transition flex items-center justify-between border border-emerald-100 group"
+          >
+            <div className="flex items-center gap-2">
+              <Wallet size={18} className="text-emerald-600 group-hover:scale-110 transition-transform duration-300" />
+              <span>เข้าสู่หน้าจัดการบัญชี</span>
             </div>
-          )}
-
-          <div className="flex flex-col gap-3">
-            {buckets.map((bucket) => {
-              const Icon = getBucketIcon(bucket.icon)
-              const isSaving = savingBucketId === bucket.id
-              const currentVal = bucketBudgets[bucket.id] ?? ''
-
-              return (
-                <div key={bucket.id} className="p-3.5 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col gap-2.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div 
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs shadow-xs"
-                        style={{ backgroundColor: bucket.color || '#3B82F6' }}
-                      >
-                        <Icon size={16} />
-                      </div>
-                      <span className="font-semibold text-gray-900 text-sm">{bucket.name}</span>
-                    </div>
-                    <span className="text-xs text-gray-500">คงเหลือ ฿{Number(bucket.balance).toLocaleString()}</span>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <div className="relative flex-1">
-                      <input
-                        type="number"
-                        step="any"
-                        min="0"
-                        value={currentVal}
-                        onChange={(e) => setBucketBudgets({ ...bucketBudgets, [bucket.id]: e.target.value })}
-                        placeholder="ไม่จำกัดงบประมาณ"
-                        className="w-full pl-7 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      <span className="absolute left-2.5 top-2.5 text-xs text-gray-400 font-semibold">฿</span>
-                    </div>
-                    
-                    <div className="relative flex-1">
-                      <select
-                        value={bucketWallets[bucket.id] || ''}
-                        onChange={(e) => setBucketWallets({ ...bucketWallets, [bucket.id]: e.target.value })}
-                        className="w-full pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-gray-700"
-                      >
-                        <option value="">-- ไม่ผูกบัญชี --</option>
-                        {wallets.map(w => (
-                          <option key={w.id} value={w.id}>
-                            ผูกกับ: {w.name} {w.bank_name ? `(${w.bank_name})` : ''}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="absolute right-3 top-2.5 pointer-events-none text-gray-400">
-                        <ChevronRight size={16} className="rotate-90" />
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={isSaving}
-                      onClick={() => handleSaveBudget(bucket.id)}
-                      className="px-3.5 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-1 shrink-0 disabled:opacity-50"
-                    >
-                      {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                      <span>บันทึก</span>
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+          </Link>
         </section>
 
         {/* Section 4: Recurring Transactions */}

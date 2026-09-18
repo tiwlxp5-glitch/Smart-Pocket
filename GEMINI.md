@@ -40,15 +40,11 @@
 - **Milestone 9 (Auth UI Refactoring & Localization)**:
   - แยกหน้าต่างเข้าสู่ระบบ (Login) และสมัครสมาชิก (Signup) ออกจากกันอย่างชัดเจน (`/login` & `/signup`)
   - แปลข้อความ Error Message จากระบบ (Supabase Auth) ให้เป็นภาษาไทยทั้งหมด เพื่อให้ผู้ใช้งานเข้าใจง่ายขึ้น
-- **Multi-Wallet & Transfers System — NEW**:
-  - **Dual-Layer Architecture**: กระเป๋า/บัญชี (เงินอยู่ที่ไหน) ทำงานควบคู่กับ ถังงบประมาณ (เงินไว้ทำอะไร).
-  - ตาราง `wallets` พร้อม RLS ครบ 4 ทิศทาง รองรับ 4 ประเภท (`cash`, `bank`, `ewallet`, `credit`) และธีมสี/Preset ธนาคารไทย.
-  - Atomic PostgreSQL RPC `process_transfer` ปลอดภัยด้วย `FOR UPDATE` row lock พร้อมรองรับค่าธรรมเนียมโอน (Transfer fee).
-  - หน้าจัดการกระเป๋าเงิน (`/dashboard/wallets`) พร้อมการ์ด Net Worth (Assets vs Debts), Modal เพิ่ม/แก้ไขกระเป๋า.
-  - หน้าโอนเงินระหว่างบัญชี (`/dashboard/transfer`) พร้อม Live balance preview, ปุ่ม Swap, และปุ่มลัดจำนวนเงิน.
-  - Horizontal Wallets Carousel และ Shortcut Cards บนหน้าแรก Dashboard.
-  - AI Slip Scanner ตรวจจับธนาคารผู้โอน (Sender Bank) และเลือกกระเป๋าเงินให้อัตโนมัติ.
-  - Income รองรับทั้งแบ่งสัดส่วน % อัตโนมัติ และระบุเข้าถังงบเดี่ยว (100%).
+- **Multi-Wallet & Transfers System (Unified Architecture) — NEW**:
+  - **Unified Wallet/Bucket UI**: กระเป๋า (Wallets) และ ถังงบ (Buckets) ถูกรวมเข้าด้วยกันในหน้า UI เพื่อให้ใช้งานง่ายขึ้น (1 กระเป๋า = 1 ถังงบ เสมอ)
+  - หน้าสร้าง/แก้ไขกระเป๋าเงิน (`/dashboard/wallets`) สามารถกำหนดเป้าหมายแบ่งเงิน (%) และ เพดานงบ (฿) ได้ในขั้นตอนเดียว
+  - ตาราง `wallets` และ `buckets` ยังคงแยกกันในระดับฐานข้อมูลเพื่อรักษาความสมบูรณ์ของประวัติธุรกรรม แต่จัดการพร้อมกันผ่าน Server Actions
+  - หน้าแรก Dashboard จัดแสดง "บัญชีธนาคาร" คู่กับถังงบโดยตรง (แสดงชื่อธนาคารและโลโก้ใน Envelope Card)
   - รองรับการ Rollback คืนยอดเงินในถังขยะ (Soft Delete) ของทุกกระเป๋าอย่างแม่นยำ.
 - **Milestone 6.1 (Linked Wallets & Auto-Transfer)**:
   - เพิ่มระบบ `default_wallet_id` ให้ถังงบ (Buckets) เพื่อผูกบัญชีธนาคารเข้ากับถังงบแบบ 1:1.

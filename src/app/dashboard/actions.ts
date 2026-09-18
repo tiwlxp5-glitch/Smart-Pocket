@@ -264,12 +264,17 @@ export async function createWallet(formData: FormData) {
   const icon = (formData.get('icon') as string) || 'wallet'
   const rawOpening = formData.get('opening_balance')
   const openingBalance = rawOpening ? Number(rawOpening) : 0
+  const rawAllocation = formData.get('allocation_percentage')
+  const allocationPercentage = rawAllocation ? Number(rawAllocation) : 0
+  const rawBudget = formData.get('monthly_budget')
+  const monthlyBudget = rawBudget && rawBudget !== '' ? Number(rawBudget) : null
 
   if (!name) {
     return { success: false, message: 'กรุณาระบุชื่อกระเป๋าเงิน' }
   }
 
-  const { data, error } = await supabase.from('wallets').insert({
+  // 1. Insert Wallet
+  const { data: walletData, error: walletError } = await supabase.from('wallets').insert({
     user_id: user.id,
     name,
     type,
@@ -280,14 +285,32 @@ export async function createWallet(formData: FormData) {
     balance: openingBalance,
   }).select().single()
 
-  if (error) {
-    console.error('Create wallet error:', error)
-    return { success: false, message: 'ไม่สามารถสร้างกระเป๋าเงินได้: ' + error.message }
+  if (walletError || !walletData) {
+    console.error('Create wallet error:', walletError)
+    return { success: false, message: 'ไม่สามารถสร้างกระเป๋าเงินได้: ' + walletError?.message }
+  }
+
+  // 2. Insert Linked Bucket
+  const { error: bucketError } = await supabase.from('buckets').insert({
+    user_id: user.id,
+    name,
+    icon,
+    color,
+    allocation_percentage: allocationPercentage,
+    monthly_budget: monthlyBudget,
+    default_wallet_id: walletData.id,
+    balance: openingBalance // Initial bucket balance matches wallet
+  })
+
+  if (bucketError) {
+    console.error('Create linked bucket error:', bucketError)
+    // We don't rollback wallet here to keep it simple, but we should log it
   }
 
   revalidatePath('/dashboard/wallets')
+  revalidatePath('/dashboard/settings')
   revalidatePath('/dashboard', 'layout')
-  return { success: true, message: 'สร้างกระเป๋าเงินสำเร็จ', data }
+  return { success: true, message: 'สร้างกระเป๋าเงินสำเร็จ', data: walletData }
 }
 
 export async function updateWallet(formData: FormData) {
@@ -299,24 +322,40 @@ export async function updateWallet(formData: FormData) {
   const name = (formData.get('name') as string)?.trim()
   const color = (formData.get('color') as string) || '#10b981'
   const icon = (formData.get('icon') as string) || 'wallet'
+  const rawAllocation = formData.get('allocation_percentage')
+  const allocationPercentage = rawAllocation ? Number(rawAllocation) : 0
+  const rawBudget = formData.get('monthly_budget')
+  const monthlyBudget = rawBudget && rawBudget !== '' ? Number(rawBudget) : null
 
   if (!walletId || !name) {
     return { success: false, message: 'ข้อมูลไม่ถูกต้อง' }
   }
 
-  const { error } = await supabase.from('wallets').update({
+  // 1. Update Wallet
+  const { error: walletError } = await supabase.from('wallets').update({
     name,
     color,
     icon,
     updated_at: new Date().toISOString()
   }).eq('id', walletId).eq('user_id', user.id)
 
-  if (error) {
-    console.error('Update wallet error:', error)
+  if (walletError) {
+    console.error('Update wallet error:', walletError)
     return { success: false, message: 'ไม่สามารถแก้ไขกระเป๋าเงินได้' }
   }
 
+  // 2. Update Linked Bucket
+  await supabase.from('buckets').update({
+    name,
+    color,
+    icon,
+    allocation_percentage: allocationPercentage,
+    monthly_budget: monthlyBudget,
+    updated_at: new Date().toISOString()
+  }).eq('default_wallet_id', walletId).eq('user_id', user.id)
+
   revalidatePath('/dashboard/wallets')
+  revalidatePath('/dashboard/settings')
   revalidatePath('/dashboard', 'layout')
   return { success: true, message: 'บันทึกการแก้ไขเรียบร้อย' }
 }

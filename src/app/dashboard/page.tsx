@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { calculateMonthlyCommitment } from '@/utils/recurringHelper'
 import { WalletCard } from '@/components/WalletCard'
 import { DashboardWalletDeleteButton } from '@/components/DashboardWalletDeleteButton'
+import { BANK_PRESETS, getWalletTypeLabel } from '@/utils/walletHelper'
 
 // Dummy fallback data if DB is empty or not connected
 const fallbackBuckets = [
@@ -353,7 +354,7 @@ export default async function DashboardPage() {
       </div>
       
       <div className="flex flex-col gap-4">
-        {buckets.map((bucket) => {
+        {buckets.filter(b => b.default_wallet_id && wallets.some(w => w.id === b.default_wallet_id)).map((bucket) => {
           // Choose icon mapping
           const Icon = bucket.icon === 'shield' ? ShieldCheck : bucket.icon === 'trending-up' ? TrendingUp : bucket.icon === 'wallet' ? WalletIcon : Coffee
           const spentThisMonth = bucketMonthlyExpenses[bucket.id] || 0
@@ -361,17 +362,27 @@ export default async function DashboardPage() {
           const hasBudget = monthlyBudget !== null && monthlyBudget > 0
           const budgetPercent = hasBudget ? Math.round((spentThisMonth / monthlyBudget) * 100) : 0
 
+          const linkedWallet = wallets.find(w => w.id === bucket.default_wallet_id)
+          const bankPreset = linkedWallet ? BANK_PRESETS.find(p => p.code === linkedWallet.bank_name) : null
+
           return (
             <div key={bucket.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center gap-4">
               <div 
                 className="w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0 shadow-2xs"
-                style={{ backgroundColor: bucket.color || '#3B82F6' }}
+                style={{ backgroundColor: bankPreset?.color || bucket.color || '#3B82F6' }}
               >
                 <Icon size={24} />
               </div>
               <div className="flex-1">
                 <div className="flex justify-between items-center mb-1">
-                  <h4 className="font-semibold text-gray-900">{bucket.name}</h4>
+                  <div className="flex flex-col">
+                    <h4 className="font-semibold text-gray-900">{bucket.name}</h4>
+                    {linkedWallet && (
+                      <span className="text-[10px] text-gray-500 font-medium">
+                        บัญชี: {bankPreset ? bankPreset.name.split(' (')[0] : linkedWallet.name}
+                      </span>
+                    )}
+                  </div>
                   <span className="font-bold text-gray-900">฿{Number(bucket.balance).toLocaleString('th-TH')}</span>
                 </div>
                 {hasBudget ? (

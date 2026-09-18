@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Wallet, WalletType } from '@/types/database'
+import { Wallet, WalletType, Bucket } from '@/types/database'
 import { BankPreset, getWalletTypeLabel } from '@/utils/walletHelper'
 import { WalletCard } from '@/components/WalletCard'
 import { createWallet, updateWallet, deleteWallet } from '@/app/dashboard/actions'
@@ -11,12 +11,14 @@ interface Props {
   initialWallets: Wallet[]
   archivedWallets: Wallet[]
   bankPresets: BankPreset[]
+  initialBuckets: Bucket[]
 }
 
 export function WalletsClientManager({
   initialWallets,
   archivedWallets,
   bankPresets,
+  initialBuckets,
 }: Props) {
   const [filterType, setFilterType] = useState<string>('all')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -31,10 +33,14 @@ export function WalletsClientManager({
   const [color, setColor] = useState(bankPresets[0].color)
   const [bankName, setBankName] = useState(bankPresets[0].code)
   const [openingBalance, setOpeningBalance] = useState('')
+  const [allocationPercentage, setAllocationPercentage] = useState('0')
+  const [monthlyBudget, setMonthlyBudget] = useState('')
 
   // Edit form states
   const [editName, setEditName] = useState('')
   const [editColor, setEditColor] = useState('')
+  const [editAllocation, setEditAllocation] = useState('0')
+  const [editBudget, setEditBudget] = useState('')
 
   const handleSelectPreset = (preset: BankPreset) => {
     setSelectedPreset(preset)
@@ -47,6 +53,8 @@ export function WalletsClientManager({
   const handleOpenCreate = () => {
     handleSelectPreset(bankPresets[0])
     setOpeningBalance('')
+    setAllocationPercentage('0')
+    setMonthlyBudget('')
     setErrorMessage(null)
     setIsCreateModalOpen(true)
   }
@@ -55,6 +63,14 @@ export function WalletsClientManager({
     setEditingWallet(w)
     setEditName(w.name)
     setEditColor(w.color || '#10b981')
+    const linkedBucket = initialBuckets.find(b => b.default_wallet_id === w.id)
+    if (linkedBucket) {
+      setEditAllocation(String(linkedBucket.allocation_percentage || 0))
+      setEditBudget(linkedBucket.monthly_budget ? String(linkedBucket.monthly_budget) : '')
+    } else {
+      setEditAllocation('0')
+      setEditBudget('')
+    }
     setErrorMessage(null)
   }
 
@@ -69,6 +85,8 @@ export function WalletsClientManager({
     formData.append('bank_name', bankName)
     formData.append('color', color)
     formData.append('opening_balance', openingBalance || '0')
+    formData.append('allocation_percentage', allocationPercentage)
+    if (monthlyBudget) formData.append('monthly_budget', monthlyBudget)
 
     const res = await createWallet(formData)
     setIsSubmitting(false)
@@ -89,6 +107,8 @@ export function WalletsClientManager({
     formData.append('wallet_id', editingWallet.id)
     formData.append('name', editName)
     formData.append('color', editColor)
+    formData.append('allocation_percentage', editAllocation)
+    if (editBudget) formData.append('monthly_budget', editBudget)
 
     const res = await updateWallet(formData)
     setIsSubmitting(false)
@@ -324,7 +344,7 @@ export function WalletsClientManager({
               {/* Opening Balance */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  ยอดเงินเริ่มต้น (Opening Balance)
+                  ยอดยกมาเริ่มต้น (Opening Balance)
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-2.5 text-sm text-gray-400 font-bold">฿</span>
@@ -333,13 +353,44 @@ export function WalletsClientManager({
                     step="any"
                     value={openingBalance}
                     onChange={(e) => setOpeningBalance(e.target.value)}
-                    placeholder="0.00 (ใส่ยอดติดลบได้หากเป็นหนี้บัตร)"
+                    placeholder="0.00 (ใส่ยอดเงินในบัญชีปัจจุบันที่มี)"
                     className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1">
-                  * ยอดเงินเริ่มต้นจะถูกนำมาคำนวณเป็นยอดคงเหลือปัจจุบันทันที
-                </p>
+              </div>
+
+              {/* Allocation Percentage & Monthly Budget */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">เป้าหมายแบ่งเงิน (%)</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      required
+                      value={allocationPercentage}
+                      onChange={(e) => setAllocationPercentage(e.target.value)}
+                      placeholder="0"
+                      className="w-full pr-8 pl-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="absolute right-3.5 top-2.5 text-sm text-gray-400 font-bold">%</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">เพดานงบรายเดือน (฿)</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={monthlyBudget}
+                      onChange={(e) => setMonthlyBudget(e.target.value)}
+                      placeholder="ไม่จำกัด"
+                      className="w-full pl-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Buttons */}
@@ -413,6 +464,40 @@ export function WalletsClientManager({
                     onChange={(e) => setEditColor(e.target.value)}
                     className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-xs uppercase font-mono"
                   />
+                </div>
+              </div>
+
+              {/* Allocation Percentage & Monthly Budget */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">เป้าหมายแบ่งเงิน (%)</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      required
+                      value={editAllocation}
+                      onChange={(e) => setEditAllocation(e.target.value)}
+                      placeholder="0"
+                      className="w-full pr-8 pl-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="absolute right-3.5 top-2.5 text-sm text-gray-400 font-bold">%</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">เพดานงบรายเดือน (฿)</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={editBudget}
+                      onChange={(e) => setEditBudget(e.target.value)}
+                      placeholder="ไม่จำกัด"
+                      className="w-full pl-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
 

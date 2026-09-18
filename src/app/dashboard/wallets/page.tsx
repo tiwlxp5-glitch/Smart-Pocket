@@ -17,15 +17,21 @@ export default async function WalletsPage() {
     redirect('/login')
   }
 
-  // Fetch wallets
-  let { data: wallets, error } = await supabase
-    .from('wallets')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: true })
+  // Fetch wallets and buckets
+  let [{ data: wallets, error: walletsError }, { data: buckets }] = await Promise.all([
+    supabase
+      .from('wallets')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('buckets')
+      .select('*')
+      .eq('user_id', user.id)
+  ])
 
   // Fallback if table doesn't exist yet or user has no wallets
-  if (error || !wallets || wallets.length === 0) {
+  if (walletsError || !wallets || wallets.length === 0) {
     wallets = [
       {
         id: 'default-fallback',
@@ -111,6 +117,7 @@ export default async function WalletsPage() {
         initialWallets={activeWallets}
         archivedWallets={archivedWallets}
         bankPresets={BANK_PRESETS}
+        initialBuckets={buckets || []}
       />
     </div>
   )
