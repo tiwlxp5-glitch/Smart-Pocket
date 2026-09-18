@@ -1,4 +1,4 @@
-import { BottomNav } from '@/components/BottomNav'
+﻿import { BottomNav } from '@/components/BottomNav'
 import { SmartAdvisorChat } from '@/components/SmartAdvisorChat'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
@@ -16,12 +16,12 @@ export default async function DashboardLayout({
   }
 
   const { data: profile, error } = await supabase.from('profiles').select('is_onboarded').eq('id', user.id).single()
-  
+
   if (!error && profile && profile.is_onboarded === false) {
     redirect('/onboarding')
   }
 
-  // Fetch data for Smart AI context globally
+  // Fetch data for Smart Advisor context
   const { data: wallets } = await supabase.from('wallets').select('*').eq('user_id', user.id).order('created_at', { ascending: true })
   const { data: buckets } = await supabase.from('buckets').select('*').eq('user_id', user.id).order('created_at', { ascending: true })
 

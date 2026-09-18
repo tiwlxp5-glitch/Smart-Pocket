@@ -5,6 +5,7 @@ import { calculateMonthlyCommitment } from '@/utils/recurringHelper'
 import { WalletCard } from '@/components/WalletCard'
 import { DashboardWalletDeleteButton } from '@/components/DashboardWalletDeleteButton'
 import { BANK_PRESETS, getWalletTypeLabel } from '@/utils/walletHelper'
+import OpenAIAdvisorButton from './_components/OpenAIAdvisorButton'
 
 
 // Dummy fallback data if DB is empty or not connected
@@ -149,13 +150,16 @@ export default async function DashboardPage() {
             </h2>
           </div>
         </Link>
-        <Link 
-          href="/dashboard/settings"
-          className="p-2.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 shadow-2xs transition"
-          title="ตั้งค่าบัญชีและงบประมาณ"
-        >
-          <Settings size={20} />
-        </Link>
+        <div className="flex items-center gap-2">
+          <OpenAIAdvisorButton />
+          <Link 
+            href="/dashboard/settings"
+            className="p-2.5 bg-white border border-gray-200 rounded-full text-gray-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 shadow-2xs transition"
+            title="ตั้งค่าบัญชีและงบประมาณ"
+          >
+            <Settings size={20} />
+          </Link>
+        </div>
       </header>
 
       {/* Auto-processed Recurring Notification Banner */}
