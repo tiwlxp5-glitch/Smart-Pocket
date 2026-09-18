@@ -7,6 +7,8 @@ import { moveToTrash } from '../actions'
 import { ExportModal } from './ExportModal'
 import { SlipLightbox } from '@/components/SlipLightbox'
 
+import { HistoryFilter } from './HistoryFilter'
+
 interface HistoryItem {
   id: string
   type: string
@@ -21,7 +23,13 @@ interface HistoryItem {
   buckets?: { name?: string } | { name?: string }[] | null
 }
 
-export default async function HistoryPage() {
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
+
+export default async function HistoryPage(props: { searchParams: SearchParams }) {
+  const searchParams = await props.searchParams
+  const typeFilter = searchParams.type as string | undefined
+  const walletFilter = searchParams.wallet_id as string | undefined
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -30,11 +38,12 @@ export default async function HistoryPage() {
     .from('wallets')
     .select('id, name, color, type')
     .eq('user_id', user?.id)
+    .order('created_at', { ascending: true })
 
   const walletMap = new Map((userWallets || []).map((w) => [w.id, w]))
 
   // ดึงข้อมูลจริงจากฐานข้อมูล (เอาเฉพาะที่ยังไม่ถูกลบ)
-  const { data: transactions } = await supabase
+  let query = supabase
     .from('transactions')
     .select(`
       id, type, amount, note, receiver, transaction_date, slip_url, wallet_id, to_wallet_id, transfer_fee,
@@ -43,6 +52,16 @@ export default async function HistoryPage() {
     .eq('user_id', user?.id)
     .is('deleted_at', null)
     .order('transaction_date', { ascending: false })
+
+  if (typeFilter && typeFilter !== 'all') {
+    query = query.eq('type', typeFilter)
+  }
+
+  if (walletFilter && walletFilter !== 'all') {
+    query = query.or(`wallet_id.eq.${walletFilter},to_wallet_id.eq.${walletFilter}`)
+  }
+
+  const { data: transactions } = await query
 
   return (
     <main className="p-6 pb-24 min-h-screen bg-gray-50">
@@ -60,10 +79,12 @@ export default async function HistoryPage() {
         </div>
       </header>
 
+      <HistoryFilter wallets={userWallets || []} />
+
       <div className="flex flex-col gap-4">
         {!transactions || transactions.length === 0 ? (
           <div className="text-center py-10 text-gray-400 bg-white rounded-2xl border border-gray-100">
-            <p>ยังไม่มีประวัติการทำรายการ</p>
+            <p>ยังไม่มีประวัติการทำรายการตามเงื่อนไขที่เลือก</p>
           </div>
         ) : (
           (transactions as unknown as HistoryItem[]).map((item) => {
