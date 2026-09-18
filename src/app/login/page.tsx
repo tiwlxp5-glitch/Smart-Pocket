@@ -1,4 +1,5 @@
-﻿import { login, signup } from './actions'
+import { login, signup } from './actions'
+import Image from 'next/image'
 import { Wallet } from 'lucide-react'
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
@@ -8,9 +9,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-4 text-white">
-            <Wallet size={24} />
-          </div>
+          <Image src="/app-icon-clean-buckets.svg" alt="Smart Pocket Logo" width={64} height={64} className="mb-4 shadow-sm rounded-2xl" />
           <h1 className="text-2xl font-bold text-gray-900">Smart Pocket</h1>
           <p className="text-gray-500 text-sm mt-1">จัดการเงินง่ายๆ แบบอัตโนมัติ</p>
         </div>

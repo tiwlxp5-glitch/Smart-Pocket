@@ -1,4 +1,5 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
+import Image from 'next/image'
 import { Wallet, ArrowRight, ShieldCheck, PieChart, TrendingUp } from 'lucide-react'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
@@ -14,8 +15,8 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="px-6 py-4 flex items-center justify-between bg-white border-b border-gray-100">
-        <div className="flex items-center gap-2 text-blue-600">
-          <Wallet size={24} />
+        <div className="flex items-center gap-2">
+          <Image src="/app-icon-clean-buckets.svg" alt="Smart Pocket Logo" width={32} height={32} className="rounded-lg shadow-sm" />
           <span className="font-bold text-xl text-gray-900">Smart Pocket</span>
         </div>
         <Link 
@@ -27,9 +28,7 @@ export default async function Home() {
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-3xl mx-auto">
-        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
-          <Wallet size={32} />
-        </div>
+        <Image src="/app-icon-clean-buckets.svg" alt="Smart Pocket Logo" width={72} height={72} className="mb-6 shadow-md rounded-[1.25rem]" />
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-4">
           จัดการเงินของคุณ <br className="hidden md:block" />
           <span className="text-blue-600">ฉลาดขึ้น อัตโนมัติขึ้น</span>

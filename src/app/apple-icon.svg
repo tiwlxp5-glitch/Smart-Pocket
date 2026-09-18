@@ -1,103 +1,97 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
   <defs>
-    <!-- Background Gradient -->
-    <linearGradient id="bg-icon" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1E293B"/>
-      <stop offset="50%" stop-color="#0F172A"/>
-      <stop offset="100%" stop-color="#020617"/>
+    <!-- Background Gradient (Ultra Clean App Card White) -->
+    <linearGradient id="cb-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F8FAFC"/>
     </linearGradient>
 
-    <!-- Border Gradient -->
-    <linearGradient id="border-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.4"/>
-      <stop offset="50%" stop-color="#818CF8" stop-opacity="0.1"/>
-      <stop offset="100%" stop-color="#10B981" stop-opacity="0.3"/>
+    <!-- Blue Wallet Gradient (App Primary Blue) -->
+    <linearGradient id="cb-wallet" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
     </linearGradient>
 
-    <!-- Income Gradient (Emerald) -->
-    <linearGradient id="income-grad-icon" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6EE7B7"/>
-      <stop offset="50%" stop-color="#10B981"/>
-      <stop offset="100%" stop-color="#059669"/>
-    </linearGradient>
-
-    <!-- Expense Gradient (Rose) -->
-    <linearGradient id="expense-grad-icon" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FDA4AF"/>
-      <stop offset="50%" stop-color="#F43F5E"/>
-      <stop offset="100%" stop-color="#E11D48"/>
-    </linearGradient>
-
-    <!-- Pocket Accent Gradient -->
-    <linearGradient id="pocket-surface" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#334155" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#1E293B" stop-opacity="0.8"/>
-    </linearGradient>
-
-    <!-- Glows and Shadows -->
-    <filter id="icon-glow-green" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#10B981" flood-opacity="0.45"/>
+    <!-- Soft Drop Shadow (Matches app's shadow-sm / shadow-md) -->
+    <filter id="cb-shadow-squircle" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#0F172A" flood-opacity="0.08"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.04"/>
     </filter>
 
-    <filter id="icon-glow-rose" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#F43F5E" flood-opacity="0.45"/>
+    <filter id="cb-shadow-wallet" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#1D4ED8" flood-opacity="0.3"/>
     </filter>
-
-    <radialGradient id="center-light" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.2"/>
-      <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
-    </radialGradient>
   </defs>
 
-  <!-- Base Squircle -->
-  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bg-icon)" stroke="url(#border-glow)" stroke-width="2"/>
+  <style>
+    .font-cb {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Prompt', sans-serif;
+    }
+  </style>
 
-  <!-- Ambient Light Center -->
-  <circle cx="256" cy="256" r="200" fill="url(#center-light)"/>
+  <!-- Base Squircle (Clean White Card) -->
+  <rect x="18" y="18" width="476" height="476" rx="114" fill="url(#cb-bg)" stroke="#E2E8F0" stroke-width="3" filter="url(#cb-shadow-squircle)"/>
 
-  <!-- Central Minimal Wallet / Card Pocket Base -->
-  <g transform="translate(146, 156)">
-    <!-- Pocket Body with Frosted Glass Look -->
-    <rect width="220" height="200" rx="36" fill="url(#pocket-surface)" stroke="#475569" stroke-width="1.5"/>
-
-    <!-- Inner Pocket Flap / Slot -->
-    <path d="M 0 60 C 70 85, 150 85, 220 60" fill="none" stroke="#64748B" stroke-width="2"/>
-    <rect x="80" y="90" width="60" height="6" rx="3" fill="#38BDF8" opacity="0.8"/>
+  <!-- ==================================================== -->
+  <!-- 3 ENVELOPE / BUCKET CARDS PEAKING OUT (Like in app)  -->
+  <!-- 1. Emergency (Amber #F59E0B)                         -->
+  <!-- 2. Investment (Emerald #10B981)                      -->
+  <!-- 3. Living (Blue #3B82F6)                             -->
+  <!-- ==================================================== -->
+  
+  <!-- Left Tab: Emergency Fund (Amber) -->
+  <g transform="translate(100, 105)">
+    <rect width="90" height="70" rx="18" fill="#FEF3C7" stroke="#FDE68A" stroke-width="2"/>
+    <circle cx="45" cy="30" r="16" fill="#F59E0B"/>
+    <!-- Mini Shield Icon -->
+    <path d="M 45 20 L 53 23 C 53 29, 49 35, 45 38 C 41 35, 37 29, 37 23 Z" fill="#FFFFFF"/>
+    <text x="45" y="58" class="font-cb" font-size="11" font-weight="800" fill="#B45309" text-anchor="middle">20%</text>
   </g>
 
-  <!-- ====================================================== -->
-  <!-- DYNAMIC INFLOW ARROW (รายรับ / INCOME)                  -->
-  <!-- Inward curving dynamic arrow into the top-left slot   -->
-  <!-- ====================================================== -->
-  <g filter="url(#icon-glow-green)">
-    <!-- Path swooping from top-left into pocket -->
-    <path d="M 96 160 C 96 210, 140 230, 196 230" fill="none" stroke="url(#income-grad-icon)" stroke-width="18" stroke-linecap="round"/>
-    
-    <!-- Arrow Head pointing inward/downward-right -->
-    <path d="M 180 206 L 206 230 L 180 254" fill="none" stroke="url(#income-grad-icon)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-    
-    <!-- Plus symbol badge (+) -->
-    <circle cx="96" cy="140" r="24" fill="url(#income-grad-icon)"/>
-    <path d="M 96 128 L 96 152 M 84 140 L 108 140" stroke="#0F172A" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- Center Tab: Investment Fund (Emerald / Income) -->
+  <g transform="translate(211, 80)">
+    <rect width="90" height="85" rx="18" fill="#D1FAE5" stroke="#A7F3D0" stroke-width="2"/>
+    <circle cx="45" cy="30" r="16" fill="#10B981"/>
+    <!-- Trending Up Icon -->
+    <path d="M 39 34 L 44 28 L 47 31 L 52 25 M 52 25 L 48 25 M 52 25 L 52 29" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="45" y="60" class="font-cb" font-size="12" font-weight="800" fill="#047857" text-anchor="middle">+30%</text>
   </g>
 
-  <!-- ====================================================== -->
-  <!-- DYNAMIC OUTFLOW ARROW (รายจ่าย / EXPENSE)              -->
-  <!-- Outward curving dynamic arrow from pocket to bot-right -->
-  <!-- ====================================================== -->
-  <g filter="url(#icon-glow-rose)">
-    <!-- Path swooping out of pocket to bottom-right -->
-    <path d="M 316 282 C 372 282, 416 302, 416 352" fill="none" stroke="url(#expense-grad-icon)" stroke-width="18" stroke-linecap="round"/>
-    
-    <!-- Arrow Head pointing outward/downward -->
-    <path d="M 390 336 L 416 362 L 442 336" fill="none" stroke="url(#expense-grad-icon)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-
-    <!-- Minus symbol badge (−) -->
-    <circle cx="416" cy="372" r="24" fill="url(#expense-grad-icon)"/>
-    <path d="M 404 372 L 428 372" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- Right Tab: Living Expense (Rose / Living) -->
+  <g transform="translate(322, 105)">
+    <rect width="90" height="70" rx="18" fill="#FFE4E6" stroke="#FECDD3" stroke-width="2"/>
+    <circle cx="45" cy="30" r="16" fill="#F43F5E"/>
+    <!-- Minus / Shopping Icon -->
+    <line x1="39" y1="30" x2="51" y2="30" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+    <text x="45" y="58" class="font-cb" font-size="11" font-weight="800" fill="#BE123C" text-anchor="middle">−50%</text>
   </g>
 
-  <!-- Minimal Brand Dot at Center -->
-  <circle cx="256" cy="285" r="10" fill="#38BDF8"/>
-  <circle cx="256" cy="285" r="18" fill="#38BDF8" opacity="0.3"/>
+  <!-- ==================================================== -->
+  <!-- CENTRAL ROYAL BLUE SMART POCKET WALLET               -->
+  <!-- ==================================================== -->
+  <g transform="translate(106, 155)" filter="url(#cb-shadow-wallet)">
+    <!-- Main Wallet Body -->
+    <rect width="300" height="225" rx="38" fill="url(#cb-wallet)"/>
+
+    <!-- Top Fold Curved Lip -->
+    <path d="M 0 65 C 100 95, 200 95, 300 65" fill="none" stroke="#60A5FA" stroke-width="3"/>
+
+    <!-- Center White Badge with App Name / Icon -->
+    <g transform="translate(110, 100)">
+      <rect width="80" height="60" rx="18" fill="#FFFFFF" filter="url(#cb-shadow-squircle)"/>
+      <!-- App Name Symbol 'S' in Royal Blue -->
+      <text x="40" y="42" class="font-cb" font-size="34" font-weight="900" fill="#1D4ED8" text-anchor="middle">S</text>
+      <!-- Small Baht Dot -->
+      <circle cx="60" cy="22" r="4" fill="#10B981"/>
+    </g>
+
+    <!-- Pocket Seam Accent -->
+    <rect x="40" y="180" width="220" height="4" rx="2" fill="#60A5FA" opacity="0.4"/>
+  </g>
+
+  <!-- Bottom Brand Title Pill (Matches app button) -->
+  <g transform="translate(256, 430)" text-anchor="middle">
+    <rect x="-85" y="-16" width="170" height="32" rx="16" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.5"/>
+    <text x="0" y="5" class="font-cb" font-size="13" font-weight="800" fill="#1D4ED8">Smart Pocket</text>
+  </g>
 </svg>
