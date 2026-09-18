@@ -8,6 +8,7 @@ import { addIncome } from '../actions'
 import { createBrowserClient } from '@supabase/ssr'
 import { Wallet as WalletTypeInterface } from '@/types/database'
 import { getWalletTypeLabel } from '@/utils/walletHelper'
+import { startNavigationProgress } from '@/components/NavigationProgress'
 
 interface Bucket {
   id: string
@@ -131,6 +132,7 @@ export default function IncomePage() {
         await addIncome(formData)
         setIsSuccess(true)
         setTimeout(() => {
+          startNavigationProgress()
           router.push('/dashboard')
         }, 1500)
       } catch (error) {
@@ -331,8 +333,17 @@ export default function IncomePage() {
             disabled={numAmount <= 0 || isLoading}
             className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-base hover:bg-emerald-700 transition disabled:opacity-50 disabled:bg-gray-400 flex items-center justify-center gap-2 shadow-md active:scale-[0.99]"
           >
-            <PieChart size={18} />
-            {isLoading ? 'กำลังโหลด...' : 'ตรวจสอบและจัดสรรเงิน'}
+            {isLoading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                <span>กำลังโหลดข้อมูล...</span>
+              </>
+            ) : (
+              <>
+                <PieChart size={18} />
+                <span>ตรวจสอบและจัดสรรเงิน</span>
+              </>
+            )}
           </button>
         </form>
       ) : (

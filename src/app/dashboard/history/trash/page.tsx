@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { th } from 'date-fns/locale'
 import { restoreFromTrash } from '../../actions'
+import { RestoreHistoryButton } from './RestoreHistoryButton'
 
 interface TrashItem {
   id: string
@@ -86,15 +87,7 @@ export default async function TrashPage() {
               </div>
 
               <div className="flex items-center justify-end pt-3 border-t border-gray-50 mt-1">
-                <form action={async () => {
-                  'use server'
-                  await restoreFromTrash(item.id)
-                }}>
-                  <button type="submit" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-full">
-                    <ArchiveRestore size={16} />
-                    กู้คืนรายการนี้
-                  </button>
-                </form>
+                <RestoreHistoryButton id={item.id} />
               </div>
             </div>
           ))

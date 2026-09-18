@@ -5,7 +5,7 @@ import { Wallet, WalletType, Bucket } from '@/types/database'
 import { BankPreset, getWalletTypeLabel } from '@/utils/walletHelper'
 import { WalletCard } from '@/components/WalletCard'
 import { createWallet, updateWallet, deleteWallet } from '@/app/dashboard/actions'
-import { Plus, Edit2, Archive, X, Check, Building2, Banknote, Smartphone, CreditCard } from 'lucide-react'
+import { Plus, Edit2, Archive, X, Check, Building2, Banknote, Smartphone, CreditCard, Loader2 } from 'lucide-react'
 
 interface Props {
   initialWallets: Wallet[]
@@ -24,6 +24,7 @@ export function WalletsClientManager({
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deletingWalletId, setDeletingWalletId] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // Form states for Create
@@ -81,22 +82,28 @@ export function WalletsClientManager({
     setIsSubmitting(true)
     setErrorMessage(null)
 
-    const formData = new FormData()
-    formData.append('name', name)
-    formData.append('type', type)
-    formData.append('bank_name', bankName)
-    formData.append('color', color)
-    formData.append('opening_balance', openingBalance || '0')
-    formData.append('cash_balance', cashBalance || '0')
-    formData.append('allocation_percentage', allocationPercentage)
-    if (monthlyBudget) formData.append('monthly_budget', monthlyBudget)
+    try {
+      const formData = new FormData()
+      formData.append('name', name)
+      formData.append('type', type)
+      formData.append('bank_name', bankName)
+      formData.append('color', color)
+      formData.append('opening_balance', openingBalance || '0')
+      formData.append('cash_balance', cashBalance || '0')
+      formData.append('allocation_percentage', allocationPercentage)
+      if (monthlyBudget) formData.append('monthly_budget', monthlyBudget)
 
-    const res = await createWallet(formData)
-    setIsSubmitting(false)
-    if (res?.success) {
-      setIsCreateModalOpen(false)
-    } else {
-      setErrorMessage(res?.message || 'เกิดข้อผิดพลาดในการสร้างกระเป๋าเงิน')
+      const res = await createWallet(formData)
+      if (res?.success) {
+        setIsCreateModalOpen(false)
+      } else {
+        setErrorMessage(res?.message || 'เกิดข้อผิดพลาดในการสร้างกระเป๋าเงิน')
+      }
+    } catch (err) {
+      console.error('Failed to create wallet:', err)
+      setErrorMessage('เกิดข้อผิดพลาดในการสร้างกระเป๋าเงิน')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -106,19 +113,25 @@ export function WalletsClientManager({
     setIsSubmitting(true)
     setErrorMessage(null)
 
-    const formData = new FormData()
-    formData.append('wallet_id', editingWallet.id)
-    formData.append('name', editName)
-    formData.append('color', editColor)
-    formData.append('allocation_percentage', editAllocation)
-    if (editBudget) formData.append('monthly_budget', editBudget)
+    try {
+      const formData = new FormData()
+      formData.append('wallet_id', editingWallet.id)
+      formData.append('name', editName)
+      formData.append('color', editColor)
+      formData.append('allocation_percentage', editAllocation)
+      if (editBudget) formData.append('monthly_budget', editBudget)
 
-    const res = await updateWallet(formData)
-    setIsSubmitting(false)
-    if (res?.success) {
-      setEditingWallet(null)
-    } else {
-      setErrorMessage(res?.message || 'เกิดข้อผิดพลาดในการแก้ไขกระเป๋าเงิน')
+      const res = await updateWallet(formData)
+      if (res?.success) {
+        setEditingWallet(null)
+      } else {
+        setErrorMessage(res?.message || 'เกิดข้อผิดพลาดในการแก้ไขกระเป๋าเงิน')
+      }
+    } catch (err) {
+      console.error('Failed to update wallet:', err)
+      setErrorMessage('เกิดข้อผิดพลาดในการแก้ไขกระเป๋าเงิน')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -126,9 +139,14 @@ export function WalletsClientManager({
     if (!confirm(`คุณต้องการลบ/ซ่อนกระเป๋า "${walletName}" ใช่หรือไม่?\n(หากมีประวัติรายการ จะต้องโอนเงินออกให้เป็น 0 บาทก่อน)`)) {
       return
     }
-    const res = await deleteWallet(walletId)
-    if (!res?.success) {
-      alert(res?.message || 'เกิดข้อผิดพลาดในการลบกระเป๋า')
+    setDeletingWalletId(walletId)
+    try {
+      const res = await deleteWallet(walletId)
+      if (!res?.success) {
+        alert(res?.message || 'เกิดข้อผิดพลาดในการลบกระเป๋า')
+      }
+    } finally {
+      setDeletingWalletId(null)
     }
   }
 
@@ -177,10 +195,15 @@ export function WalletsClientManager({
         {!wallet.is_default && (
           <button
             onClick={() => handleDelete(wallet.id, wallet.name)}
-            className="p-1.5 rounded-lg bg-black/30 hover:bg-black/50 text-white backdrop-blur-md transition shadow-2xs"
+            disabled={deletingWalletId === wallet.id}
+            className="p-1.5 rounded-lg bg-black/30 hover:bg-black/50 text-white backdrop-blur-md transition shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
             title="ลบ/ซ่อนกระเป๋า"
           >
-            <Archive size={13} />
+            {deletingWalletId === wallet.id ? (
+              <Loader2 size={13} className="animate-spin text-white" />
+            ) : (
+              <Archive size={13} />
+            )}
           </button>
         )}
       </div>
@@ -495,9 +518,16 @@ export function WalletsClientManager({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
-                  {isSubmitting ? 'กำลังบันทึก...' : 'สร้างกระเป๋า'}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>กำลังบันทึก...</span>
+                    </>
+                  ) : (
+                    'สร้างกระเป๋า'
+                  )}
                 </button>
               </div>
             </form>
@@ -615,9 +645,16 @@ export function WalletsClientManager({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
-                  {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>กำลังบันทึก...</span>
+                    </>
+                  ) : (
+                    'บันทึกการแก้ไข'
+                  )}
                 </button>
               </div>
             </form>

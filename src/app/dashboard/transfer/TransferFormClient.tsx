@@ -6,6 +6,7 @@ import { Wallet } from '@/types/database'
 import { getWalletTypeLabel, validateTransfer } from '@/utils/walletHelper'
 import { transferMoney } from '@/app/dashboard/actions'
 import { ArrowUpDown, ArrowRight, ArrowRightLeft, Sparkles, CheckCircle2, Loader2 } from 'lucide-react'
+import { startNavigationProgress } from '@/components/NavigationProgress'
 
 interface Props {
   wallets: Wallet[]
@@ -62,16 +63,22 @@ export function TransferFormClient({ wallets }: Props) {
     formData.append('note', note)
     formData.append('date', new Date().toISOString())
 
-    const res = await transferMoney(formData)
-    setIsSubmitting(false)
-
-    if (res?.success) {
-      setIsSuccess(true)
-      setTimeout(() => {
-        router.push('/dashboard')
-      }, 1200)
-    } else {
-      setErrorMsg(res?.message || 'เกิดข้อผิดพลาดในการโอนเงิน')
+    try {
+      const res = await transferMoney(formData)
+      if (res?.success) {
+        setIsSuccess(true)
+        setTimeout(() => {
+          startNavigationProgress()
+          router.push('/dashboard')
+        }, 1200)
+      } else {
+        setErrorMsg(res?.message || 'เกิดข้อผิดพลาดในการโอนเงิน')
+      }
+    } catch (err) {
+      console.error('Failed to transfer money:', err)
+      setErrorMsg('เกิดข้อผิดพลาดในการโอนเงิน')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 

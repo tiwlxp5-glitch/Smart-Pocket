@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { X, TrendingUp, TrendingDown, ArrowRightLeft, Camera } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { X, TrendingUp, TrendingDown, ArrowRightLeft, Camera, Loader2 } from 'lucide-react'
+import { startNavigationProgress } from './NavigationProgress'
 
 interface QuickActionModalProps {
   isOpen: boolean
@@ -54,6 +55,34 @@ const actions = [
 
 export function QuickActionModal({ isOpen, onClose }: QuickActionModalProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const [navigatingHref, setNavigatingHref] = useState<string | null>(null)
+  const fallbackTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const clearFallbackTimer = () => {
+    if (fallbackTimerRef.current) {
+      clearTimeout(fallbackTimerRef.current)
+      fallbackTimerRef.current = null
+    }
+  }
+
+  useEffect(() => {
+    if (!isOpen) {
+      setNavigatingHref(null)
+      clearFallbackTimer()
+    }
+  }, [isOpen])
+
+  // Reset navigatingHref on route change
+  useEffect(() => {
+    setNavigatingHref(null)
+    clearFallbackTimer()
+  }, [pathname])
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => clearFallbackTimer()
+  }, [])
 
   // Close on Escape key
   useEffect(() => {
@@ -78,8 +107,18 @@ export function QuickActionModal({ isOpen, onClose }: QuickActionModalProps) {
   if (!isOpen) return null
 
   const handleAction = (href: string) => {
-    onClose()
+    if (pathname === href) {
+      onClose()
+      return
+    }
+    clearFallbackTimer()
+    setNavigatingHref(href)
+    startNavigationProgress()
     router.push(href)
+    // Safety fallback: auto-close after 3s if navigation is delayed
+    fallbackTimerRef.current = setTimeout(() => {
+      onClose()
+    }, 3000)
   }
 
   return (
@@ -121,17 +160,25 @@ export function QuickActionModal({ isOpen, onClose }: QuickActionModalProps) {
         <div className="grid grid-cols-2 gap-3 px-6 pb-8">
           {actions.map((action) => {
             const Icon = action.icon
+            const isItemNavigating = navigatingHref === action.href
             return (
               <button
                 key={action.href}
                 onClick={() => handleAction(action.href)}
-                className={`flex flex-col items-start gap-3 p-4 rounded-2xl ${action.lightBg} border border-transparent hover:border-current hover:shadow-md active:scale-[0.97] transition-all duration-150 focus:outline-none focus:ring-2 ${action.ringColor}`}
+                disabled={Boolean(navigatingHref)}
+                className={`flex flex-col items-start gap-3 p-4 rounded-2xl ${action.lightBg} border border-transparent hover:border-current hover:shadow-md active:scale-[0.97] transition-all duration-150 focus:outline-none focus:ring-2 ${action.ringColor} disabled:opacity-60`}
               >
                 <div className={`w-11 h-11 rounded-xl ${action.bgColor} flex items-center justify-center shadow-sm`}>
-                  <Icon size={22} className="text-white" />
+                  {isItemNavigating ? (
+                    <Loader2 size={22} className="text-white animate-spin" />
+                  ) : (
+                    <Icon size={22} className="text-white" />
+                  )}
                 </div>
                 <div className="text-left">
-                  <p className={`font-bold text-sm ${action.textColor}`}>{action.label}</p>
+                  <p className={`font-bold text-sm ${action.textColor}`}>
+                    {isItemNavigating ? 'กำลังเปิด...' : action.label}
+                  </p>
                   <p className="text-[11px] text-gray-500 leading-tight mt-0.5">{action.sublabel}</p>
                 </div>
               </button>

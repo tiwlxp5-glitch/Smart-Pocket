@@ -9,6 +9,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import { extractSlipData } from './extract-action'
 import { Wallet as WalletTypeInterface } from '@/types/database'
 import { getWalletTypeLabel, detectBankFromText } from '@/utils/walletHelper'
+import { startNavigationProgress } from '@/components/NavigationProgress'
 
 interface Bucket {
   id: string
@@ -40,6 +41,7 @@ export default function ExpensePage() {
   const [selectedBucketId, setSelectedBucketId] = useState<string>(aiBucket || '')
   const [isSuccess, setIsSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   // AI Slip State
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -232,40 +234,42 @@ export default function ExpensePage() {
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault()
     if (numAmount > 0 && selectedBucketId) {
-      setIsLoading(true) // Disable form while processing
-      
-      let finalSlipUrl = ''
-      
-      // อัพโหลดรูปภาพที่บีบอัดแล้วขึ้น Supabase Storage (ประหยัดพื้นที่ กว่าไฟล์ต้นฉบับ)
-      if (compressedSlipBlob) {
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('slips')
-          .upload(fileName, compressedSlipBlob, { contentType: 'image/jpeg' })
-          
-        if (!uploadError && uploadData) {
-          const { data } = supabase.storage.from('slips').getPublicUrl(uploadData.path)
-          finalSlipUrl = data.publicUrl
-        }
-      }
-
-      const formData = new FormData()
-      formData.append('amount', numAmount.toString())
-      formData.append('note', note)
-      formData.append('receiver', receiver)
-      formData.append('bucket_id', selectedBucketId)
-      if (selectedWalletId) formData.append('wallet_id', selectedWalletId)
-      if (finalSlipUrl) formData.append('slip_url', finalSlipUrl)
+      setIsSubmitting(true) // Disable form while processing
       
       try {
+        let finalSlipUrl = ''
+        
+        // อัพโหลดรูปภาพที่บีบอัดแล้วขึ้น Supabase Storage (ประหยัดพื้นที่ กว่าไฟล์ต้นฉบับ)
+        if (compressedSlipBlob) {
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('slips')
+            .upload(fileName, compressedSlipBlob, { contentType: 'image/jpeg' })
+            
+          if (!uploadError && uploadData) {
+            const { data } = supabase.storage.from('slips').getPublicUrl(uploadData.path)
+            finalSlipUrl = data.publicUrl
+          }
+        }
+
+        const formData = new FormData()
+        formData.append('amount', numAmount.toString())
+        formData.append('note', note)
+        formData.append('receiver', receiver)
+        formData.append('bucket_id', selectedBucketId)
+        if (selectedWalletId) formData.append('wallet_id', selectedWalletId)
+        if (finalSlipUrl) formData.append('slip_url', finalSlipUrl)
+        
         await addExpense(formData)
         setIsSuccess(true)
         setTimeout(() => {
+          startNavigationProgress()
           router.push('/dashboard')
         }, 2000)
       } catch (error) {
+        console.error('Failed to add expense:', error)
         alert('เกิดข้อผิดพลาดในการบันทึกรายจ่าย')
-        setIsLoading(false)
+        setIsSubmitting(false)
       }
     }
   }
@@ -488,10 +492,10 @@ export default function ExpensePage() {
 
         <button
           type="submit"
-          disabled={numAmount <= 0 || !selectedBucketId || isScanning || isLoading}
+          disabled={numAmount <= 0 || !selectedBucketId || isScanning || isSubmitting || isLoading}
           className="w-full bg-rose-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-rose-700 transition-all active:scale-[0.98] duration-200 disabled:opacity-50 disabled:bg-gray-400 flex items-center justify-center gap-2"
         >
-          {isLoading ? (
+          {isSubmitting ? (
             <>
               <Loader2 className="animate-spin" size={24} />
               กำลังบันทึก...

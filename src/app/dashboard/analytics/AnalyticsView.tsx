@@ -314,7 +314,7 @@ export function AnalyticsView({
             <button
               key={tab.id}
               onClick={() => setPeriod(tab.id as PeriodType)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
                 isActive
                   ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'

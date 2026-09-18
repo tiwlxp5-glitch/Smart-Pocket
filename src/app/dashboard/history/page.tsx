@@ -8,6 +8,7 @@ import { ExportModal } from './ExportModal'
 import { SlipLightbox } from '@/components/SlipLightbox'
 
 import { HistoryFilter } from './HistoryFilter'
+import { DeleteHistoryButton } from './DeleteHistoryButton'
 
 interface HistoryItem {
   id: string
@@ -187,15 +188,7 @@ export default async function HistoryPage(props: { searchParams: SearchParams })
                   <div></div>
                 )}
                 
-                <form action={async () => {
-                  'use server'
-                  await moveToTrash(item.id)
-                }}>
-                  <button type="submit" className="text-xs font-medium text-gray-400 hover:text-rose-500 transition flex items-center gap-1">
-                    <Trash2 size={14} />
-                    ลบรายการ
-                  </button>
-                </form>
+                <DeleteHistoryButton id={item.id} />
               </div>
             </div>
           )})

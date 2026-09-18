@@ -203,13 +203,13 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-2">
           <Link 
             href="/dashboard/transfer" 
-            className="flex-1 py-2 px-3 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition text-white shadow-2xs"
+            className="flex-1 py-2 px-3 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-[0.98] text-white shadow-2xs"
           >
             <ArrowRightLeft size={14} /> โอนเงิน
           </Link>
           <Link 
             href="/dashboard/wallets" 
-            className="flex-1 py-2 px-3 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition text-white shadow-2xs"
+            className="flex-1 py-2 px-3 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-[0.98] text-white shadow-2xs"
           >
             <WalletIcon size={14} /> จัดการกระเป๋า
           </Link>
@@ -230,13 +230,13 @@ export default async function DashboardPage() {
 
         <div className="flex flex-col gap-2.5">
           {wallets.map((w) => (
-            <Link key={w.id} href="/dashboard/wallets" className="block">
+            <Link key={w.id} href="/dashboard/wallets" className="block active:scale-[0.98] transition-transform">
               <WalletCard wallet={w} compact={true} />
             </Link>
           ))}
           <Link
             href="/dashboard/wallets"
-            className="rounded-2xl border-2 border-dashed border-gray-200 hover:border-blue-400 bg-gray-50/60 hover:bg-blue-50/40 p-3 flex items-center justify-center gap-2 transition group"
+            className="rounded-2xl border-2 border-dashed border-gray-200 hover:border-blue-400 bg-gray-50/60 hover:bg-blue-50/40 p-3 flex items-center justify-center gap-2 transition active:scale-[0.98] group"
           >
             <div className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-400 group-hover:text-blue-600 group-hover:border-blue-300 flex items-center justify-center shadow-2xs transition">
               <Plus size={16} />
@@ -297,7 +297,7 @@ export default async function DashboardPage() {
       {/* Quick Analytics Card */}
       <Link 
         href="/dashboard/analytics"
-        className="block bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-8 hover:shadow-md hover:border-blue-200 transition group"
+        className="block bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-8 hover:shadow-md hover:border-blue-200 transition active:scale-[0.98] group"
       >
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 text-blue-600 font-bold text-sm">
@@ -323,7 +323,7 @@ export default async function DashboardPage() {
       {/* Recurring Transactions Shortcut Card */}
       <Link 
         href="/dashboard/recurring"
-        className="block bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-8 hover:shadow-md hover:border-indigo-200 transition group"
+        className="block bg-white border border-gray-100 rounded-3xl p-5 shadow-sm mb-8 hover:shadow-md hover:border-indigo-200 transition active:scale-[0.98] group"
       >
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">

@@ -51,3 +51,32 @@ Integrity mode: development
 - [ ] รันคำสั่ง npm test ผ่านทั้งหมด (รวมทั้ง Milestone 4 และ Milestone 5)
 - [ ] คำสั่ง npm run build คอมไพล์ผ่านสมบูรณ์ 0 errors, 0 type errors
 - [ ] ทุกฟังก์ชันปฏิบัติตามมาตรฐานความปลอดภัย RLS และ Production Baseline
+
+## 2026-09-18T14:26:05Z
+
+# Teamwork Project Prompt — Draft
+
+> Status: Launched
+> Goal: Delegation complete — teamwork_preview is currently executing.
+> Requested team: Small, focused team
+
+Investigate and fix the perceived UI delay ("กดไม่ติด" or unresponsiveness) in the Next.js App Router application across all interactions (navigation, form submissions, button clicks). The fix must be comprehensive and permanent without breaking existing functionality.
+This is a single self-contained fix; keep it small and focused.
+
+Working directory: c:\แอพรายรับรายจ่าย
+Integrity mode: development
+
+## Requirements
+
+### R1. Comprehensive UI Responsiveness Audit & Fix
+Audit all interactive elements (navigation `<Link>`s, form submissions, and `router.push` actions) to ensure immediate visual feedback upon interaction. Implement global loading states (e.g., top progress bar) and transition states (`useTransition`, `pending` states) where missing.
+
+### R2. Zero Regression Policy
+The fixes must purely address UI responsiveness and transition states. Do not alter the core business logic, database queries, or routing structure. Existing features (AI Slip Scanner, Recurring Transactions, Wallets) must function exactly as before.
+
+## Acceptance Criteria
+
+### Verification
+- [ ] Automated build (`npm run build`) completes successfully without any errors.
+- [ ] Manual inspection confirms that clicking any navigation link or action button provides instant visual feedback (e.g., spinner, progress bar, or disabled state).
+- [ ] Unit tests (`npm test`) continue to pass 100%.

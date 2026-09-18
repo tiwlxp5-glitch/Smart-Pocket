@@ -102,8 +102,9 @@ export default function RecurringPage() {
   const [formSubmitting, setFormSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
-  // Delete confirmation
+  // Delete confirmation & toggle concurrency protection
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const [isPending, startTransition] = useTransition()
@@ -217,62 +218,81 @@ export default function RecurringPage() {
     setFormError(null)
     setFormSubmitting(true)
 
-    const formData = new FormData()
-    formData.append('type', formType)
-    formData.append('amount', amount)
-    formData.append('note', note)
-    formData.append('category', category)
-    formData.append('bucket_id', bucketId)
-    if (walletId) formData.append('wallet_id', walletId)
-    formData.append('frequency', frequency)
-    if (frequency === 'monthly') {
-      formData.append('day_of_month', dayOfMonth)
-    } else if (frequency === 'weekly') {
-      formData.append('day_of_week', dayOfWeek)
-    }
-    formData.append('start_date', startDate)
-    if (endDate) formData.append('end_date', endDate)
-    formData.append('auto_process', autoProcess ? 'true' : 'false')
+    try {
+      const formData = new FormData()
+      formData.append('type', formType)
+      formData.append('amount', amount)
+      formData.append('note', note)
+      formData.append('category', category)
+      formData.append('bucket_id', bucketId)
+      if (walletId) formData.append('wallet_id', walletId)
+      formData.append('frequency', frequency)
+      if (frequency === 'monthly') {
+        formData.append('day_of_month', dayOfMonth)
+      } else if (frequency === 'weekly') {
+        formData.append('day_of_week', dayOfWeek)
+      }
+      formData.append('start_date', startDate)
+      if (endDate) formData.append('end_date', endDate)
+      formData.append('auto_process', autoProcess ? 'true' : 'false')
 
-    let res
-    if (editingSchedule) {
-      res = await updateRecurringSchedule(editingSchedule.id, formData)
-    } else {
-      res = await createRecurringSchedule(formData)
-    }
+      let res
+      if (editingSchedule) {
+        res = await updateRecurringSchedule(editingSchedule.id, formData)
+      } else {
+        res = await createRecurringSchedule(formData)
+      }
 
-    if (res.success) {
-      setIsModalOpen(false)
-      setFeedback({ type: 'success', text: editingSchedule ? 'บันทึกการแก้ไขเรียบร้อย' : 'เพิ่มรายการประจำสำเร็จ' })
-      setTimeout(() => setFeedback(null), 3500)
-      await loadData()
-      startTransition(() => {
-        router.refresh()
-      })
-    } else {
-      setFormError(res.message || 'เกิดข้อผิดพลาดในการบันทึก')
+      if (res.success) {
+        setIsModalOpen(false)
+        setFeedback({ type: 'success', text: editingSchedule ? 'บันทึกการแก้ไขเรียบร้อย' : 'เพิ่มรายการประจำสำเร็จ' })
+        setTimeout(() => setFeedback(null), 3500)
+        await loadData()
+        startTransition(() => {
+          router.refresh()
+        })
+      } else {
+        setFormError(res.message || 'เกิดข้อผิดพลาดในการบันทึก')
+      }
+    } catch (err) {
+      console.error('Failed to submit recurring schedule:', err)
+      setFormError('เกิดข้อผิดพลาดในการบันทึกข้อมูล')
+    } finally {
+      setFormSubmitting(false)
     }
-    setFormSubmitting(false)
   }
 
   // Handle Toggle Active
   const handleToggleActive = async (id: string, currentActive: boolean) => {
+    if (togglingId) return
     const nextState = !currentActive
+    setTogglingId(id)
+
     // Optimistic update
     setSchedules((prev) =>
       prev.map((s) => (s.id === id ? { ...s, is_active: nextState } : s))
     )
 
-    const res = await toggleRecurringActive(id, nextState)
-    if (!res.success) {
-      // Rollback
+    try {
+      const res = await toggleRecurringActive(id, nextState)
+      if (!res.success) {
+        // Rollback
+        setSchedules((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, is_active: currentActive } : s))
+        )
+        setFeedback({ type: 'error', text: res.message || 'ไม่สามารถเปลี่ยนสถานะได้' })
+      } else {
+        setFeedback({ type: 'success', text: res.message || 'อัปเดตสถานะสำเร็จ' })
+        setTimeout(() => setFeedback(null), 3000)
+      }
+    } catch (err) {
+      console.error('Failed to toggle recurring schedule:', err)
       setSchedules((prev) =>
         prev.map((s) => (s.id === id ? { ...s, is_active: currentActive } : s))
       )
-      setFeedback({ type: 'error', text: res.message || 'ไม่สามารถเปลี่ยนสถานะได้' })
-    } else {
-      setFeedback({ type: 'success', text: res.message || 'อัปเดตสถานะสำเร็จ' })
-      setTimeout(() => setFeedback(null), 3000)
+      setFeedback({ type: 'error', text: 'เกิดข้อผิดพลาดในการเปลี่ยนสถานะ' })
+    } finally {
+      setTogglingId(null)
     }
   }
 
@@ -281,15 +301,21 @@ export default function RecurringPage() {
     if (!window.confirm('คุณต้องการลบรายการประจำนี้ใช่หรือไม่?')) return
 
     setDeletingId(id)
-    const res = await deleteRecurringSchedule(id)
-    if (res.success) {
-      setSchedules((prev) => prev.filter((s) => s.id !== id))
-      setFeedback({ type: 'success', text: 'ลบรายการประจำเรียบร้อยแล้ว' })
-      setTimeout(() => setFeedback(null), 3000)
-    } else {
-      setFeedback({ type: 'error', text: res.message || 'ไม่สามารถลบรายการได้' })
+    try {
+      const res = await deleteRecurringSchedule(id)
+      if (res.success) {
+        setSchedules((prev) => prev.filter((s) => s.id !== id))
+        setFeedback({ type: 'success', text: 'ลบรายการประจำเรียบร้อยแล้ว' })
+        setTimeout(() => setFeedback(null), 3000)
+      } else {
+        setFeedback({ type: 'error', text: res.message || 'ไม่สามารถลบรายการได้' })
+      }
+    } catch (err) {
+      console.error('Failed to delete recurring schedule:', err)
+      setFeedback({ type: 'error', text: 'เกิดข้อผิดพลาดในการลบรายการ' })
+    } finally {
+      setDeletingId(null)
     }
-    setDeletingId(null)
   }
 
   // Monthly commitment calculation
@@ -511,14 +537,16 @@ export default function RecurringPage() {
                       {/* Active/Pause Toggle */}
                       <button
                         type="button"
+                        disabled={togglingId === schedule.id}
                         onClick={() => handleToggleActive(schedule.id, schedule.is_active)}
-                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-full transition ${
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-full transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 ${
                           schedule.is_active 
                             ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' 
                             : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                         }`}
                       >
-                        {schedule.is_active ? 'เปิดอยู่' : 'ปิดอยู่'}
+                        {togglingId === schedule.id && <Loader2 size={10} className="animate-spin" />}
+                        <span>{schedule.is_active ? 'เปิดอยู่' : 'ปิดอยู่'}</span>
                       </button>
 
                       {/* Edit */}

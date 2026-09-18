@@ -21,6 +21,7 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
+import { startNavigationProgress } from '@/components/NavigationProgress'
 import { updateUserProfile, updateUserPassword, updateBucketSettings } from '../actions'
 
 interface BucketItem {
@@ -60,6 +61,7 @@ export default function SettingsPage() {
   const [wallets, setWallets] = useState<WalletItem[]>([])
   const [savingBucketId, setSavingBucketId] = useState<string | null>(null)
   const [budgetFeedback, setBudgetFeedback] = useState<string | null>(null)
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -105,17 +107,23 @@ export default function SettingsPage() {
     setProfileSaving(true)
     setProfileFeedback(null)
 
-    const formData = new FormData()
-    formData.append('full_name', fullName)
-    const res = await updateUserProfile(formData)
+    try {
+      const formData = new FormData()
+      formData.append('full_name', fullName)
+      const res = await updateUserProfile(formData)
 
-    if (res.success) {
-      setProfileFeedback({ type: 'success', text: res.message || 'บันทึกสำเร็จ' })
-      router.refresh()
-    } else {
-      setProfileFeedback({ type: 'error', text: res.message || 'เกิดข้อผิดพลาด' })
+      if (res.success) {
+        setProfileFeedback({ type: 'success', text: res.message || 'บันทึกสำเร็จ' })
+        router.refresh()
+      } else {
+        setProfileFeedback({ type: 'error', text: res.message || 'เกิดข้อผิดพลาด' })
+      }
+    } catch (err) {
+      console.error('Failed to update profile:', err)
+      setProfileFeedback({ type: 'error', text: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' })
+    } finally {
+      setProfileSaving(false)
     }
-    setProfileSaving(false)
   }
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -123,19 +131,25 @@ export default function SettingsPage() {
     setPasswordSaving(true)
     setPasswordFeedback(null)
 
-    const formData = new FormData()
-    formData.append('password', password)
-    formData.append('confirm_password', confirmPassword)
-    const res = await updateUserPassword(formData)
+    try {
+      const formData = new FormData()
+      formData.append('password', password)
+      formData.append('confirm_password', confirmPassword)
+      const res = await updateUserPassword(formData)
 
-    if (res.success) {
-      setPasswordFeedback({ type: 'success', text: res.message || 'เปลี่ยนรหัสผ่านเรียบร้อย' })
-      setPassword('')
-      setConfirmPassword('')
-    } else {
-      setPasswordFeedback({ type: 'error', text: res.message || 'เกิดข้อผิดพลาด' })
+      if (res.success) {
+        setPasswordFeedback({ type: 'success', text: res.message || 'เปลี่ยนรหัสผ่านเรียบร้อย' })
+        setPassword('')
+        setConfirmPassword('')
+      } else {
+        setPasswordFeedback({ type: 'error', text: res.message || 'เกิดข้อผิดพลาด' })
+      }
+    } catch (err) {
+      console.error('Failed to update password:', err)
+      setPasswordFeedback({ type: 'error', text: 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน' })
+    } finally {
+      setPasswordSaving(false)
     }
-    setPasswordSaving(false)
   }
 
   const handleSaveBudget = async (bucketId: string) => {
@@ -181,7 +195,7 @@ export default function SettingsPage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition">
+          <Link href="/dashboard" className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition active:scale-95 duration-150">
             <ChevronLeft size={24} />
           </Link>
           <h1 className="text-xl font-bold text-gray-900">ตั้งค่าบัญชีและการใช้งาน</h1>
@@ -235,7 +249,7 @@ export default function SettingsPage() {
             <button
               type="submit"
               disabled={profileSaving}
-              className="mt-1 w-full py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+              className="mt-1 w-full py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] disabled:opacity-50"
             >
               {profileSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               <span>บันทึกชื่อโปรไฟล์</span>
@@ -294,7 +308,7 @@ export default function SettingsPage() {
             <button
               type="submit"
               disabled={passwordSaving}
-              className="mt-1 w-full py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-black transition flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+              className="mt-1 w-full py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-black transition flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] disabled:opacity-50"
             >
               {passwordSaving ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={16} />}
               <span>อัปเดตรหัสผ่าน</span>
@@ -315,7 +329,7 @@ export default function SettingsPage() {
           </div>
           <Link
             href="/dashboard/wallets"
-            className="w-full py-3 px-4 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-700 rounded-2xl text-sm font-semibold transition flex items-center justify-between border border-emerald-100 group"
+            className="w-full py-3 px-4 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-700 rounded-2xl text-sm font-semibold transition active:scale-[0.98] flex items-center justify-between border border-emerald-100 group"
           >
             <div className="flex items-center gap-2">
               <Wallet size={18} className="text-emerald-600 group-hover:scale-110 transition-transform duration-300" />
@@ -338,7 +352,7 @@ export default function SettingsPage() {
           </div>
           <Link
             href="/dashboard/recurring"
-            className="w-full py-3 px-4 bg-indigo-50 hover:bg-indigo-100/80 text-indigo-700 rounded-2xl text-sm font-semibold transition flex items-center justify-between border border-indigo-100 group"
+            className="w-full py-3 px-4 bg-indigo-50 hover:bg-indigo-100/80 text-indigo-700 rounded-2xl text-sm font-semibold transition active:scale-[0.98] flex items-center justify-between border border-indigo-100 group"
           >
             <div className="flex items-center gap-2">
               <Repeat size={18} className="text-indigo-600 group-hover:rotate-45 transition-transform duration-300" />
@@ -350,13 +364,30 @@ export default function SettingsPage() {
 
         {/* Section 5: Sign Out */}
         <section className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
-          <form action="/auth/signout" method="post">
+          <form
+            action="/auth/signout"
+            method="post"
+            onSubmit={() => {
+              setIsSigningOut(true)
+              startNavigationProgress()
+            }}
+          >
             <button
               type="submit"
-              className="w-full py-3 bg-rose-50 text-rose-600 rounded-2xl text-sm font-semibold hover:bg-rose-100 transition flex items-center justify-center gap-2 border border-rose-100"
+              disabled={isSigningOut}
+              className="w-full py-3 bg-rose-50 text-rose-600 rounded-2xl text-sm font-semibold hover:bg-rose-100 transition flex items-center justify-center gap-2 border border-rose-100 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <LogOut size={18} />
-              <span>ออกจากระบบ (Sign Out)</span>
+              {isSigningOut ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  <span>กำลังออกจากระบบ...</span>
+                </>
+              ) : (
+                <>
+                  <LogOut size={18} />
+                  <span>ออกจากระบบ (Sign Out)</span>
+                </>
+              )}
             </button>
           </form>
         </section>

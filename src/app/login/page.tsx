@@ -2,6 +2,7 @@ import { login } from './actions'
 import Image from 'next/image'
 import Link from 'next/link'
 import { AuthCard } from '@/components/AuthCard'
+import { SubmitButton } from '@/components/SubmitButton'
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const params = await searchParams
@@ -49,12 +50,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           )}
 
           <div className="flex flex-col gap-4 mt-4">
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors active:scale-95"
-            >
+            <SubmitButton pendingText="กำลังเข้าสู่ระบบ...">
               เข้าสู่ระบบ
-            </button>
+            </SubmitButton>
             
             <div className="text-center text-sm text-gray-500 mt-2">
               ยังไม่มีบัญชี?{' '}
