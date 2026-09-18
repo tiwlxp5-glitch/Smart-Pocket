@@ -1,14 +1,23 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText, createUIMessageStreamResponse, toUIMessageStream, convertToModelMessages } from 'ai';
 
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
-});
-
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
+    // FIX: Validate API key first — missing key is the most common production failure
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    if (!apiKey) {
+      console.error('[Smart Advisor] GEMINI_API_KEY is not set in environment variables!');
+      return new Response(
+        JSON.stringify({ error: 'API key ยังไม่ได้ตั้งค่า กรุณาติดต่อผู้ดูแลระบบ' }),
+        { status: 500, headers: { 'content-type': 'application/json' } }
+      );
+    }
+
+    // FIX: Create google client inside the handler so errors are caught
+    const google = createGoogleGenerativeAI({ apiKey });
+
     const { messages, context } = await req.json();
 
     // Normalize messages to ensure they have 'parts' array
@@ -66,10 +75,15 @@ export async function POST(req: Request) {
     return createUIMessageStreamResponse({
       stream: toUIMessageStream({ stream: result.stream }),
     });
+
   } catch (error: any) {
-    console.error('[Smart Advisor API Error]', error);
+    console.error('[Smart Advisor API Error]', {
+      message: error.message,
+      statusCode: error.statusCode,
+      cause: error.cause?.message,
+    });
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: 'เกิดข้อผิดพลาดในการเชื่อมต่อ AI กรุณาลองใหม่อีกครั้ง',
         detail: process.env.NODE_ENV === 'development' ? error.message : undefined
       }),
