@@ -37,6 +37,9 @@
   - อัปโหลดสลิปเป็น compressed JPEG Blob (max 1200px, quality 0.7) แทน original file ประหยัด Storage.
   - `SlipLightbox` component (`src/components/SlipLightbox.tsx`): Self-contained badge 📎 + Modal.
   - หน้า History แสดง badge "มีสลิป" บนรายการที่มีรูป — กดเพื่อเปิด Lightbox ดูในแอพได้ทันที.
+- **Milestone 9 (Auth UI Refactoring & Localization)**:
+  - แยกหน้าต่างเข้าสู่ระบบ (Login) และสมัครสมาชิก (Signup) ออกจากกันอย่างชัดเจน (`/login` & `/signup`)
+  - แปลข้อความ Error Message จากระบบ (Supabase Auth) ให้เป็นภาษาไทยทั้งหมด เพื่อให้ผู้ใช้งานเข้าใจง่ายขึ้น
 - **Multi-Wallet & Transfers System — NEW**:
   - **Dual-Layer Architecture**: กระเป๋า/บัญชี (เงินอยู่ที่ไหน) ทำงานควบคู่กับ ถังงบประมาณ (เงินไว้ทำอะไร).
   - ตาราง `wallets` พร้อม RLS ครบ 4 ทิศทาง รองรับ 4 ประเภท (`cash`, `bank`, `ewallet`, `credit`) และธีมสี/Preset ธนาคารไทย.

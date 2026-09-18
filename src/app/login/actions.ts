@@ -15,7 +15,13 @@ export async function login(formData: FormData) {
   })
 
   if (error) {
-    redirect(`/login?error=Could not authenticate user`)
+    let thError = 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
+    if (error.message.includes('Invalid login credentials')) {
+      thError = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
+    } else if (error.message.includes('Email not confirmed')) {
+      thError = 'กรุณายืนยันอีเมลของคุณก่อนเข้าสู่ระบบ'
+    }
+    redirect(`/login?error=${encodeURIComponent(thError)}`)
   }
 
   revalidatePath('/', 'layout')
@@ -39,7 +45,15 @@ export async function signup(formData: FormData) {
   })
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}`)
+    let thError = 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
+    if (error.message.includes('User already registered')) {
+      thError = 'อีเมลนี้มีผู้ใช้งานแล้ว'
+    } else if (error.message.includes('Password should be at least')) {
+      thError = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'
+    } else if (error.message.includes('invalid format')) {
+      thError = 'รูปแบบอีเมลไม่ถูกต้อง'
+    }
+    redirect(`/signup?error=${encodeURIComponent(thError)}`)
   }
 
   revalidatePath('/', 'layout')
