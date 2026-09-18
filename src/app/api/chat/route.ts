@@ -1,4 +1,4 @@
-﻿import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText, createUIMessageStreamResponse, toUIMessageStream, convertToModelMessages } from 'ai';
 
 const google = createGoogleGenerativeAI({
@@ -10,7 +10,12 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   const { messages, context } = await req.json();
 
-  const modelMessages = await convertToModelMessages(messages);
+  const normalizedMessages = messages.map((m: any) => ({
+    ...m,
+    parts: m.parts || [{ type: 'text', text: m.content || '' }]
+  }));
+
+  const modelMessages = await convertToModelMessages(normalizedMessages);
 
   const systemPrompt = `
 คุณคือ "Smart Pocket Advisor" ผู้เชี่ยวชาญการเงินส่วนตัวของผู้ใช้งาน
@@ -35,7 +40,7 @@ export async function POST(req: Request) {
   `;
 
   const result = await streamText({
-    model: google('gemini-2.0-flash'),
+    model: google('gemini-3.6-flash'),
     system: systemPrompt,
     messages: modelMessages,
   });
