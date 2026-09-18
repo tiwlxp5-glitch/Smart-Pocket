@@ -216,7 +216,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Wallets Horizontal Carousel */}
+      {/* Wallets Vertical List */}
       <div className="mb-7">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-1.5">
@@ -224,29 +224,24 @@ export default async function DashboardPage() {
             <h3 className="font-bold text-gray-900 text-sm">กระเป๋าและบัญชี</h3>
           </div>
           <Link href="/dashboard/wallets" className="text-xs text-blue-600 font-semibold hover:underline flex items-center gap-0.5">
-            ทั้งหมด <ChevronRight size={13} />
+            จัดการ <ChevronRight size={13} />
           </Link>
         </div>
 
-        <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2 snap-x">
+        <div className="flex flex-col gap-2.5">
           {wallets.map((w) => (
-            <div key={w.id} className="min-w-[210px] max-w-[230px] snap-start shrink-0 relative group">
-              <WalletCard wallet={w} />
-              {!w.is_default && (
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <DashboardWalletDeleteButton walletId={w.id} walletName={w.name} />
-                </div>
-              )}
-            </div>
+            <Link key={w.id} href="/dashboard/wallets" className="block">
+              <WalletCard wallet={w} compact={true} />
+            </Link>
           ))}
           <Link
             href="/dashboard/wallets"
-            className="min-w-[120px] rounded-3xl border-2 border-dashed border-gray-200 hover:border-blue-400 bg-gray-50/60 hover:bg-blue-50/40 flex flex-col items-center justify-center p-4 text-center transition group snap-start shrink-0"
+            className="rounded-2xl border-2 border-dashed border-gray-200 hover:border-blue-400 bg-gray-50/60 hover:bg-blue-50/40 p-3 flex items-center justify-center gap-2 transition group"
           >
-            <div className="w-10 h-10 rounded-2xl bg-white border border-gray-200 text-gray-400 group-hover:text-blue-600 group-hover:border-blue-300 flex items-center justify-center mb-1.5 shadow-2xs transition">
-              <Plus size={18} />
+            <div className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-400 group-hover:text-blue-600 group-hover:border-blue-300 flex items-center justify-center shadow-2xs transition">
+              <Plus size={16} />
             </div>
-            <span className="text-[11px] font-bold text-gray-600 group-hover:text-blue-600">เพิ่มกระเป๋า</span>
+            <span className="text-xs font-bold text-gray-600 group-hover:text-blue-600">เพิ่มกระเป๋าใหม่</span>
           </Link>
         </div>
       </div>
