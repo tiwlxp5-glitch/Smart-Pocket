@@ -6,11 +6,11 @@
 - **Database & Auth**: Supabase (PostgreSQL with RLS)
 - **Deployment**: Vercel (recommended)
 
-## Current State (Milestone 12 Completed - AI Advisor Refactor & Quick Add Restoration)
+## Current State (Milestone 14.1 Completed - AI Chat Critical Fix & Model Upgrade)
 - UI Prototyping completed (Landing Page, Login, Dashboard, Income/Expense forms, History).
 - Configured Supabase Auth and Database with RLS.
 - Soft-delete (Trash) system with 3-day lazy cleanup implemented.
-- AI Slip Scanner implemented using Gemini 3.6 Flash (extracts Amount, Note, Receiver, and Sender Bank).
+- AI Slip Scanner implemented using Gemini 3.5 Flash (extracts Amount, Note, Receiver, and Sender Bank).
 - App metadata and PWA settings updated for mobile installation ("รายรับรายจ่าย").
 - **Interactive Analytics & Charts System (`/dashboard/analytics`)**:
   - Time filters: สัปดาห์นี้, เดือนนี้, เดือนที่แล้ว, ปีนี้, ทั้งหมด.
@@ -114,9 +114,17 @@
   - ฝัง `useTransition` เข้าไปในปุ่ม Action ต่างๆ (เช่น ลบกระเป๋า, ลบประวัติ, กู้คืน) เพื่อแสดงสถานะหมุนโหลด ป้องกันการกดย้ำ
   - ฝัง `useFormStatus` ผ่าน `SubmitButton.tsx` ให้กับหน้าล็อกอินและสมัครสมาชิก
   - ทดสอบระบบครอบคลุมทุกจุด (Unit Tests เพิ่มเป็น 119 ข้อ) ผ่าน 100% Zero Regression
+- **Milestone 14.1 (AI Chat Critical Fix & Model Upgrade)**:
+  - แก้ไขปัญหาร้ายแรงที่ Smart Advisor AI ไม่ตอบกลับ (คิดสักพักแล้วเงียบ) พบ 4 สาเหตุ:
+    1. **Gemini API ปฏิเสธ**: Welcome message (role: assistant) ถูกส่งไปเป็น turn แรก → Gemini บังคับ role: user ก่อน — แก้ด้วยการแยก Welcome เป็น Static UI Element
+    2. **`sendMessage()` ใช้ signature ผิด**: ส่ง UIMessage object เต็มรูปแบบ แต่ AI SDK 7 ต้องการ `{ text: string }` — แก้ให้ตรง API
+    3. **`toUIMessageStream()` syntax ผิด**: ส่ง result object ทั้งก้อน แต่ต้องส่ง `{ stream: result.stream }` — แก้ให้ destructure ถูกต้อง
+    4. **ไม่มี Error Handling เลย**: ไม่มี try/catch ใน API route + ไม่แสดง error ใน UI → ผู้ใช้เห็นแค่ loader หมุนแล้วหายไป — เพิ่ม Error UI + Retry button
+  - อัปเกรด AI Model ทุกจุดจาก `gemini-3.6-flash` (ไม่มีอยู่จริง) เป็น `gemini-3.5-flash` (stable, รองรับถึง 2027+)
+  - ไฟล์ที่แก้ไข: `route.ts`, `SmartAdvisorChat.tsx`, `smart-add-action.ts`, `extract-action.ts`
 
 ## Automated Tests
-- Unit tests suite (`npm test`) ผ่านฉลุย **119/119 tests** (100% pass rate) ครอบคลุมถึง M14 (UI Responsiveness).
+- Unit tests suite (`npm test`) ผ่านฉลุย **119/119 tests** (100% pass rate) ครอบคลุมถึง M14.1 (AI Chat Fix).
 
 ## Next Steps
 - ทดสอบการใช้งานจริงในสภาพแวดล้อม Live UAT
