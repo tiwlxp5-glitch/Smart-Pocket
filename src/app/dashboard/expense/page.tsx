@@ -167,22 +167,30 @@ export default function ExpensePage() {
       if (extracted.receiver) setReceiver(extracted.receiver)
 
       // Auto-match Wallet based on sender_bank or note
+      let matchedWalletId = null
       if (extracted.sender_bank && wallets.length > 0) {
         const bankMatch = wallets.find(
           (w) =>
             (w.bank_name && w.bank_name.toLowerCase() === extracted.sender_bank.toLowerCase()) ||
             (w.name && w.name.toLowerCase().includes(extracted.sender_bank.toLowerCase()))
         )
-        if (bankMatch) {
-          setSelectedWalletId(bankMatch.id)
-        }
+        if (bankMatch) matchedWalletId = bankMatch.id
       } else if (extracted.note && wallets.length > 0) {
         const preset = detectBankFromText(extracted.note)
         if (preset) {
           const bankMatch = wallets.find(
             (w) => w.bank_name === preset.code || w.name.toLowerCase().includes(preset.code)
           )
-          if (bankMatch) setSelectedWalletId(bankMatch.id)
+          if (bankMatch) matchedWalletId = bankMatch.id
+        }
+      }
+
+      if (matchedWalletId) {
+        setSelectedWalletId(matchedWalletId)
+        // Auto-select the bucket that is linked to this wallet
+        const bucketMatch = buckets.find(b => b.default_wallet_id === matchedWalletId)
+        if (bucketMatch) {
+          setSelectedBucketId(bucketMatch.id)
         }
       }
     } catch (error) {
