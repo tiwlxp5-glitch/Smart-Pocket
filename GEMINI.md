@@ -102,6 +102,8 @@
 - **Milestone 13.1 (Global UI Polish - Dark Mode Input Fix)**:
   - แก้ไขปัญหาสีตัวอักษรในช่องกรอกข้อมูล (`input`, `textarea`, `select`) เป็นสีเทาอ่อนกลืนกับพื้นหลังเวลาผู้ใช้เปิด Dark Mode ใน OS
   - เพิ่ม Global CSS Rule บังคับให้ข้อความในช่องกรอกข้อมูลเป็นสีดำเข้ม (`#111827`) เสมอ เพื่อให้คอนทราสต์ตัดกับพื้นหลังการ์ดที่เป็น `bg-white` อย่างชัดเจน ช่วยให้อ่านง่ายขึ้นในทุกสภาพแสง
+- **Milestone 13.2 (Dashboard UI Refinement)**:
+  - ปรับดีไซน์ส่วน "กระเป๋าและบัญชี" ในหน้า Dashboard จาก Horizontal Carousel ขนาดใหญ่ ให้เป็น Vertical List แบบ Compact เรียบง่ายสบายตา เพื่อประหยัดพื้นที่บนหน้าจอมือถือและดูสะอาดขึ้น
 
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **104/104 tests** (100% pass rate) ครอบคลุม M4 + M5 + M6.
