@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Wallet } from '@/types/database'
 import { getWalletTypeLabel, validateTransfer } from '@/utils/walletHelper'
 import { transferMoney } from '@/app/dashboard/actions'
@@ -13,14 +13,20 @@ interface Props {
 
 export function TransferFormClient({ wallets }: Props) {
   const router = useRouter()
-  const [fromWalletId, setFromWalletId] = useState<string>(wallets[0]?.id || '')
+  const searchParams = useSearchParams()
+  const aiAmount = searchParams.get('ai_amount')
+  const aiNote = searchParams.get('ai_note')
+  const aiWallet = searchParams.get('ai_wallet')
+  const aiToWallet = searchParams.get('ai_to_wallet')
+
+  const [fromWalletId, setFromWalletId] = useState<string>(aiWallet || wallets[0]?.id || '')
   const [toWalletId, setToWalletId] = useState<string>(
-    wallets.find((w) => w.id !== wallets[0]?.id)?.id || ''
+    aiToWallet || wallets.find((w) => w.id !== wallets[0]?.id)?.id || ''
   )
-  const [amount, setAmount] = useState<string>('')
+  const [amount, setAmount] = useState<string>(aiAmount || '')
   const [fee, setFee] = useState<string>('')
   const [hasFee, setHasFee] = useState(false)
-  const [note, setNote] = useState<string>('')
+  const [note, setNote] = useState<string>(aiNote || '')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)

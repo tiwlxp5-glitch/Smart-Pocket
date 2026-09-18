@@ -76,6 +76,12 @@
     3. `app-icon-cashflow-pills.svg`: In-Out Cashflow Balance (การ์ดรับ-จ่าย +฿ / −฿ สไตล์หน้าสรุป)
     4. `app-icon-smart-wallet-app.svg`: Smart Pocket Pure Minimal (กระเป๋าไอคอนแอพ คลีนๆ สบายตา)
   - สร้างและอัปเดตหน้า Interactive Mobile Mockup Studio (`/icon-preview`) แสดงผลบน iPhone Simulator จริง พร้อม Wallpaper Switcher และ Micro-scale Legibility Test (32px - 128px).
+- **Milestone 10 (Smart Add - Natural Language Input)**:
+  - เพิ่มระบบบันทึกรายการด้วยเสียงและข้อความภาษาธรรมชาติ (AI-powered Natural Language Input)
+  - สร้าง Server Action (`src/app/actions/smart-add-action.ts`) ที่ส่งโครงสร้างฐานข้อมูล Wallets และ Buckets จริงของผู้ใช้ไปให้ Gemini วิเคราะห์
+  - รองรับการแยกประเภทรายการอัตโนมัติ (รับ/จ่าย/โอน), จำนวนเงิน, หมวดหมู่ และ กระเป๋าเงิน
+  - สร้าง `SmartAddFAB.tsx` แบบ Floating Action Button รองรับ Web Speech API สำหรับพูดบันทึก
+  - เชื่อมต่อฟอร์ม Income, Expense และ Transfer ผ่าน URL Parameters เพื่อ Pre-fill ข้อมูลจาก AI พร้อมรอให้ผู้ใช้กดยืนยันเพื่อความปลอดภัย (Prevent AI Hallucination)
 
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **104/104 tests** (100% pass rate) ครอบคลุม M4 + M5 + M6.

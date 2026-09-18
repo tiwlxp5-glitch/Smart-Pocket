@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { ArrowUpCircle, CheckCircle2, ChevronLeft, ShieldCheck, TrendingUp, Coffee, ScanLine, Loader2, AlertTriangle, Wallet as WalletIcon, Building2, Banknote, CreditCard, Smartphone } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { addExpense } from '../actions'
 import { createBrowserClient } from '@supabase/ssr'
 import { extractSlipData } from './extract-action'
@@ -23,14 +23,20 @@ interface Bucket {
 
 export default function ExpensePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const aiAmount = searchParams.get('ai_amount')
+  const aiNote = searchParams.get('ai_note')
+  const aiBucket = searchParams.get('ai_bucket')
+  const aiWallet = searchParams.get('ai_wallet')
+
   const [buckets, setBuckets] = useState<Bucket[]>([])
   const [wallets, setWallets] = useState<WalletTypeInterface[]>([])
-  const [selectedWalletId, setSelectedWalletId] = useState<string>('')
+  const [selectedWalletId, setSelectedWalletId] = useState<string>(aiWallet || '')
   const [bucketExpenses, setBucketExpenses] = useState<Record<string, number>>({})
-  const [amount, setAmount] = useState<string>('')
-  const [note, setNote] = useState('')
+  const [amount, setAmount] = useState<string>(aiAmount || '')
+  const [note, setNote] = useState(aiNote || '')
   const [receiver, setReceiver] = useState('')
-  const [selectedBucketId, setSelectedBucketId] = useState<string>('')
+  const [selectedBucketId, setSelectedBucketId] = useState<string>(aiBucket || '')
   const [isSuccess, setIsSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   
@@ -53,7 +59,9 @@ export default function ExpensePage() {
       const { data } = await supabase.from('buckets').select('*').eq('is_archived', false).order('created_at')
       if (data) {
         setBuckets(data)
-        if (data.length > 0) setSelectedBucketId(data[data.length - 1].id)
+        if (data.length > 0 && !aiBucket) {
+          setSelectedBucketId(data[data.length - 1].id)
+        }
       }
 
       // Fetch Wallets
@@ -66,7 +74,9 @@ export default function ExpensePage() {
 
       if (walletData && walletData.length > 0) {
         setWallets(walletData)
-        setSelectedWalletId(walletData[0].id)
+        if (!aiWallet) {
+          setSelectedWalletId(walletData[0].id)
+        }
       }
 
       if (user) {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ArrowDownCircle, PieChart, CheckCircle2, ChevronLeft, Wallet as WalletIcon, Check, Layers, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { addIncome } from '../actions'
 import { createBrowserClient } from '@supabase/ssr'
 import { Wallet as WalletTypeInterface } from '@/types/database'
@@ -21,13 +21,19 @@ interface Bucket {
 
 export default function IncomePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const aiAmount = searchParams.get('ai_amount')
+  const aiNote = searchParams.get('ai_note')
+  const aiWallet = searchParams.get('ai_wallet')
+  const aiBucket = searchParams.get('ai_bucket') // Optional for income, but if passed, we can switch to single mode
+
   const [buckets, setBuckets] = useState<Bucket[]>([])
   const [wallets, setWallets] = useState<WalletTypeInterface[]>([])
-  const [selectedWalletId, setSelectedWalletId] = useState<string>('')
-  const [allocationMode, setAllocationMode] = useState<'auto' | 'single'>('single')
-  const [selectedBucketId, setSelectedBucketId] = useState<string>('')
-  const [amount, setAmount] = useState<string>('')
-  const [note, setNote] = useState('')
+  const [selectedWalletId, setSelectedWalletId] = useState<string>(aiWallet || '')
+  const [allocationMode, setAllocationMode] = useState<'auto' | 'single'>(aiBucket ? 'single' : 'auto')
+  const [selectedBucketId, setSelectedBucketId] = useState<string>(aiBucket || '')
+  const [amount, setAmount] = useState<string>(aiAmount || '')
+  const [note, setNote] = useState(aiNote || '')
   const [showSplitter, setShowSplitter] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -45,7 +51,9 @@ export default function IncomePage() {
       const { data: bucketData } = await supabase.from('buckets').select('*').eq('is_archived', false).order('created_at')
       if (bucketData) {
         setBuckets(bucketData)
-        if (bucketData.length > 0) setSelectedBucketId(bucketData[0].id)
+        if (bucketData.length > 0 && !aiBucket) {
+          setSelectedBucketId(bucketData[0].id)
+        }
       }
 
       // Fetch wallets
@@ -58,7 +66,9 @@ export default function IncomePage() {
 
       if (walletData && walletData.length > 0) {
         setWallets(walletData)
-        setSelectedWalletId(walletData[0].id)
+        if (!aiWallet) {
+          setSelectedWalletId(walletData[0].id)
+        }
       }
 
       setIsLoading(false)
