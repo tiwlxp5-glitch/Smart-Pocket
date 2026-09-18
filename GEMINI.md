@@ -89,7 +89,7 @@
   - **AI Chat ถูก Refactor ให้ทำหน้าที่เฉพาะ**: ถามตอบ / วิเคราะห์ / สรุปข้อมูลการเงิน เท่านั้น
   - **ลบ `prepareTransaction` Tool** ออกจาก AI chat route — AI ไม่บันทึกรายการอีกต่อไป
   - **ปรับ System Prompt** ชัดเจนขึ้น: ห้ามบันทึกรายการ / ห้ามใช้ Tool / ให้คำแนะนำการเงินเท่านั้น
-  - **ยกระดับ Model**: อัปเกรดเป็น `gemini-2.0-flash`
+  - **ยกระดับ Model**: อัปเกรดเป็น `gemini-3.6-flash` (อัปเดตจาก 2.0 ที่ถูกยกเลิก)
   - **สร้าง `QuickActionModal.tsx`** — Modal 4 ตัวเลือก: รายรับ / รายจ่าย / โอนเงิน / สแกนสลิป
   - **BottomNav ปุ่มกลาง** เปลี่ยนเป็นปุ่ม `+` เปิด QuickActionModal (ทดแทน AI FAB เดิม)
   - **สร้าง `OpenAIAdvisorButton.tsx`** — ปุ่มไอคอน Bot ใน Dashboard Header (มุมบนขวา) เพื่อเปิด Chat
