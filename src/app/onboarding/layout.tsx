@@ -1,8 +1,7 @@
-import { BottomNav } from '@/components/BottomNav'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 
-export default async function DashboardLayout({
+export default async function OnboardingLayout({
   children,
 }: {
   children: React.ReactNode
@@ -14,18 +13,15 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  // If already onboarded, redirect to dashboard so they can't redo it here (they can edit in settings)
   const { data: profile, error } = await supabase.from('profiles').select('is_onboarded').eq('id', user.id).single()
-  
-  if (!error && profile && profile.is_onboarded === false) {
-    redirect('/onboarding')
+  if (!error && profile && profile.is_onboarded) {
+    redirect('/dashboard')
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="max-w-md mx-auto bg-white min-h-screen shadow-sm">
-        {children}
-      </div>
-      <BottomNav />
+    <div className="min-h-screen bg-gray-50">
+      {children}
     </div>
   )
 }

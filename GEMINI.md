@@ -47,16 +47,30 @@
   - AI Slip Scanner ตรวจจับธนาคารผู้โอน (Sender Bank) และเลือกกระเป๋าเงินให้อัตโนมัติ.
   - Income รองรับทั้งแบ่งสัดส่วน % อัตโนมัติ และระบุเข้าถังงบเดี่ยว (100%).
   - รองรับการ Rollback คืนยอดเงินในถังขยะ (Soft Delete) ของทุกกระเป๋าอย่างแม่นยำ.
-- **Automated Tests**:
-  - Unit tests suite (`npm test`) ผ่านฉลุย **104/104 tests** (100% pass rate) ครอบคลุม M4 + M5 + M6.
+- **Milestone 6.1 (Linked Wallets & Auto-Transfer)**:
+  - เพิ่มระบบ `default_wallet_id` ให้ถังงบ (Buckets) เพื่อผูกบัญชีธนาคารเข้ากับถังงบแบบ 1:1.
+  - หน้า Setting (`/dashboard/settings`): เพิ่ม Dropdown เลือกกระเป๋าเงินผูกกับถังงบ.
+  - **Auto-Select**: เมื่อเลือกถังงบในหน้าบันทึกรายจ่าย (Expense) หรือรายรับแบบ Single (Income) ระบบจะเลือกกระเป๋าเงินที่ผูกไว้อัตโนมัติ.
+  - **Auto-Transfer**: เมื่อบันทึกรายรับ (Income) และกระจายเงินลงถัง หากถังนั้นผูกกับกระเป๋าเงินอื่นที่ไม่ได้เป็นกระเป๋าหลักรับเงิน ระบบจะรัน `process_transfer` เพื่อโอนเงินเข้าบัญชีจริงอัตโนมัติ (Statement ตรงเป๊ะ).
+- **Milestone 7 (Onboarding System)**:
+  - เพิ่มฟิลด์ `is_onboarded` ในตาราง `profiles`
+  - สร้างหน้า Onboarding Wizard (`/onboarding`) ให้ผู้ใช้ใหม่เลือกรูปแบบจัดการเงิน
+  - Mode 1: รวมบัญชี (1 Wallet, 3 Buckets ผูก Wallet เดียวกัน)
+  - Mode 2: แยกบัญชี (3 Wallets, 3 Buckets ผูกแยกกัน 1:1)
+  - Auto Redirect ให้ผู้ใช้ใหม่ตั้งค่าให้เสร็จก่อนเข้า Dashboard
+
+## Automated Tests
+- Unit tests suite (`npm test`) ผ่านฉลุย **104/104 tests** (100% pass rate) ครอบคลุม M4 + M5 + M6.
 
 ## Next Steps
-- ทดสอบการใช้งานจริงในสภาพแวดล้อม Live UAT และพิจารณาฟีเจอร์ Savings Goals หรือ Push Notifications ในอนาคต.
+- ทดสอบการใช้งานจริงในสภาพแวดล้อม Live UAT
 
 ## Migration Required (Supabase)
 Run the following SQL in Supabase SQL Editor or `supabase db push`:
 ```
 supabase/schema_wallets.sql
+supabase/schema_linked_wallets.sql
+supabase/schema_onboarding.sql
 ```
 
 
