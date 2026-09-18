@@ -1,10 +1,10 @@
 import { createClient } from '@/utils/supabase/server'
-import { ShieldCheck, TrendingUp, Coffee, Settings, PieChart, ChevronRight, AlertTriangle, AlertCircle, Wallet as WalletIcon, Repeat, CalendarClock, Sparkles, ArrowRightLeft, Plus } from 'lucide-react'
+import { ShieldCheck, TrendingUp, Coffee, Settings, PieChart, ChevronRight, AlertTriangle, Wallet as WalletIcon, Repeat, Sparkles, ArrowRightLeft, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { calculateMonthlyCommitment } from '@/utils/recurringHelper'
 import { WalletCard } from '@/components/WalletCard'
 import { DashboardWalletDeleteButton } from '@/components/DashboardWalletDeleteButton'
-import { BANK_PRESETS, getWalletTypeLabel } from '@/utils/walletHelper'
+import { BANK_PRESETS } from '@/utils/walletHelper'
 import OpenAIAdvisorButton from './_components/OpenAIAdvisorButton'
 
 

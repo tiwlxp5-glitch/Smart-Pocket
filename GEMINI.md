@@ -6,7 +6,7 @@
 - **Database & Auth**: Supabase (PostgreSQL with RLS)
 - **Deployment**: Vercel (recommended)
 
-## Current State (Milestone 6 Completed - Multi-Wallet & Transfers System)
+## Current State (Milestone 12 Completed - AI Advisor Refactor & Quick Add Restoration)
 - UI Prototyping completed (Landing Page, Login, Dashboard, Income/Expense forms, History).
 - Configured Supabase Auth and Database with RLS.
 - Soft-delete (Trash) system with 3-day lazy cleanup implemented.
@@ -82,8 +82,20 @@
   - รองรับการแยกประเภทรายการอัตโนมัติ (รับ/จ่าย/โอน), จำนวนเงิน, หมวดหมู่ และ กระเป๋าเงิน
   - สร้าง `SmartAddFAB.tsx` แบบ Floating Action Button รองรับ Web Speech API สำหรับพูดบันทึก
   - เชื่อมต่อฟอร์ม Income, Expense และ Transfer ผ่าน URL Parameters เพื่อ Pre-fill ข้อมูลจาก AI พร้อมรอให้ผู้ใช้กดยืนยันเพื่อความปลอดภัย (Prevent AI Hallucination)
+- **Milestone 11 (Smart Advisor Chat & UI Polish)**:
+  - อัปเกรดระบบ AI เป็นระบบแชทผู้เชี่ยวชาญการเงินเต็มรูปแบบ (Expert Advisor) วิเคราะห์ข้อมูลแบบ Real-time
+  - รองรับ Markdown เต็มรูปแบบ (ReactMarkdown + remarkGfm) และ Bank color detection
+- **Milestone 12 (AI Advisor Refactor & Quick Add Restoration)**:
+  - **AI Chat ถูก Refactor ให้ทำหน้าที่เฉพาะ**: ถามตอบ / วิเคราะห์ / สรุปข้อมูลการเงิน เท่านั้น
+  - **ลบ `prepareTransaction` Tool** ออกจาก AI chat route — AI ไม่บันทึกรายการอีกต่อไป
+  - **ปรับ System Prompt** ชัดเจนขึ้น: ห้ามบันทึกรายการ / ห้ามใช้ Tool / ให้คำแนะนำการเงินเท่านั้น
+  - **ยกระดับ Model**: อัปเกรดเป็น `gemini-2.0-flash`
+  - **สร้าง `QuickActionModal.tsx`** — Modal 4 ตัวเลือก: รายรับ / รายจ่าย / โอนเงิน / สแกนสลิป
+  - **BottomNav ปุ่มกลาง** เปลี่ยนเป็นปุ่ม `+` เปิด QuickActionModal (ทดแทน AI FAB เดิม)
+  - **สร้าง `OpenAIAdvisorButton.tsx`** — ปุ่มไอคอน Bot ใน Dashboard Header (มุมบนขวา) เพื่อเปิด Chat
+  - **ลบ `SmartAddFAB.tsx`** — ถูกแทนที่อย่างสมบูรณ์โดย QuickActionModal
 
-- **Milestone 11 (Smart Advisor Chat & UI Polish)**:\n  - อัปเกรดระบบ AI จากเดิมที่เป็นเพียงการบันทึกรายการ (Smart Add) ให้กลายเป็นระบบแชทผู้เชี่ยวชาญการเงินเต็มรูปแบบ (Expert Advisor) ที่สามารถพูดคุยและวิเคราะห์ข้อมูลการเงินของผู้ใช้ได้แบบ Real-time\n  - ย้ายปุ่ม AI ไปอยู่ตรงกลางของ Bottom Navigation bar (FAB ใหม่อยู่ตรงกลาง)\n  - รองรับการเรนเดอร์ Markdown เต็มรูปแบบ (ReactMarkdown + remarkGfm) ทำให้จัดหน้าตาการตอบกลับด้วยย่อหน้า, ตัวหนา, และ List ได้อย่างสวยงาม\n  - เพิ่มฟีเจอร์ตรวจจับชื่อธนาคารจากข้อความแชท (เช่น กรุงไทย, KBank) และใส่สีตัวหนังสือให้ตรงกับสีแบรนด์ธนาคารอัตโนมัติ เพื่อให้อ่านง่ายและดูเป็นมืออาชีพมากขึ้น\n\n## Automated Tests
+## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **104/104 tests** (100% pass rate) ครอบคลุม M4 + M5 + M6.
 
 ## Next Steps

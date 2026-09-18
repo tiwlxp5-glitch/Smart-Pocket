@@ -1,9 +1,9 @@
-﻿'use client'
+'use client'
 
 import { useState, useRef, useEffect } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { Bot, Mic, Send, X, Loader2, Sparkles } from 'lucide-react'
+import { Bot, Mic, Send, X, Loader2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { detectBankFromText } from '@/utils/walletHelper'
