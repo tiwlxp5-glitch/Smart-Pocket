@@ -350,58 +350,9 @@ export default function ExpensePage() {
           </div>
         </div>
 
-        {/* Wallet Selector */}
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="block text-sm font-bold text-gray-900">จ่ายจากกระเป๋า / บัญชี (Wallet)</h3>
-            <Link href="/dashboard/wallets" className="text-xs text-blue-600 font-semibold hover:underline">
-              + จัดการบัญชี
-            </Link>
-          </div>
-          {wallets.length === 0 ? (
-            <p className="text-xs text-gray-400 py-2">ใช้กระเป๋าหลักเริ่มต้น</p>
-          ) : (
-            <div className="grid grid-cols-1 gap-2.5">
-              {wallets.map((w) => {
-                const isSelected = selectedWalletId === w.id
-                return (
-                  <label
-                    key={w.id}
-                    className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all cursor-pointer active:scale-[0.98] duration-200 ${
-                      isSelected ? 'border-rose-500 bg-rose-50/50 shadow-2xs' : 'border-gray-100 bg-gray-50/50 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="wallet"
-                        value={w.id}
-                        checked={isSelected}
-                        onChange={() => setSelectedWalletId(w.id)}
-                        className="hidden"
-                      />
-                      <span
-                        className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs"
-                        style={{ backgroundColor: w.color || '#10b981' }}
-                      />
-                      <div>
-                        <span className="text-xs font-bold text-gray-900 block">{w.name}</span>
-                        <span className="text-[10px] text-gray-500">{getWalletTypeLabel(w.type)}</span>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-gray-700">
-                      ฿{Number(w.balance).toLocaleString('th-TH', { minimumFractionDigits: 2 })}
-                    </span>
-                  </label>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
         {/* Bucket (Budget Envelope) Selector */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-          <h3 className="block text-sm font-bold text-gray-900 mb-4">หักจากถังงบประมาณ (Bucket Envelope)</h3>
+          <h3 className="block text-sm font-bold text-gray-900 mb-4">หักจากถังงบ / กระเป๋าเงิน</h3>
           {buckets.length === 0 ? (
             <p className="text-center text-gray-400 py-4">กำลังโหลดถังงบประมาณ...</p>
           ) : (
@@ -411,6 +362,7 @@ export default function ExpensePage() {
                 const Icon = bucket.icon === 'shield' ? ShieldCheck : bucket.icon === 'trending-up' ? TrendingUp : bucket.icon === 'wallet' ? WalletIcon : Coffee
                 const bucketMonthlyLimit = bucket.monthly_budget ? Number(bucket.monthly_budget) : null
                 const bucketSpent = bucketExpenses[bucket.id] || 0
+                const linkedWallet = wallets.find(w => w.id === bucket.default_wallet_id)
                 
                 return (
                   <label 
@@ -428,14 +380,14 @@ export default function ExpensePage() {
                       className="hidden"
                     />
                     <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0"
-                      style={{ backgroundColor: bucket.color || '#3B82F6' }}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm"
+                      style={{ backgroundColor: linkedWallet?.color || bucket.color || '#3B82F6' }}
                     >
                       <Icon size={20} />
                     </div>
                     <div className="flex-1">
                       <p className={`font-semibold ${isSelected ? 'text-rose-700' : 'text-gray-900'}`}>{bucket.name}</p>
-                      <p className={`text-xs ${isSelected ? 'text-rose-500' : 'text-gray-500'}`}>
+                      <p className={`text-xs ${isSelected ? 'text-rose-500' : 'text-gray-500'} mt-0.5`}>
                         คงเหลือ: ฿{Number(bucket.balance).toLocaleString('th-TH')}
                         {bucketMonthlyLimit && (
                           <span className="ml-1 opacity-80">
@@ -443,9 +395,15 @@ export default function ExpensePage() {
                           </span>
                         )}
                       </p>
+                      {linkedWallet && (
+                        <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-gray-500 bg-white/60 px-2 py-0.5 rounded-md inline-flex border border-gray-100 shadow-2xs">
+                          <WalletIcon size={10} style={{ color: linkedWallet.color || '#10b981' }} />
+                          <span>หักจากบัญชี: <strong style={{ color: linkedWallet.color || '#10b981' }}>{linkedWallet.name}</strong></span>
+                        </div>
+                      )}
                     </div>
                     {isSelected && (
-                      <CheckCircle2 className="text-rose-500" size={24} />
+                      <CheckCircle2 className="text-rose-500 shrink-0" size={24} />
                     )}
                   </label>
                 )
