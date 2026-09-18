@@ -108,9 +108,15 @@
   - เพิ่มระบบ Filter ในหน้าประวัติการเงิน (`/dashboard/history`) แบบจัดหมวดหมู่ (Tabs: ทั้งหมด, รายรับ, รายจ่าย)
   - เพิ่ม Filter ย่อยสำหรับเจาะจงเฉพาะ "ธนาคาร/กระเป๋าเงิน" ที่ต้องการดูประวัติ
   - ใช้ URL Query Params (`searchParams`) ในการจัดการ State เพื่อให้แชร์ลิงก์ได้ และไม่กระทบการดึงข้อมูลจาก Server Components แบบเดิม (ปลอดภัยจาก Hydration Error 100%)
+- **Milestone 14 (Comprehensive UI Responsiveness & Zero-Delay Navigation)**:
+  - ยกเครื่องระบบ Visual Feedback ทั้งแอปเพื่อแก้ปัญหาผู้ใช้กดแล้วรู้สึก "ดีเลย์" หรือ "กดไม่ติด"
+  - สร้าง `NavigationProgress.tsx` ทำหน้าที่เป็นแถบโหลด (Top Progress Bar) แสดงผลทันทีที่ผู้ใช้คลิก Link เปลี่ยนหน้า
+  - ฝัง `useTransition` เข้าไปในปุ่ม Action ต่างๆ (เช่น ลบกระเป๋า, ลบประวัติ, กู้คืน) เพื่อแสดงสถานะหมุนโหลด ป้องกันการกดย้ำ
+  - ฝัง `useFormStatus` ผ่าน `SubmitButton.tsx` ให้กับหน้าล็อกอินและสมัครสมาชิก
+  - ทดสอบระบบครอบคลุมทุกจุด (Unit Tests เพิ่มเป็น 119 ข้อ) ผ่าน 100% Zero Regression
 
 ## Automated Tests
-- Unit tests suite (`npm test`) ผ่านฉลุย **104/104 tests** (100% pass rate) ครอบคลุม M4 + M5 + M6.
+- Unit tests suite (`npm test`) ผ่านฉลุย **119/119 tests** (100% pass rate) ครอบคลุมถึง M14 (UI Responsiveness).
 
 ## Next Steps
 - ทดสอบการใช้งานจริงในสภาพแวดล้อม Live UAT
