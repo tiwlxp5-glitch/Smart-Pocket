@@ -18,7 +18,7 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  const { data: profile, error } = await supabase.from('profiles').select('is_onboarded, display_name').eq('id', user.id).single()
+  const { data: profile, error } = await supabase.from('profiles').select('is_onboarded').eq('id', user.id).single()
 
   if (!error && profile && profile.is_onboarded === false) {
     redirect('/onboarding')
@@ -28,15 +28,13 @@ export default async function DashboardLayout({
   const { data: wallets } = await supabase.from('wallets').select('*').eq('user_id', user.id).order('created_at', { ascending: true })
   const { data: buckets } = await supabase.from('buckets').select('*').eq('user_id', user.id).order('created_at', { ascending: true })
 
-  const userName = profile?.display_name || 'คุณผู้ใช้งาน'
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <div className="max-w-md mx-auto bg-white min-h-screen shadow-sm">
         {children}
       </div>
       <BottomNav />
-      <SmartAdvisorChat wallets={wallets || []} buckets={buckets || []} userName={userName} />
+      <SmartAdvisorChat wallets={wallets || []} buckets={buckets || []} />
     </div>
   )
 }

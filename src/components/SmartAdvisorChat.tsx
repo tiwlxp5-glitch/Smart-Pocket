@@ -10,7 +10,7 @@ import { detectBankFromText } from '@/utils/walletHelper'
 
 const WELCOME_MESSAGE = '👋 สวัสดีครับ! ผมคือ Smart Advisor ที่ปรึกษาการเงินส่วนตัวของคุณ\n\nถามผมได้เลยนะครับ เช่น:\n- **"สรุปค่าใช้จ่ายเดือนนี้ให้หน่อย"**\n- **"ควรออมเงินเดือนละเท่าไหร่ดี?"**\n- **"กระเป๋าไหนเหลือเงินเยอะสุด?"**\n\n_(หากต้องการบันทึกรายการ กดปุ่ม **+** ที่ด้านล่างได้เลยครับ)_'
 
-export function SmartAdvisorChat({ wallets, buckets, userName }: { wallets: any[], buckets: any[], userName: string }) {
+export function SmartAdvisorChat({ wallets, buckets }: { wallets: any[], buckets: any[] }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [inputText, setInputText] = useState('')
@@ -32,7 +32,6 @@ export function SmartAdvisorChat({ wallets, buckets, userName }: { wallets: any[
     wallets: wallets.map(w => ({ id: w.id, name: w.name, balance: w.balance })),
     buckets: buckets.map(b => ({ id: b.id, name: b.name, balance: b.balance })),
     monthlyExpense: 0,
-    userName,
   }
 
   // FIX: Don't pass welcome message in initial messages array
