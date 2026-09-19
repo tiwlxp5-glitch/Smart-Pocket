@@ -148,6 +148,9 @@
 - **Milestone 14.7 (Recurring Action Safety Loop)**:
   - เพิ่ม Node.js-side while loop ใน `checkAndProcessRecurringAction` Server Action (`actions.ts`) เพื่อเรียกใช้ `process_due_recurring_transactions` RPC ซ้ำอัตโนมัติหาก `processed_count === 36` (Safety cap ของ RPC)
   - กำหนด Max loops = 5 เพื่อป้องกันปัญหา Infinite loop และรับประกันว่าจะดึงรายการตกหล่นทั้งหมดหากผู้ใช้ไม่ได้ล็อกอินเข้าใช้งานหลายเดือน (สูงสุด 36 * 5 = 180 รายการต่อการเปิดแอป 1 ครั้ง)
+- **Milestone 14.8 (Deadlock Prevention in Transfers)**:
+  - แก้ไขปัญหา Deadlock ระหว่างผู้ใช้ทำรายการโอนเงินชนกันใน `process_transfer` RPC
+  - เพิ่มกลไกเปรียบเทียบ UUID (`p_from_wallet_id` vs `p_to_wallet_id`) เพื่อล็อคกระเป๋า (FOR UPDATE) ตามลำดับที่แน่นอนเสมอ ป้องกันฐานข้อมูลค้าง
 
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **119/119 tests** (100% pass rate) ครอบคลุมถึง M14.1 (AI Chat Fix).

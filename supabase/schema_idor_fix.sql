@@ -100,21 +100,33 @@ BEGIN
 
   v_total_deduct := p_amount + p_fee;
 
-  -- 2. Lock and Check Source Wallet
-  SELECT balance INTO v_from_balance 
-  FROM public.wallets 
-  WHERE id = p_from_wallet_id AND user_id = p_user_id 
-  FOR UPDATE;
+  -- 2. Lock Wallets in Consistent Order to Prevent Deadlocks
+  IF p_from_wallet_id < p_to_wallet_id THEN
+    SELECT balance INTO v_from_balance 
+    FROM public.wallets 
+    WHERE id = p_from_wallet_id AND user_id = p_user_id 
+    FOR UPDATE;
 
+    SELECT balance INTO v_to_balance 
+    FROM public.wallets 
+    WHERE id = p_to_wallet_id AND user_id = p_user_id 
+    FOR UPDATE;
+  ELSE
+    SELECT balance INTO v_to_balance 
+    FROM public.wallets 
+    WHERE id = p_to_wallet_id AND user_id = p_user_id 
+    FOR UPDATE;
+
+    SELECT balance INTO v_from_balance 
+    FROM public.wallets 
+    WHERE id = p_from_wallet_id AND user_id = p_user_id 
+    FOR UPDATE;
+  END IF;
+
+  -- 3. Check if both wallets exist and belong to the user
   IF v_from_balance IS NULL THEN
     RAISE EXCEPTION 'Source wallet not found or permission denied';
   END IF;
-
-  -- 3. Lock and Check Destination Wallet
-  SELECT balance INTO v_to_balance 
-  FROM public.wallets 
-  WHERE id = p_to_wallet_id AND user_id = p_user_id 
-  FOR UPDATE;
 
   IF v_to_balance IS NULL THEN
     RAISE EXCEPTION 'Destination wallet not found or permission denied';
