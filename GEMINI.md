@@ -146,9 +146,17 @@
   - แก้ไขไฟล์ทั้งหมดที่เคยเรียกใช้ `alert()` เช่น หน้าสร้างรายจ่าย, หน้าสร้างรายรับ, จัดการกระเป๋า, ลบ/กู้คืนประวัติ ให้เปลี่ยนไปใช้ `toast.error()` แทน เพื่อประสบการณ์ใช้งานที่ดีขึ้นและไม่ค้างเมื่อ AI เกิด Timeout
 
 - **Milestone 14.7 (Recurring Action Safety Loop)**:
-  - เพิ่ม Node.js-side while loop ใน `checkAndProcessRecurringAction` Server Action (`actions.ts`) เพื่อเรียกใช้ `process_due_recurring_transactions` RPC ซ้ำอัตโนมัติหาก `processed_count === 36` (Safety cap ของ RPC)
-  - กำหนด Max loops = 5 เพื่อป้องกันปัญหา Infinite loop และรับประกันว่าจะดึงรายการตกหล่นทั้งหมดหากผู้ใช้ไม่ได้ล็อกอินเข้าใช้งานหลายเดือน (สูงสุด 36 * 5 = 180 รายการต่อการเปิดแอป 1 ครั้ง)
-- **Milestone 14.8 (Deadlock Prevention in Transfers)**:
+  - เพิ่มระบบ Safety Cap 36 Iterations ใน `process_due_recurring_transactions` ป้องกัน Infinity Loop
+  - ปรับปรุงให้ย้อนรอยสร้างรายการที่หลุดไป (Catch-up) ได้แม่นยำขึ้น รองรับปีอธิกสุรทิน (Leap Year)
+  - เปลี่ยนแปลงกลไก `checkAndProcessRecurringAction` Server Action (`actions.ts`) และ `process_due_recurring_transactions` ให้ส่งค่า `has_more_pending` Boolean flag กลับมา แทนที่จะพึ่งพา `processed_count === 36` ในการระบุว่ายังมีรายการคงค้างหรือไม่ เพื่อความถูกต้องของข้อมูลเมื่อรวมทุก schedules
+  - สร้างไฟล์ SQL สำหรับแพตช์ใหม่: `supabase/schema_recurring_has_more_fix.sql`
+
+- **Milestone 14.8 (Ghost Money Bug Fix)**:
+  - แก้ไขปัญหายอดเงินล่องหน (Ghost Money) เวลาผู้ใช้กู้คืนรายการ (Restore) หรือย้ายลงถังขยะ (Trash)
+  - เพิ่มการบังคับปลดสถานะซ่อนกระเป๋า (`is_archived = false`) ทันทีที่กระเป๋าถูกอัปเดตยอดเงินใน RPC `restore_from_trash` และ `move_to_trash`
+  - สร้างไฟล์รวมแพตช์ใหม่ใน `supabase/schema_ghost_money_fix.sql` และอัปเดตไฟล์เดิม `schema_idor_fix.sql`
+
+- **Milestone 14.9 (Deadlock Prevention in Transfers)**:
   - แก้ไขปัญหา Deadlock ระหว่างผู้ใช้ทำรายการโอนเงินชนกันใน `process_transfer` RPC
   - เพิ่มกลไกเปรียบเทียบ UUID (`p_from_wallet_id` vs `p_to_wallet_id`) เพื่อล็อคกระเป๋า (FOR UPDATE) ตามลำดับที่แน่นอนเสมอ ป้องกันฐานข้อมูลค้าง
 
@@ -167,6 +175,7 @@ supabase/schema_onboarding.sql
 supabase/schema_fix_cascade_delete.sql
 supabase/schema_recurring_fix.sql
 supabase/schema_income_allocation.sql
+supabase/schema_recurring_has_more_fix.sql
 ```
 
 ## AI SDK & Vercel Best Practices (Lessons Learned)

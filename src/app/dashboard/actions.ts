@@ -686,6 +686,7 @@ export async function checkAndProcessRecurringAction() {
     const MAX_LOOPS = 5;
     let lastError = null;
 
+    let hasMorePending = false;
     do {
       const { data, error } = await supabase.rpc('process_due_recurring_transactions', {
         p_user_id: user.id,
@@ -701,9 +702,10 @@ export async function checkAndProcessRecurringAction() {
       totalProcessedCount += currentProcessedCount;
       totalExpenseSum += Number(data?.total_expense) || 0;
       totalIncomeSum += Number(data?.total_income) || 0;
+      hasMorePending = Boolean(data?.has_more_pending);
 
       loopCount++;
-    } while (currentProcessedCount === 36 && loopCount < MAX_LOOPS);
+    } while (hasMorePending && loopCount < MAX_LOOPS);
 
     if (totalProcessedCount === 0 && lastError && loopCount === 0) {
         return { success: false, processedCount: 0, totalExpense: 0, totalIncome: 0, message: lastError }
