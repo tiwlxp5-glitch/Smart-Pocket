@@ -135,6 +135,11 @@
   - **Expense**: ดึง `default_wallet_id` จาก bucket มาใช้บันทึกลงใน `transactions` และหักเงินจาก `wallets`
   - **Income**: รองรับการระบุ `wallet_id` ตรงๆ พร้อมระบบ Allocate อัตโนมัติไปยัง `wallets` ที่ผูกกับ buckets ผ่าน `process_transfer` logic ภายใน RPC
 
+- **Milestone 14.5 (ACID Compliance & Anti-Pattern Removal)**:
+  - Refactored `actions.ts` Server Actions (`addIncome`, `addExpense`, `transferMoney`) เพื่อลบ manual Node.js loops และ fallback database updates ทั้งหมด.
+  - สร้าง `process_income_allocation` Supabase RPC จัดการ single และ multi-bucket allocations (รวมถึง auto-transfers ไป linked wallets) ให้ทำงานภายใน atomic transaction เดียว.
+  - โอนย้ายการคำนวณทางการเงินทั้งหมดไปอยู่ใน atomic PostgreSQL transactions เพื่อรับประกัน ACID compliance.
+
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **119/119 tests** (100% pass rate) ครอบคลุมถึง M14.1 (AI Chat Fix).
 
@@ -149,6 +154,7 @@ supabase/schema_linked_wallets.sql
 supabase/schema_onboarding.sql
 supabase/schema_fix_cascade_delete.sql
 supabase/schema_recurring_fix.sql
+supabase/schema_income_allocation.sql
 ```
 
 ## AI SDK & Vercel Best Practices (Lessons Learned)

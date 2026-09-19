@@ -18,7 +18,7 @@ export async function addExpense(formData: FormData) {
 
   if (!bucketId || isNaN(amount) || amount <= 0) throw new Error('Invalid input')
 
-  // 1. Try Calling updated process_expense RPC with p_wallet_id
+  // 1. Call updated process_expense RPC
   const { data: rpcTxId, error: rpcError } = await supabase.rpc('process_expense', {
     p_user_id: user.id,
     p_bucket_id: bucketId,
@@ -32,31 +32,8 @@ export async function addExpense(formData: FormData) {
   })
 
   if (rpcError) {
-    console.warn('RPC process_expense with p_wallet_id returned error, attempting fallback:', rpcError.message)
-    // Fallback: call 8-argument RPC and update wallet separately
-    const { error: fallbackError } = await supabase.rpc('process_expense', {
-      p_user_id: user.id,
-      p_bucket_id: bucketId,
-      p_amount: amount,
-      p_category: 'expense',
-      p_note: note,
-      p_date: new Date().toISOString(),
-      p_slip_url: slipUrl,
-      p_receiver: receiver
-    })
-
-    if (fallbackError) {
-      console.error('Error adding expense with fallback:', fallbackError)
-      throw new Error('Failed to deduct expense: ' + fallbackError.message)
-    }
-
-    // Update wallet balance directly if walletId provided
-    if (walletId) {
-      const { data: w } = await supabase.from('wallets').select('balance').eq('id', walletId).single()
-      if (w) {
-        await supabase.from('wallets').update({ balance: Number(w.balance) - amount }).eq('id', walletId)
-      }
-    }
+    console.error('RPC process_expense error:', rpcError)
+    throw new Error('Failed to deduct expense: ' + rpcError.message)
   }
 
   revalidatePath('/dashboard', 'layout')
@@ -75,154 +52,19 @@ export async function addIncome(formData: FormData) {
 
   if (isNaN(amount) || amount <= 0) throw new Error('Invalid input')
 
-  // 1. Fetch user's active buckets
-  const { data: buckets } = await supabase
-    .from('buckets')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('is_archived', false)
+  const { error: rpcError } = await supabase.rpc('process_income_allocation', {
+    p_user_id: user.id,
+    p_wallet_id: walletId,
+    p_amount: amount,
+    p_note: note,
+    p_date: new Date().toISOString(),
+    p_allocation_mode: allocationMode,
+    p_single_bucket_id: singleBucketId
+  })
 
-  if (!buckets || buckets.length === 0) throw new Error('No buckets found')
-
-  // 2. Insert Income Transaction
-  const { data: tx, error: txError } = await supabase
-    .from('transactions')
-    .insert({
-      user_id: user.id,
-      wallet_id: walletId,
-      bucket_id: allocationMode === 'single' ? singleBucketId : null,
-      type: 'income',
-      amount: amount,
-      category: 'income',
-      note: note,
-    })
-    .select()
-    .single()
-
-  if (txError) {
-    console.error('Create transaction error:', txError)
-    throw new Error('Failed to create transaction: ' + txError.message)
-  }
-
-  // 3. Update Destination Wallet Balance
-  if (walletId) {
-    const { data: w } = await supabase.from('wallets').select('balance').eq('id', walletId).single()
-    if (w) {
-      await supabase.from('wallets').update({ balance: Number(w.balance) + amount }).eq('id', walletId)
-    }
-  }
-
-  // 4. Allocate to buckets
-  if (allocationMode === 'single' && singleBucketId) {
-    // 100% allocation to designated bucket
-    await supabase.from('allocations').insert({
-      user_id: user.id,
-      income_transaction_id: tx.id,
-      bucket_id: singleBucketId,
-      amount: amount
-    })
-
-    const targetBucket = buckets.find(b => b.id === singleBucketId)
-    if (targetBucket) {
-      await supabase
-        .from('buckets')
-        .update({ balance: Number(targetBucket.balance) + amount })
-        .eq('id', singleBucketId)
-        .eq('user_id', user.id)
-
-      // Auto-transfer to linked wallet
-      if (targetBucket.default_wallet_id && walletId && targetBucket.default_wallet_id !== walletId) {
-        const { error: rpcError } = await supabase.rpc('process_transfer', {
-          p_user_id: user.id,
-          p_from_wallet_id: walletId,
-          p_to_wallet_id: targetBucket.default_wallet_id,
-          p_amount: amount,
-          p_fee: 0,
-          p_note: 'โอนเข้าบัญชีที่ผูกไว้อัตโนมัติ',
-          p_date: new Date().toISOString()
-        })
-        
-        if (rpcError) {
-          console.warn('Auto-transfer RPC error (fallback triggered):', rpcError.message)
-          // Fallback: update balances directly
-          const { data: fromW } = await supabase.from('wallets').select('balance').eq('id', walletId).single()
-          const { data: toW } = await supabase.from('wallets').select('balance').eq('id', targetBucket.default_wallet_id).single()
-
-          if (fromW && toW) {
-            await supabase.from('wallets').update({ balance: Number(fromW.balance) - amount }).eq('id', walletId)
-            await supabase.from('wallets').update({ balance: Number(toW.balance) + amount }).eq('id', targetBucket.default_wallet_id)
-
-            await supabase.from('transactions').insert({
-              user_id: user.id,
-              wallet_id: walletId,
-              to_wallet_id: targetBucket.default_wallet_id,
-              type: 'transfer',
-              amount: amount,
-              transfer_fee: 0,
-              category: 'โอนเงินระหว่างบัญชี',
-              note: 'โอนเข้าบัญชีที่ผูกไว้อัตโนมัติ',
-              transaction_date: new Date().toISOString()
-            })
-          }
-        }
-      }
-    }
-  } else {
-    // Standard percentage-based allocation
-    for (const bucket of buckets) {
-      const allocatedAmount = (amount * bucket.allocation_percentage) / 100
-      if (allocatedAmount <= 0) continue
-
-      await supabase.from('allocations').insert({
-        user_id: user.id,
-        income_transaction_id: tx.id,
-        bucket_id: bucket.id,
-        amount: allocatedAmount
-      })
-
-      await supabase
-        .from('buckets')
-        .update({ balance: Number(bucket.balance) + allocatedAmount })
-        .eq('id', bucket.id)
-        .eq('user_id', user.id)
-
-      // Auto-transfer to linked wallet
-      if (bucket.default_wallet_id && walletId && bucket.default_wallet_id !== walletId) {
-        const { error: rpcError } = await supabase.rpc('process_transfer', {
-          p_user_id: user.id,
-          p_from_wallet_id: walletId,
-          p_to_wallet_id: bucket.default_wallet_id,
-          p_amount: allocatedAmount,
-          p_fee: 0,
-          p_note: 'จัดสรรรายรับอัตโนมัติ',
-          p_date: new Date().toISOString()
-        })
-        
-        if (rpcError) {
-          console.warn('Auto-transfer RPC error (fallback triggered):', rpcError.message)
-          // Fallback: update balances directly
-          const { data: fromW } = await supabase.from('wallets').select('balance').eq('id', walletId).single()
-          const { data: toW } = await supabase.from('wallets').select('balance').eq('id', bucket.default_wallet_id).single()
-
-          if (fromW && toW) {
-            await supabase.from('wallets').update({ balance: Number(fromW.balance) - allocatedAmount }).eq('id', walletId)
-            await supabase.from('wallets').update({ balance: Number(toW.balance) + allocatedAmount }).eq('id', bucket.default_wallet_id)
-
-            await supabase.from('transactions').insert({
-              user_id: user.id,
-              wallet_id: walletId,
-              to_wallet_id: bucket.default_wallet_id,
-              type: 'transfer',
-              amount: allocatedAmount,
-              transfer_fee: 0,
-              category: 'โอนเงินระหว่างบัญชี',
-              note: 'จัดสรรรายรับอัตโนมัติ',
-              transaction_date: new Date().toISOString()
-            })
-          }
-        }
-      }
-    }
+  if (rpcError) {
+    console.error('RPC process_income_allocation error:', rpcError)
+    throw new Error('Failed to process income: ' + rpcError.message)
   }
 
   revalidatePath('/dashboard', 'layout')
@@ -251,7 +93,7 @@ export async function transferMoney(formData: FormData) {
     return { success: false, message: 'ค่าธรรมเนียมต้องไม่ติดลบ' }
   }
 
-  // 1. Try atomic PostgreSQL RPC first
+  // 1. Call atomic PostgreSQL RPC
   const { error: rpcError } = await supabase.rpc('process_transfer', {
     p_user_id: user.id,
     p_from_wallet_id: fromWalletId,
@@ -263,37 +105,8 @@ export async function transferMoney(formData: FormData) {
   })
 
   if (rpcError) {
-    console.warn('process_transfer RPC returned error, using fallback transaction:', rpcError.message)
-    // Fallback: update balances directly
-    const { data: fromW } = await supabase.from('wallets').select('balance').eq('id', fromWalletId).single()
-    const { data: toW } = await supabase.from('wallets').select('balance').eq('id', toWalletId).single()
-
-    if (!fromW || !toW) {
-      return { success: false, message: 'ไม่พบกระเป๋าเงินที่ระบุ' }
-    }
-
-    // Deduct source (amount + fee)
-    await supabase.from('wallets').update({ balance: Number(fromW.balance) - (amount + fee) }).eq('id', fromWalletId)
-    // Credit destination (amount)
-    await supabase.from('wallets').update({ balance: Number(toW.balance) + amount }).eq('id', toWalletId)
-
-    // Insert transfer transaction
-    const { error: insertError } = await supabase.from('transactions').insert({
-      user_id: user.id,
-      wallet_id: fromWalletId,
-      to_wallet_id: toWalletId,
-      type: 'transfer',
-      amount: amount,
-      transfer_fee: fee,
-      category: 'โอนเงินระหว่างบัญชี',
-      note: note,
-      transaction_date: date
-    })
-
-    if (insertError) {
-      console.error('Fallback insert error:', insertError)
-      return { success: false, message: 'เกิดข้อผิดพลาดในการบันทึกรายการโอน: ' + insertError.message }
-    }
+    console.error('process_transfer RPC error:', rpcError)
+    return { success: false, message: 'เกิดข้อผิดพลาดในการโอนเงิน: ' + rpcError.message }
   }
 
   revalidatePath('/dashboard/wallets')
