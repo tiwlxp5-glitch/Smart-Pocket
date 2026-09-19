@@ -177,6 +177,7 @@ DECLARE
   v_to_balance NUMERIC;
   v_total_deduct NUMERIC;
 BEGIN
+  IF auth.uid() IS NULL OR auth.uid() <> p_user_id THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   -- 1. Basic Validations
   IF p_from_wallet_id = p_to_wallet_id THEN
     RAISE EXCEPTION 'Cannot transfer to the same wallet';
@@ -271,6 +272,7 @@ DECLARE
   v_current_balance NUMERIC;
   v_target_wallet_id UUID := p_wallet_id;
 BEGIN
+  IF auth.uid() IS NULL OR auth.uid() <> p_user_id THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   -- 1. Check & Lock Bucket
   SELECT balance INTO v_current_balance FROM public.buckets WHERE id = p_bucket_id AND user_id = p_user_id FOR UPDATE;
   IF v_current_balance IS NULL THEN RAISE EXCEPTION 'Bucket not found'; END IF;
@@ -314,6 +316,7 @@ DECLARE
   v_tx RECORD;
   v_alloc RECORD;
 BEGIN
+  IF auth.uid() IS NULL OR auth.uid() <> p_user_id THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   -- ทำความสะอาดถังขยะ: ลบข้อมูลทิ้งถาวรหากลบเกิน 3 วัน
   DELETE FROM public.transactions WHERE user_id = p_user_id AND deleted_at < NOW() - INTERVAL '3 days';
 
@@ -356,6 +359,7 @@ DECLARE
   v_tx RECORD;
   v_alloc RECORD;
 BEGIN
+  IF auth.uid() IS NULL OR auth.uid() <> p_user_id THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   DELETE FROM public.transactions WHERE user_id = p_user_id AND deleted_at < NOW() - INTERVAL '3 days';
 
   SELECT * INTO v_tx FROM public.transactions WHERE id = p_tx_id AND user_id = p_user_id AND deleted_at IS NOT NULL;

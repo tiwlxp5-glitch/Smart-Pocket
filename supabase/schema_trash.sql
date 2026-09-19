@@ -1,4 +1,4 @@
-﻿-- ==========================================
+-- ==========================================
 -- 🗑️ ระบบถังขยะ (Soft Delete) และกู้คืนรายการ
 -- ==========================================
 
@@ -11,6 +11,7 @@ DECLARE
   v_tx RECORD;
   v_alloc RECORD;
 BEGIN
+  IF auth.uid() IS NULL OR auth.uid() <> p_user_id THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   -- ทำความสะอาดถังขยะ: ลบข้อมูลทิ้งถาวรหากลบเกิน 3 วัน (Lazy Cleanup Pattern)
   DELETE FROM transactions WHERE user_id = p_user_id AND deleted_at < NOW() - INTERVAL '3 days';
 
@@ -40,6 +41,7 @@ DECLARE
   v_tx RECORD;
   v_alloc RECORD;
 BEGIN
+  IF auth.uid() IS NULL OR auth.uid() <> p_user_id THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   -- ทำความสะอาดถังขยะเช่นกัน
   DELETE FROM transactions WHERE user_id = p_user_id AND deleted_at < NOW() - INTERVAL '3 days';
 

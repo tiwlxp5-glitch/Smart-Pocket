@@ -1,4 +1,4 @@
-﻿-- ==========================================
+-- ==========================================
 -- 👤 เพิ่มช่อง "ชื่อผู้รับเงิน (Receiver)"
 -- ==========================================
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS receiver TEXT;
@@ -10,6 +10,7 @@ CREATE OR REPLACE FUNCTION process_expense(
 DECLARE
   v_transaction_id UUID; v_current_balance NUMERIC;
 BEGIN
+  IF auth.uid() IS NULL OR auth.uid() <> p_user_id THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   SELECT balance INTO v_current_balance FROM buckets WHERE id = p_bucket_id AND user_id = p_user_id FOR UPDATE;
   IF v_current_balance IS NULL THEN RAISE EXCEPTION 'Bucket not found'; END IF;
   

@@ -28,6 +28,7 @@ DECLARE
   v_target_wallet_id UUID := p_wallet_id;
   v_bucket_default_wallet UUID;
 BEGIN
+  IF auth.uid() IS NULL OR auth.uid() <> p_user_id THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   -- 1. Check & Lock Bucket
   SELECT balance, default_wallet_id INTO v_current_balance, v_bucket_default_wallet 
   FROM public.buckets WHERE id = p_bucket_id AND user_id = p_user_id FOR UPDATE;

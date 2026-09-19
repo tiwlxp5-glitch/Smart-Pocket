@@ -129,6 +129,7 @@ DECLARE
   v_transaction_id UUID;
   v_current_balance NUMERIC;
 BEGIN
+  IF auth.uid() IS NULL OR auth.uid() <> p_user_id THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   -- 1. Check Bucket Ownership and Balance (Optional: Allow negative balance or strictly block it)
   SELECT balance INTO v_current_balance FROM buckets WHERE id = p_bucket_id AND user_id = p_user_id FOR UPDATE;
   

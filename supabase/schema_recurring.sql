@@ -94,9 +94,7 @@ DECLARE
   v_iter INT;
 BEGIN
   -- 1. Security Check (IDOR Guard)
-  IF auth.uid() IS NOT NULL AND auth.uid() <> p_user_id THEN
-    RAISE EXCEPTION 'Permission denied: Cannot process schedules for another user';
-  END IF;
+  IF auth.uid() IS NULL OR auth.uid() <> p_user_id THEN RAISE EXCEPTION 'Unauthorized'; END IF;
 
   -- 2. Iterate through all active, due schedules with row-level lock
   FOR v_rec IN 

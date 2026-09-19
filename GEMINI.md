@@ -125,6 +125,10 @@
 - **Milestone 14.2 (AI Timeout & Stability Fix)**:
   - แก้ไขปัญหา AI Slip Scanner และ แชทบอทตัดจบกลางคันเนื่องจากติดข้อจำกัด Vercel Serverless Timeout (15s default).
   - เพิ่ม `export const maxDuration = 60` ใน `src/app/dashboard/layout.tsx` เพื่อให้ Server Actions ทั้งหมด (รวมถึง `extract-action.ts` ที่ใช้อ่านสลิป) ได้รับเวลาทำงานสูงสุด 60 วินาที.
+- **Milestone 14.3 (Security Hardening & IDOR Fix)**:
+  - แก้ไขช่องโหว่ IDOR (Insecure Direct Object Reference) ใน Supabase RPCs ที่ใช้ `SECURITY DEFINER`.
+  - เพิ่มระบบตรวจจับ `auth.uid()` vs `p_user_id` ในทุก RPC (`process_expense`, `process_transfer`, `move_to_trash`, `restore_from_trash`, `process_due_recurring_transactions`).
+  - สร้างไฟล์รวมแพตช์ `supabase/schema_idor_fix.sql` เพื่อให้สามารถนำไปรันบน Supabase SQL Editor ได้ทันที.
 
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **119/119 tests** (100% pass rate) ครอบคลุมถึง M14.1 (AI Chat Fix).
