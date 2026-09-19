@@ -678,20 +678,38 @@ export async function checkAndProcessRecurringAction() {
   }
 
   try {
-    const { data, error } = await supabase.rpc('process_due_recurring_transactions', {
-      p_user_id: user.id,
-    })
+    let totalProcessedCount = 0;
+    let totalExpenseSum = 0;
+    let totalIncomeSum = 0;
+    let currentProcessedCount = 0;
+    let loopCount = 0;
+    const MAX_LOOPS = 5;
+    let lastError = null;
 
-    if (error) {
-      console.warn('Lazy Evaluation Runner warning:', error.message)
-      return { success: false, processedCount: 0, totalExpense: 0, totalIncome: 0, message: error.message }
+    do {
+      const { data, error } = await supabase.rpc('process_due_recurring_transactions', {
+        p_user_id: user.id,
+      })
+
+      if (error) {
+        console.warn('Lazy Evaluation Runner warning:', error.message)
+        lastError = error.message;
+        break;
+      }
+
+      currentProcessedCount = Number(data?.processed_count) || 0
+      totalProcessedCount += currentProcessedCount;
+      totalExpenseSum += Number(data?.total_expense) || 0;
+      totalIncomeSum += Number(data?.total_income) || 0;
+
+      loopCount++;
+    } while (currentProcessedCount === 36 && loopCount < MAX_LOOPS);
+
+    if (totalProcessedCount === 0 && lastError && loopCount === 0) {
+        return { success: false, processedCount: 0, totalExpense: 0, totalIncome: 0, message: lastError }
     }
 
-    const processedCount = Number(data?.processed_count) || 0
-    const totalExpense = Number(data?.total_expense) || 0
-    const totalIncome = Number(data?.total_income) || 0
-
-    if (processedCount > 0) {
+    if (totalProcessedCount > 0) {
       revalidatePath('/dashboard', 'layout')
       revalidatePath('/dashboard/history')
       revalidatePath('/dashboard/analytics')
@@ -700,10 +718,10 @@ export async function checkAndProcessRecurringAction() {
 
     return {
       success: true,
-      processedCount,
-      totalExpense,
-      totalIncome,
-      message: `ประมวลผลรายการประจำแล้ว ${processedCount} รายการ`,
+      processedCount: totalProcessedCount,
+      totalExpense: totalExpenseSum,
+      totalIncome: totalIncomeSum,
+      message: `ประมวลผลรายการประจำแล้ว ${totalProcessedCount} รายการ`,
     }
   } catch (err: any) {
     console.warn('Lazy Evaluation Runner caught exception:', err?.message)

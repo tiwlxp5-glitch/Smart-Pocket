@@ -140,6 +140,15 @@
   - สร้าง `process_income_allocation` Supabase RPC จัดการ single และ multi-bucket allocations (รวมถึง auto-transfers ไป linked wallets) ให้ทำงานภายใน atomic transaction เดียว.
   - โอนย้ายการคำนวณทางการเงินทั้งหมดไปอยู่ใน atomic PostgreSQL transactions เพื่อรับประกัน ACID compliance.
 
+- **Milestone 14.6 (Modern Toast UI Migration)**:
+  - ยกเลิกระบบแจ้งเตือนข้อผิดพลาดที่ใช้ `alert()` แบบเก่าทั้งหมด ซึ่งบล็อกการทำงานของแอปและมี UX ไม่ดี
+  - ติดตั้งและตั้งค่าไลบรารี `sonner` สำหรับการแจ้งเตือน (Toast) ในระดับโกลบอล (`<Toaster />` ใน `layout.tsx`)
+  - แก้ไขไฟล์ทั้งหมดที่เคยเรียกใช้ `alert()` เช่น หน้าสร้างรายจ่าย, หน้าสร้างรายรับ, จัดการกระเป๋า, ลบ/กู้คืนประวัติ ให้เปลี่ยนไปใช้ `toast.error()` แทน เพื่อประสบการณ์ใช้งานที่ดีขึ้นและไม่ค้างเมื่อ AI เกิด Timeout
+
+- **Milestone 14.7 (Recurring Action Safety Loop)**:
+  - เพิ่ม Node.js-side while loop ใน `checkAndProcessRecurringAction` Server Action (`actions.ts`) เพื่อเรียกใช้ `process_due_recurring_transactions` RPC ซ้ำอัตโนมัติหาก `processed_count === 36` (Safety cap ของ RPC)
+  - กำหนด Max loops = 5 เพื่อป้องกันปัญหา Infinite loop และรับประกันว่าจะดึงรายการตกหล่นทั้งหมดหากผู้ใช้ไม่ได้ล็อกอินเข้าใช้งานหลายเดือน (สูงสุด 36 * 5 = 180 รายการต่อการเปิดแอป 1 ครั้ง)
+
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **119/119 tests** (100% pass rate) ครอบคลุมถึง M14.1 (AI Chat Fix).
 
