@@ -1,7 +1,7 @@
 'use client'
 
 import { Archive, Loader2 } from 'lucide-react'
-import { deleteWallet } from '@/app/dashboard/actions'
+import { deleteWallet } from '@/app/dashboard/wallet-actions'
 import { useTransition } from 'react'
 import { toast } from 'sonner'
 

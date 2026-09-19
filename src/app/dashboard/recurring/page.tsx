@@ -28,7 +28,7 @@ import {
   updateRecurringSchedule, 
   deleteRecurringSchedule, 
   toggleRecurringActive 
-} from '../actions'
+} from '../recurring-actions'
 import { 
   RecurringFrequency, 
   RecurringSchedule, 

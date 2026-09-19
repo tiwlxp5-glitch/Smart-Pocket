@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { Wallet, WalletType, Bucket } from '@/types/database'
 import { BankPreset, getWalletTypeLabel } from '@/utils/walletHelper'
 import { WalletCard } from '@/components/WalletCard'
-import { createWallet, updateWallet, deleteWallet } from '@/app/dashboard/actions'
+import { createWallet, updateWallet, deleteWallet } from '@/app/dashboard/wallet-actions'
 import { Plus, Edit2, Archive, X, Check, Building2, Banknote, Smartphone, CreditCard, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 

@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { ArchiveRestore, Loader2 } from 'lucide-react'
-import { restoreFromTrash } from '@/app/dashboard/actions'
+import { restoreFromTrash } from '@/app/dashboard/trash-actions'
 import { toast } from 'sonner'
 
 export function RestoreHistoryButton({ id }: { id: string }) {

@@ -22,7 +22,8 @@ import {
 } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 import { startNavigationProgress } from '@/components/NavigationProgress'
-import { updateUserProfile, updateUserPassword, updateBucketSettings } from '../actions'
+import { updateUserProfile, updateUserPassword } from '../profile-actions'
+import { updateBucketSettings } from '../wallet-actions'
 
 interface BucketItem {
   id: string

@@ -3,7 +3,7 @@ import { ScrollText, ArrowDownCircle, ArrowUpCircle, Trash2, ArrowRightLeft } fr
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { th } from 'date-fns/locale'
-import { moveToTrash } from '../actions'
+import { moveToTrash } from '../trash-actions'
 import { ExportModal } from './ExportModal'
 import { SlipLightbox } from '@/components/SlipLightbox'
 

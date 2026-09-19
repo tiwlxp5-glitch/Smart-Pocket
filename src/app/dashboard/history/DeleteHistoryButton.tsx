@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { Trash2, Loader2 } from 'lucide-react'
-import { moveToTrash } from '@/app/dashboard/actions'
+import { moveToTrash } from '@/app/dashboard/trash-actions'
 import { toast } from 'sonner'
 
 export function DeleteHistoryButton({ id }: { id: string }) {

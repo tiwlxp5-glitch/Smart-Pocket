@@ -3,7 +3,7 @@ import { Trash2, ArrowDownCircle, ArrowUpCircle, ArchiveRestore, ChevronLeft, In
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { th } from 'date-fns/locale'
-import { restoreFromTrash } from '../../actions'
+import { restoreFromTrash } from '../../trash-actions'
 import { RestoreHistoryButton } from './RestoreHistoryButton'
 
 interface TrashItem {

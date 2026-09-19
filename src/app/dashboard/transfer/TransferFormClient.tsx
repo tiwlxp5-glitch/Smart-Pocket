@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Wallet } from '@/types/database'
 import { getWalletTypeLabel, validateTransfer } from '@/utils/walletHelper'
-import { transferMoney } from '@/app/dashboard/actions'
+import { transferMoney } from '@/app/dashboard/transaction-actions'
 import { ArrowUpDown, ArrowRight, ArrowRightLeft, Sparkles, CheckCircle2, Loader2 } from 'lucide-react'
 import { startNavigationProgress } from '@/components/NavigationProgress'
 

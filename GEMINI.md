@@ -171,7 +171,9 @@
   - แก้ไขปัญหา Date Timezone สำหรับ Vercel Server ที่ใช้ UTC เป็นหลัก ทำให้ผู้ใช้ไทยเห็นข้อมูลผิดเพี้ยนในช่วง 7 ชั่วโมงแรกของเดือนใหม่
   - สร้าง `src/utils/timezone.ts` เพื่อจัดการ timezone แบบปลอดภัยโดยใช้ `Intl.DateTimeFormat` ร่วมกับ `timeZone: 'Asia/Bangkok'`
   - แก้ไข `src/app/dashboard/expense/page.tsx`, `src/app/dashboard/page.tsx` และ `src/app/api/export/excel/route.ts` ให้คำนวณเดือนและปีใน Timezone `Asia/Bangkok` เพื่อความแม่นยำ 100%
-
+- **Milestone 14.12 (God File Refactoring)**:
+  - แยกไฟล์ Server Actions (`actions.ts` กว่า 700 บรรทัด) ออกเป็นไฟล์ย่อยตาม Domain (Transaction, Wallet, Recurring, Trash, Profile)
+  - อัปเดต Import statement ทั่วทั้งโปรเจกต์ให้ชี้ไปที่ไฟล์ใหม่ครบถ้วน
 
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **119/119 tests** (100% pass rate) ครอบคลุมถึง M14.1 (AI Chat Fix).
