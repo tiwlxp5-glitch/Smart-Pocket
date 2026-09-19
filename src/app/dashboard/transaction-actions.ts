@@ -14,6 +14,8 @@ export async function addExpense(formData: FormData) {
   const walletId = (formData.get('wallet_id') as string) || null
   const slipUrl = (formData.get('slip_url') as string) || null
   const receiver = (formData.get('receiver') as string)?.trim() || null
+  const rawDate = formData.get('transaction_date') as string
+  const date = rawDate || new Date().toISOString()
 
   if (!bucketId || isNaN(amount) || amount <= 0) throw new Error('Invalid input')
 
@@ -24,7 +26,7 @@ export async function addExpense(formData: FormData) {
     p_amount: amount,
     p_category: 'expense',
     p_note: note,
-    p_date: new Date().toISOString(),
+    p_date: date,
     p_slip_url: slipUrl,
     p_receiver: receiver,
     p_wallet_id: walletId
@@ -48,6 +50,8 @@ export async function addIncome(formData: FormData) {
   const walletId = (formData.get('wallet_id') as string) || null
   const allocationMode = (formData.get('allocation_mode') as string) || 'auto' // 'auto' | 'single'
   const singleBucketId = (formData.get('single_bucket_id') as string) || null
+  const rawDate = formData.get('transaction_date') as string
+  const date = rawDate || new Date().toISOString()
 
   if (isNaN(amount) || amount <= 0) throw new Error('Invalid input')
 
@@ -56,7 +60,7 @@ export async function addIncome(formData: FormData) {
     p_wallet_id: walletId,
     p_amount: amount,
     p_note: note,
-    p_date: new Date().toISOString(),
+    p_date: date,
     p_allocation_mode: allocationMode,
     p_single_bucket_id: singleBucketId
   })

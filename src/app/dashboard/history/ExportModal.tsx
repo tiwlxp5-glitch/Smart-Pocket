@@ -184,35 +184,35 @@ export function ExportModal({ transactions }: ExportModalProps) {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-gray-100 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-gray-100 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-2xs">
-                  <FileSpreadsheet size={22} />
+                <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-2xs">
+                  <FileSpreadsheet size={20} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 text-base">ส่งออกรายงานการเงิน</h3>
-                  <p className="text-xs text-gray-500">รายงานระดับมืออาชีพ พร้อมเปิดใน Excel ทันที</p>
+                  <h3 className="font-bold text-gray-900 text-sm">ส่งออกรายงานการเงิน</h3>
+                  <p className="text-[10px] text-gray-500">รายงานระดับมืออาชีพ พร้อมเปิดใน Excel ทันที</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
             {/* Timeframe selection */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
-                <Calendar size={14} className="text-gray-500" />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-semibold text-gray-700 flex items-center gap-1.5">
+                <Calendar size={12} className="text-gray-500" />
                 <span>เลือกรอบระยะเวลา:</span>
               </label>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5">
                 <button
                   type="button"
                   onClick={() => setTimeframe('this_month')}
@@ -250,25 +250,25 @@ export function ExportModal({ transactions }: ExportModalProps) {
             </div>
 
             {/* Financial Summary Preview */}
-            <div className="bg-gray-50 rounded-2xl p-3.5 border border-gray-100 flex flex-col gap-2">
-              <div className="flex items-center justify-between text-xs text-gray-600 font-semibold">
+            <div className="bg-gray-50 rounded-2xl p-3 border border-gray-100 flex flex-col gap-1.5">
+              <div className="flex items-center justify-between text-[11px] text-gray-600 font-semibold">
                 <span>สรุปข้อมูลที่จะส่งออก:</span>
                 <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-bold">
                   {filteredData.length} รายการ
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-2 pt-1">
-                <div className="bg-white p-2 rounded-xl border border-gray-100 text-center">
+              <div className="grid grid-cols-3 gap-1.5">
+                <div className="bg-white p-1.5 rounded-xl border border-gray-100 text-center">
                   <p className="text-[10px] text-gray-400">รายรับ</p>
-                  <p className="text-xs font-bold text-emerald-600 truncate">+฿{incomeSum.toLocaleString()}</p>
+                  <p className="text-[11px] font-bold text-emerald-600 truncate">+฿{incomeSum.toLocaleString()}</p>
                 </div>
-                <div className="bg-white p-2 rounded-xl border border-gray-100 text-center">
+                <div className="bg-white p-1.5 rounded-xl border border-gray-100 text-center">
                   <p className="text-[10px] text-gray-400">รายจ่าย</p>
-                  <p className="text-xs font-bold text-rose-600 truncate">-฿{expenseSum.toLocaleString()}</p>
+                  <p className="text-[11px] font-bold text-rose-600 truncate">-฿{expenseSum.toLocaleString()}</p>
                 </div>
-                <div className="bg-white p-2 rounded-xl border border-gray-100 text-center">
+                <div className="bg-white p-1.5 rounded-xl border border-gray-100 text-center">
                   <p className="text-[10px] text-gray-400">สุทธิ</p>
-                  <p className={`text-xs font-bold truncate ${netSum >= 0 ? 'text-blue-600' : 'text-rose-600'}`}>
+                  <p className={`text-[11px] font-bold truncate ${netSum >= 0 ? 'text-blue-600' : 'text-rose-600'}`}>
                     ฿{netSum.toLocaleString()}
                   </p>
                 </div>
@@ -276,7 +276,7 @@ export function ExportModal({ transactions }: ExportModalProps) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2">
               {/* Option 1: Styled Excel (.xlsx) */}
               <button
                 type="button"

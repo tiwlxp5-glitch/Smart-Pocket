@@ -129,6 +129,9 @@ export default function IncomePage() {
         formData.append('single_bucket_id', selectedBucketId)
       }
       
+      const submitDate = new Date().toISOString()
+      formData.append('transaction_date', submitDate)
+      
       try {
         await addIncome(formData)
         setIsSuccess(true)

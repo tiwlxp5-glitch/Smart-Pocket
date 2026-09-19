@@ -60,6 +60,7 @@ export default function ExpenseFormClient({ buckets, wallets, bucketExpenses }: 
   const [slipFile, setSlipFile] = useState<File | null>(null)
   const [compressedSlipBlob, setCompressedSlipBlob] = useState<Blob | null>(null)
   const [slipPreview, setSlipPreview] = useState<string | null>(null)
+  const [scannedDate, setScannedDate] = useState<string | null>(null)
 
   const numAmount = Number(amount) || 0
   const supabase = createBrowserClient(
@@ -83,6 +84,7 @@ export default function ExpenseFormClient({ buckets, wallets, bucketExpenses }: 
 
     setSlipFile(file)
     setCompressedSlipBlob(null)
+    setScannedDate(null)
     setIsScanning(true)
     
     try {
@@ -98,6 +100,7 @@ export default function ExpenseFormClient({ buckets, wallets, bucketExpenses }: 
       if (extracted.amount) setAmount(extracted.amount.toString())
       if (extracted.note) setNote(extracted.note)
       if (extracted.receiver) setReceiver(extracted.receiver)
+      if (extracted.transaction_date) setScannedDate(extracted.transaction_date)
 
       // Auto-match Wallet based on sender_bank or note
       let matchedWalletId = null
@@ -132,6 +135,7 @@ export default function ExpenseFormClient({ buckets, wallets, bucketExpenses }: 
       setSlipPreview(null)
       setSlipFile(null)
       setCompressedSlipBlob(null)
+      setScannedDate(null)
     } finally {
       setIsScanning(false)
     }
@@ -165,6 +169,13 @@ export default function ExpenseFormClient({ buckets, wallets, bucketExpenses }: 
         formData.append('bucket_id', selectedBucketId)
         if (selectedWalletId) formData.append('wallet_id', selectedWalletId)
         if (finalSlipUrl) formData.append('slip_url', finalSlipUrl)
+        
+        // Use AI extracted date if available, otherwise get exact client time in ISO format
+        const submitDate = scannedDate || (() => {
+          const now = new Date()
+          return now.toISOString()
+        })()
+        formData.append('transaction_date', submitDate)
         
         await addExpense(formData)
         setIsSuccess(true)
