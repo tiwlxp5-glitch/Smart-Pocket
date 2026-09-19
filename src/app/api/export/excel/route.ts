@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { generateExcelWorkbook, ExcelTransactionItem } from '@/utils/exportExcel'
+import { getStartOfMonthBkk, getStartOfYearBkk, getCurrentBkkDateParts, getBkkMonthNameThai } from '@/utils/timezone'
 
 export const runtime = 'nodejs'
 
@@ -16,31 +17,31 @@ export async function POST(req: Request) {
     const timeframe = body.timeframe || 'this_month'
     let transactions: ExcelTransactionItem[] = body.items
 
-    const now = new Date()
+    const { year: curYear, month: curMonth } = getCurrentBkkDateParts()
     let timeframeLabel = 'ทั้งหมด (All Time)'
     let fileSuffix = 'all'
 
     if (timeframe === 'this_month') {
-      const monthName = now.toLocaleDateString('th-TH', { month: 'long' })
-      timeframeLabel = `เดือน${monthName} ${now.getFullYear() + 543} (${now.getFullYear()})`
-      fileSuffix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      const monthName = getBkkMonthNameThai()
+      timeframeLabel = `เดือน${monthName} ${curYear + 543} (${curYear})`
+      fileSuffix = `${curYear}-${String(curMonth + 1).padStart(2, '0')}`
     } else if (timeframe === 'this_year') {
-      timeframeLabel = `ประจำปี พ.ศ. ${now.getFullYear() + 543} (${now.getFullYear()})`
-      fileSuffix = `${now.getFullYear()}`
+      timeframeLabel = `ประจำปี พ.ศ. ${curYear + 543} (${curYear})`
+      fileSuffix = `${curYear}`
     }
 
     // Filter by timeframe if full list is provided
     if (transactions && transactions.length > 0) {
-      const curYear = now.getFullYear()
-      const curMonth = now.getMonth()
-
       transactions = transactions.filter((tx) => {
         const txDate = new Date(tx.transaction_date)
+        const txBkkParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit' }).format(txDate)
+        const [txY, txM] = txBkkParts.split('-').map(Number)
+        
         if (timeframe === 'this_month') {
-          return txDate.getFullYear() === curYear && txDate.getMonth() === curMonth
+          return txY === curYear && (txM - 1) === curMonth
         }
         if (timeframe === 'this_year') {
-          return txDate.getFullYear() === curYear
+          return txY === curYear
         }
         return true
       })
@@ -57,10 +58,10 @@ export async function POST(req: Request) {
         .order('transaction_date', { ascending: false })
 
       if (timeframe === 'this_month') {
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+        const startOfMonth = getStartOfMonthBkk()
         query = query.gte('transaction_date', startOfMonth)
       } else if (timeframe === 'this_year') {
-        const startOfYear = new Date(now.getFullYear(), 0, 1).toISOString()
+        const startOfYear = getStartOfYearBkk()
         query = query.gte('transaction_date', startOfYear)
       }
 

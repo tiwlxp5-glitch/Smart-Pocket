@@ -3,6 +3,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import ExpenseFormClient from './ExpenseFormClient'
 import { Loader2 } from 'lucide-react'
+import { getStartOfMonthBkk } from '@/utils/timezone'
 
 export const maxDuration = 60
 
@@ -46,7 +47,7 @@ export default async function ExpensePage() {
   }
 
   // Fetch current month expenses per bucket
-  const startOfMonthStr = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+  const startOfMonthStr = getStartOfMonthBkk()
   
   const { data: txs } = await supabase
     .from('transactions')

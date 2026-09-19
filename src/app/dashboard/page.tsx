@@ -6,6 +6,7 @@ import { WalletCard } from '@/components/WalletCard'
 import { DashboardWalletDeleteButton } from '@/components/DashboardWalletDeleteButton'
 import { BANK_PRESETS } from '@/utils/walletHelper'
 import OpenAIAdvisorButton from './_components/OpenAIAdvisorButton'
+import { getStartOfMonthBkk } from '@/utils/timezone'
 
 
 // Dummy fallback data if DB is empty or not connected
@@ -51,8 +52,7 @@ export default async function DashboardPage() {
   }
 
   // ดึงรายการสรุปประจำเดือนนี้
-  const now = new Date()
-  const startOfMonthStr = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+  const startOfMonthStr = getStartOfMonthBkk()
   
   const { data: monthTransactions } = user ? await supabase
     .from('transactions')
