@@ -146,6 +146,11 @@
   - แก้ไขไฟล์ทั้งหมดที่เคยเรียกใช้ `alert()` เช่น หน้าสร้างรายจ่าย, หน้าสร้างรายรับ, จัดการกระเป๋า, ลบ/กู้คืนประวัติ ให้เปลี่ยนไปใช้ `toast.error()` แทน เพื่อประสบการณ์ใช้งานที่ดีขึ้นและไม่ค้างเมื่อ AI เกิด Timeout
 
 - **Milestone 14.7 (Recurring Action Safety Loop)**:
+  - เพิ่มความปลอดภัยในการรัน `process_due_recurring_transactions` จากฝั่ง Server Component (หน้า `/dashboard`)
+- **Milestone 14.8 (Dashboard Server Component Refactoring)**:
+  - แยกส่วนตรรกะการคำนวณข้อมูลที่ซับซ้อน (Data transformation & calculation) เช่น ยอดเงินรวม (Net Worth), การคำนวณแจ้งเตือนงบประมาณ (Budget Alerts), และยอดรับ/จ่ายรวมของถังงบประมาณ ออกจาก `page.tsx` ของ Dashboard
+  - สร้าง `src/utils/dashboardService.ts` เพื่อจัดการ Data Service อย่างเป็นสัดส่วน
+  - ปรับให้ `page.tsx` ทำหน้าที่เป็นเพียง "Controller" ที่ดึงข้อมูลจาก Database และเรียกใช้ฟังก์ชันจาก Service ก่อนส่งต่อให้ UI (JSX) อย่างสะอาดและอ่านง่ายขึ้น
   - เพิ่มระบบ Safety Cap 36 Iterations ใน `process_due_recurring_transactions` ป้องกัน Infinity Loop
   - ปรับปรุงให้ย้อนรอยสร้างรายการที่หลุดไป (Catch-up) ได้แม่นยำขึ้น รองรับปีอธิกสุรทิน (Leap Year)
   - เปลี่ยนแปลงกลไก `checkAndProcessRecurringAction` Server Action (`actions.ts`) และ `process_due_recurring_transactions` ให้ส่งค่า `has_more_pending` Boolean flag กลับมา แทนที่จะพึ่งพา `processed_count === 36` ในการระบุว่ายังมีรายการคงค้างหรือไม่ เพื่อความถูกต้องของข้อมูลเมื่อรวมทุก schedules
