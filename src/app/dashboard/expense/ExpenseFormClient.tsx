@@ -1,0 +1,416 @@
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import { ArrowUpCircle, CheckCircle2, ChevronLeft, ShieldCheck, TrendingUp, Coffee, ScanLine, Loader2, AlertTriangle, Wallet as WalletIcon } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { addExpense } from '../actions'
+import { createBrowserClient } from '@supabase/ssr'
+import { extractSlipData } from './extract-action'
+import { Wallet as WalletTypeInterface } from '@/types/database'
+import { detectBankFromText } from '@/utils/walletHelper'
+import { startNavigationProgress } from '@/components/NavigationProgress'
+import { toast } from 'sonner'
+import { compressImage } from '@/utils/imageHelper'
+
+interface Bucket {
+  id: string
+  name: string
+  icon?: string | null
+  color?: string | null
+  balance: number
+  allocation_percentage?: number
+  monthly_budget?: number | null
+  default_wallet_id?: string | null
+  created_at?: string
+}
+
+interface ExpenseFormClientProps {
+  buckets: Bucket[]
+  wallets: WalletTypeInterface[]
+  bucketExpenses: Record<string, number>
+}
+
+export default function ExpenseFormClient({ buckets, wallets, bucketExpenses }: ExpenseFormClientProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const aiAmount = searchParams.get('ai_amount')
+  const aiNote = searchParams.get('ai_note')
+  const aiBucket = searchParams.get('ai_bucket')
+  const aiWallet = searchParams.get('ai_wallet')
+
+  const [selectedWalletId, setSelectedWalletId] = useState<string>(aiWallet || wallets[0]?.id || '')
+  
+  // Set default bucket
+  let defaultBucketId = aiBucket || ''
+  if (!defaultBucketId && buckets.length > 0) {
+    defaultBucketId = buckets[buckets.length - 1].id
+  }
+  const [selectedBucketId, setSelectedBucketId] = useState<string>(defaultBucketId)
+  
+  const [amount, setAmount] = useState<string>(aiAmount || '')
+  const [note, setNote] = useState(aiNote || '')
+  const [receiver, setReceiver] = useState('')
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // AI Slip State
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isScanning, setIsScanning] = useState(false)
+  const [slipFile, setSlipFile] = useState<File | null>(null)
+  const [compressedSlipBlob, setCompressedSlipBlob] = useState<Blob | null>(null)
+  const [slipPreview, setSlipPreview] = useState<string | null>(null)
+
+  const numAmount = Number(amount) || 0
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  // Auto-select wallet if bucket has a default_wallet_id
+  useEffect(() => {
+    if (selectedBucketId && buckets.length > 0) {
+      const bucket = buckets.find(b => b.id === selectedBucketId)
+      if (bucket?.default_wallet_id) {
+        setSelectedWalletId(bucket.default_wallet_id)
+      }
+    }
+  }, [selectedBucketId, buckets])
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setSlipFile(file)
+    setCompressedSlipBlob(null)
+    setIsScanning(true)
+    
+    try {
+      const { dataUrl: compressedDataUrl, blob: compressedBlob } = await compressImage(file)
+      setSlipPreview(compressedDataUrl) // Show preview from compressed
+      setCompressedSlipBlob(compressedBlob) // Store Blob for upload
+      
+      const base64Data = compressedDataUrl.split(',')[1]
+      
+      // Send to AI
+      const extracted = await extractSlipData(base64Data, 'image/jpeg')
+      
+      if (extracted.amount) setAmount(extracted.amount.toString())
+      if (extracted.note) setNote(extracted.note)
+      if (extracted.receiver) setReceiver(extracted.receiver)
+
+      // Auto-match Wallet based on sender_bank or note
+      let matchedWalletId = null
+      if (extracted.sender_bank && wallets.length > 0) {
+        const bankMatch = wallets.find(
+          (w) =>
+            (w.bank_name && w.bank_name.toLowerCase() === extracted.sender_bank.toLowerCase()) ||
+            (w.name && w.name.toLowerCase().includes(extracted.sender_bank.toLowerCase()))
+        )
+        if (bankMatch) matchedWalletId = bankMatch.id
+      } else if (extracted.note && wallets.length > 0) {
+        const preset = detectBankFromText(extracted.note)
+        if (preset) {
+          const bankMatch = wallets.find(
+            (w) => w.bank_name === preset.code || w.name.toLowerCase().includes(preset.code)
+          )
+          if (bankMatch) matchedWalletId = bankMatch.id
+        }
+      }
+
+      if (matchedWalletId) {
+        setSelectedWalletId(matchedWalletId)
+        // Auto-select the bucket that is linked to this wallet
+        const bucketMatch = buckets.find(b => b.default_wallet_id === matchedWalletId)
+        if (bucketMatch) {
+          setSelectedBucketId(bucketMatch.id)
+        }
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error('อ่านสลิปไม่สำเร็จ กรุณากรอกข้อมูลเองครับ')
+      setSlipPreview(null)
+      setSlipFile(null)
+      setCompressedSlipBlob(null)
+    } finally {
+      setIsScanning(false)
+    }
+  }
+
+  const handleConfirm = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (numAmount > 0 && selectedBucketId) {
+      setIsSubmitting(true) 
+      
+      try {
+        let finalSlipUrl = ''
+        
+        // Upload compressed image
+        if (compressedSlipBlob) {
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('slips')
+            .upload(fileName, compressedSlipBlob, { contentType: 'image/jpeg' })
+            
+          if (!uploadError && uploadData) {
+            const { data } = supabase.storage.from('slips').getPublicUrl(uploadData.path)
+            finalSlipUrl = data.publicUrl
+          }
+        }
+
+        const formData = new FormData()
+        formData.append('amount', numAmount.toString())
+        formData.append('note', note)
+        formData.append('receiver', receiver)
+        formData.append('bucket_id', selectedBucketId)
+        if (selectedWalletId) formData.append('wallet_id', selectedWalletId)
+        if (finalSlipUrl) formData.append('slip_url', finalSlipUrl)
+        
+        await addExpense(formData)
+        setIsSuccess(true)
+        setTimeout(() => {
+          startNavigationProgress()
+          router.push('/dashboard')
+        }, 2000)
+      } catch (error) {
+        console.error('Failed to add expense:', error)
+        toast.error('เกิดข้อผิดพลาดในการบันทึกรายจ่าย')
+        setIsSubmitting(false)
+      }
+    }
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen p-6 flex flex-col items-center justify-center bg-gray-50 text-center pb-20">
+        <CheckCircle2 size={80} className="text-rose-500 mb-6 animate-bounce" />
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">บันทึกรายจ่ายสำเร็จ!</h2>
+        <p className="text-gray-500">ระบบได้หักเงินออกจากกระเป๋าที่คุณเลือกแล้ว</p>
+      </div>
+    )
+  }
+
+  return (
+    <main className="p-6 pb-24 bg-gray-50 min-h-screen">
+      <header className="flex items-center gap-4 mb-8">
+        <Link href="/dashboard" className="p-2 bg-white rounded-full shadow-sm border border-gray-100 text-gray-600">
+          <ChevronLeft size={24} />
+        </Link>
+        <h1 className="text-xl font-bold text-gray-900">บันทึกรายจ่าย</h1>
+      </header>
+
+      {/* AI Slip Scanner Section */}
+      <div className="mb-6">
+        <input 
+          type="file" 
+          accept="image/*" 
+          ref={fileInputRef} 
+          className="hidden" 
+          onChange={handleFileSelect}
+        />
+        
+        {slipPreview ? (
+          <div className="relative bg-white rounded-3xl p-4 shadow-sm border border-gray-100 flex items-center gap-4">
+            <img src={slipPreview} alt="Slip" className="w-16 h-16 object-cover rounded-xl border border-gray-200" />
+            <div className="flex-1">
+              {isScanning ? (
+                <div className="flex items-center gap-2 text-blue-600">
+                  <Loader2 className="animate-spin" size={20} />
+                  <span className="font-semibold text-sm animate-pulse">AI กำลังอ่านสลิป...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-emerald-600">
+                  <CheckCircle2 size={20} />
+                  <span className="font-semibold text-sm">ดึงข้อมูลสำเร็จ!</span>
+                </div>
+              )}
+            </div>
+            <button 
+              type="button" 
+              onClick={() => fileInputRef.current?.click()}
+              className="px-3 py-1.5 text-xs font-semibold bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              เปลี่ยนรูป
+            </button>
+          </div>
+        ) : (
+          <button 
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-5 rounded-3xl shadow-md flex items-center justify-between hover:shadow-lg transition-all"
+          >
+            <div className="text-left">
+              <h3 className="font-bold text-lg mb-1">สแกนสลิปอัจฉริยะ (AI)</h3>
+              <p className="text-blue-100 text-xs">อัพโหลดรูปสลิปให้ AI ดึงข้อมูลให้อัตโนมัติ</p>
+            </div>
+            <div className="bg-white/20 p-3 rounded-full backdrop-blur-sm">
+              <ScanLine size={24} />
+            </div>
+          </button>
+        )}
+      </div>
+
+      <form onSubmit={handleConfirm} className="flex flex-col gap-6">
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center justify-center relative">
+          <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4">
+            <ArrowUpCircle size={32} />
+          </div>
+          <p className="text-gray-500 mb-2">ยอดเงินที่จ่าย (บาท)</p>
+          <input
+            type="number"
+            step="0.01"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            className={`text-5xl font-extrabold text-center w-full bg-transparent focus:outline-none placeholder:text-gray-300 transition-colors ${isScanning ? 'text-gray-300' : 'text-gray-900'}`}
+            required
+            disabled={isScanning}
+          />
+        </div>
+
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">บันทึกช่วยจำ (สินค้า/เหตุผล)</label>
+            <input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="เช่น ค่ากาแฟ, ซื้อของออนไลน์"
+              className={`w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 transition-colors ${isScanning ? 'text-gray-300 bg-gray-50' : 'text-gray-900'}`}
+              disabled={isScanning}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อผู้รับเงิน (ร้านค้า/บุคคล)</label>
+            <input
+              type="text"
+              value={receiver}
+              onChange={(e) => setReceiver(e.target.value)}
+              placeholder="เช่น ร้านถุงเงิน, นายใจดี"
+              className={`w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 transition-colors ${isScanning ? 'text-gray-300 bg-gray-50' : 'text-gray-900'}`}
+              disabled={isScanning}
+            />
+          </div>
+        </div>
+
+        {/* Bucket (Budget Envelope) Selector */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+          <h3 className="block text-sm font-bold text-gray-900 mb-4">หักจากถังงบ / กระเป๋าเงิน</h3>
+          {buckets.length === 0 ? (
+            <p className="text-center text-gray-400 py-4">ไม่พบข้อมูลถังงบประมาณ</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {buckets.map(bucket => {
+                const isSelected = selectedBucketId === bucket.id
+                const Icon = bucket.icon === 'shield' ? ShieldCheck : bucket.icon === 'trending-up' ? TrendingUp : bucket.icon === 'wallet' ? WalletIcon : Coffee
+                const bucketMonthlyLimit = bucket.monthly_budget ? Number(bucket.monthly_budget) : null
+                const bucketSpent = bucketExpenses[bucket.id] || 0
+                const linkedWallet = wallets.find(w => w.id === bucket.default_wallet_id)
+                
+                return (
+                  <label 
+                    key={bucket.id}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer active:scale-[0.98] duration-200 ${
+                      isSelected ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-gray-50 hover:bg-gray-100'
+                    }`}
+                  >
+                    <input 
+                      type="radio" 
+                      name="bucket" 
+                      value={bucket.id} 
+                      checked={isSelected}
+                      onChange={() => setSelectedBucketId(bucket.id)}
+                      className="hidden"
+                    />
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm"
+                      style={{ backgroundColor: linkedWallet?.color || bucket.color || '#3B82F6' }}
+                    >
+                      <Icon size={20} />
+                    </div>
+                    <div className="flex-1">
+                      <p className={`font-semibold ${isSelected ? 'text-rose-700' : 'text-gray-900'}`}>{bucket.name}</p>
+                      <p className={`text-xs ${isSelected ? 'text-rose-500' : 'text-gray-500'} mt-0.5`}>
+                        คงเหลือ: ฿{Number(bucket.balance).toLocaleString('th-TH')}
+                        {bucketMonthlyLimit && (
+                          <span className="ml-1 opacity-80">
+                            • งบ: ฿{bucketSpent.toLocaleString('th-TH')}/฿{bucketMonthlyLimit.toLocaleString('th-TH')}
+                          </span>
+                        )}
+                      </p>
+                      {linkedWallet && (
+                        <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-gray-500 bg-white/60 px-2 py-0.5 rounded-md inline-flex border border-gray-100 shadow-2xs">
+                          <WalletIcon size={10} style={{ color: linkedWallet.color || '#10b981' }} />
+                          <span>หักจากบัญชี: <strong style={{ color: linkedWallet.color || '#10b981' }}>{linkedWallet.name}</strong></span>
+                        </div>
+                      )}
+                    </div>
+                    {isSelected && (
+                      <CheckCircle2 className="text-rose-500 shrink-0" size={24} />
+                    )}
+                  </label>
+                )
+              })}
+
+              {/* Dynamic Budget Warning Alert for selected bucket */}
+              {(() => {
+                const selectedBucket = buckets.find(b => b.id === selectedBucketId)
+                const currentSpent = selectedBucket ? (bucketExpenses[selectedBucket.id] || 0) : 0
+                const monthlyLimit = selectedBucket?.monthly_budget ? Number(selectedBucket.monthly_budget) : null
+                if (!monthlyLimit || monthlyLimit <= 0) return null
+
+                const projectedSpent = currentSpent + numAmount
+                const projectedRatio = Math.round((projectedSpent / monthlyLimit) * 100)
+
+                if (projectedRatio >= 100) {
+                  return (
+                    <div className="mt-2 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-800 animate-in fade-in duration-200">
+                      <AlertTriangle size={18} className="text-rose-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">⚠️ การจ่ายครั้งนี้จะทำให้กระเป๋านี้เกินงบประมาณรายเดือน!</p>
+                        <p className="mt-0.5 text-[11px] opacity-90 leading-relaxed">
+                          ใช้ไปแล้ว ฿{currentSpent.toLocaleString('th-TH')} {numAmount > 0 ? `+ ฿${numAmount.toLocaleString('th-TH')} = ฿${projectedSpent.toLocaleString('th-TH')}` : ''} (แตะ {projectedRatio}% ของเพดานงบ ฿{monthlyLimit.toLocaleString('th-TH')})
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }
+
+                if (projectedRatio >= 80) {
+                  return (
+                    <div className="mt-2 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-xs text-amber-800 animate-in fade-in duration-200">
+                      <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">⚡ การจ่ายครั้งนี้จะแตะ {projectedRatio}% ของงบประมาณรายเดือน</p>
+                        <p className="mt-0.5 text-[11px] opacity-90 leading-relaxed">
+                          ใช้ไปแล้ว ฿{currentSpent.toLocaleString('th-TH')} {numAmount > 0 ? `+ ฿${numAmount.toLocaleString('th-TH')} = ฿${projectedSpent.toLocaleString('th-TH')}` : ''} จากเพดานงบ ฿{monthlyLimit.toLocaleString('th-TH')}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }
+
+                return null
+              })()}
+            </div>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={numAmount <= 0 || !selectedBucketId || isScanning || isSubmitting}
+          className="w-full bg-rose-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-rose-700 transition-all active:scale-[0.98] duration-200 disabled:opacity-50 disabled:bg-gray-400 flex items-center justify-center gap-2"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin" size={24} />
+              กำลังบันทึก...
+            </>
+          ) : (
+            'ยืนยันการจ่ายเงิน'
+          )}
+        </button>
+      </form>
+    </main>
+  )
+}
