@@ -183,28 +183,28 @@ BEGIN
   SELECT * INTO v_tx FROM public.transactions WHERE id = p_tx_id AND user_id = p_user_id AND deleted_at IS NULL;
   IF NOT FOUND THEN RETURN FALSE; END IF;
 
-  -- คืนเงินเข้า Bucket และ Wallet
+  -- คืนเงินเข้า Bucket และ Wallet พร้อม Force Unarchive
   IF v_tx.type = 'expense' THEN
     IF v_tx.bucket_id IS NOT NULL THEN
       UPDATE public.buckets SET balance = balance + v_tx.amount WHERE id = v_tx.bucket_id;
     END IF;
     IF v_tx.wallet_id IS NOT NULL THEN
-      UPDATE public.wallets SET balance = balance + v_tx.amount WHERE id = v_tx.wallet_id;
+      UPDATE public.wallets SET balance = balance + v_tx.amount, is_archived = false WHERE id = v_tx.wallet_id;
     END IF;
   ELSIF v_tx.type = 'income' THEN
     FOR v_alloc IN SELECT bucket_id, amount FROM public.allocations WHERE income_transaction_id = p_tx_id LOOP
       UPDATE public.buckets SET balance = balance - v_alloc.amount WHERE id = v_alloc.bucket_id;
     END LOOP;
     IF v_tx.wallet_id IS NOT NULL THEN
-      UPDATE public.wallets SET balance = balance - v_tx.amount WHERE id = v_tx.wallet_id;
+      UPDATE public.wallets SET balance = balance - v_tx.amount, is_archived = false WHERE id = v_tx.wallet_id;
     END IF;
   ELSIF v_tx.type = 'transfer' THEN
-    -- คืนเงินให้กระเป๋าต้นทาง และหักออกจากกระเป๋าปลายทาง
+    -- คืนเงินให้กระเป๋าต้นทาง และหักออกจากกระเป๋าปลายทาง พร้อม Force Unarchive
     IF v_tx.wallet_id IS NOT NULL THEN
-      UPDATE public.wallets SET balance = balance + (v_tx.amount + COALESCE(v_tx.transfer_fee, 0)) WHERE id = v_tx.wallet_id;
+      UPDATE public.wallets SET balance = balance + (v_tx.amount + COALESCE(v_tx.transfer_fee, 0)), is_archived = false WHERE id = v_tx.wallet_id;
     END IF;
     IF v_tx.to_wallet_id IS NOT NULL THEN
-      UPDATE public.wallets SET balance = balance - v_tx.amount WHERE id = v_tx.to_wallet_id;
+      UPDATE public.wallets SET balance = balance - v_tx.amount, is_archived = false WHERE id = v_tx.to_wallet_id;
     END IF;
   END IF;
 
@@ -227,27 +227,27 @@ BEGIN
   SELECT * INTO v_tx FROM public.transactions WHERE id = p_tx_id AND user_id = p_user_id AND deleted_at IS NOT NULL;
   IF NOT FOUND THEN RETURN FALSE; END IF;
 
-  -- หัก/เพิ่มเงินกลับตามประเภทรายการ
+  -- หัก/เพิ่มเงินกลับตามประเภทรายการ พร้อม Force Unarchive
   IF v_tx.type = 'expense' THEN
     IF v_tx.bucket_id IS NOT NULL THEN
       UPDATE public.buckets SET balance = balance - v_tx.amount WHERE id = v_tx.bucket_id;
     END IF;
     IF v_tx.wallet_id IS NOT NULL THEN
-      UPDATE public.wallets SET balance = balance - v_tx.amount WHERE id = v_tx.wallet_id;
+      UPDATE public.wallets SET balance = balance - v_tx.amount, is_archived = false WHERE id = v_tx.wallet_id;
     END IF;
   ELSIF v_tx.type = 'income' THEN
     FOR v_alloc IN SELECT bucket_id, amount FROM public.allocations WHERE income_transaction_id = p_tx_id LOOP
       UPDATE public.buckets SET balance = balance + v_alloc.amount WHERE id = v_alloc.bucket_id;
     END LOOP;
     IF v_tx.wallet_id IS NOT NULL THEN
-      UPDATE public.wallets SET balance = balance + v_tx.amount WHERE id = v_tx.wallet_id;
+      UPDATE public.wallets SET balance = balance + v_tx.amount, is_archived = false WHERE id = v_tx.wallet_id;
     END IF;
   ELSIF v_tx.type = 'transfer' THEN
     IF v_tx.wallet_id IS NOT NULL THEN
-      UPDATE public.wallets SET balance = balance - (v_tx.amount + COALESCE(v_tx.transfer_fee, 0)) WHERE id = v_tx.wallet_id;
+      UPDATE public.wallets SET balance = balance - (v_tx.amount + COALESCE(v_tx.transfer_fee, 0)), is_archived = false WHERE id = v_tx.wallet_id;
     END IF;
     IF v_tx.to_wallet_id IS NOT NULL THEN
-      UPDATE public.wallets SET balance = balance + v_tx.amount WHERE id = v_tx.to_wallet_id;
+      UPDATE public.wallets SET balance = balance + v_tx.amount, is_archived = false WHERE id = v_tx.to_wallet_id;
     END IF;
   END IF;
 
