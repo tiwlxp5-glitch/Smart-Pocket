@@ -160,6 +160,13 @@
   - แก้ไขปัญหา Deadlock ระหว่างผู้ใช้ทำรายการโอนเงินชนกันใน `process_transfer` RPC
   - เพิ่มกลไกเปรียบเทียบ UUID (`p_from_wallet_id` vs `p_to_wallet_id`) เพื่อล็อคกระเป๋า (FOR UPDATE) ตามลำดับที่แน่นอนเสมอ ป้องกันฐานข้อมูลค้าง
 
+- **Milestone 14.10 (Expense Page Server Component Refactoring)**:
+  - ทำการเปลี่ยนหน้า `expense/page.tsx` จาก God Component แบบฝั่ง Client ให้เป็น Server Component แบบ Next.js App Router มาตรฐาน
+  - ยกเลิกการใช้ `useEffect` สำหรับดึงข้อมูล `wallets`, `buckets`, และ `bucketExpenses` และย้ายการดึงข้อมูลไปที่ Supabase Server Client เพื่อให้ประมวลผลให้เสร็จก่อนเรนเดอร์ (ไม่มีโหลดหน้าขาว)
+  - สกัดโค้ดแปลงและบีบอัดภาพ Canvas ออกไปไว้ที่ `src/utils/imageHelper.ts` (ไฟล์ใหม่)
+  - แยก UI ฝั่ง Client ออกไปไว้ที่ `ExpenseFormClient.tsx`
+  - ติดตั้ง `maxDuration = 60` ลงบน `page.tsx` เพิ่อป้องกันปัญหา AI Timeout ขณะดึงข้อมูลสลิป
+
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **119/119 tests** (100% pass rate) ครอบคลุมถึง M14.1 (AI Chat Fix).
 
