@@ -130,6 +130,11 @@
   - เพิ่มระบบตรวจจับ `auth.uid()` vs `p_user_id` ในทุก RPC (`process_expense`, `process_transfer`, `move_to_trash`, `restore_from_trash`, `process_due_recurring_transactions`).
   - สร้างไฟล์รวมแพตช์ `supabase/schema_idor_fix.sql` เพื่อให้สามารถนำไปรันบน Supabase SQL Editor ได้ทันที.
 
+- **Milestone 14.4 (Multi-Wallet Recurring Transactions Fix)**:
+  - เขียนตรรกะ RPC `process_due_recurring_transactions` ใหม่ใน `supabase/schema_recurring_fix.sql` เพื่อให้รองรับระบบ Multi-Wallet (Milestone 6) อย่างสมบูรณ์
+  - **Expense**: ดึง `default_wallet_id` จาก bucket มาใช้บันทึกลงใน `transactions` และหักเงินจาก `wallets`
+  - **Income**: รองรับการระบุ `wallet_id` ตรงๆ พร้อมระบบ Allocate อัตโนมัติไปยัง `wallets` ที่ผูกกับ buckets ผ่าน `process_transfer` logic ภายใน RPC
+
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **119/119 tests** (100% pass rate) ครอบคลุมถึง M14.1 (AI Chat Fix).
 
@@ -143,6 +148,7 @@ supabase/schema_wallets.sql
 supabase/schema_linked_wallets.sql
 supabase/schema_onboarding.sql
 supabase/schema_fix_cascade_delete.sql
+supabase/schema_recurring_fix.sql
 ```
 
 ## AI SDK & Vercel Best Practices (Lessons Learned)
