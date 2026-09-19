@@ -1,7 +1,10 @@
-﻿import { BottomNav } from '@/components/BottomNav'
+import { BottomNav } from '@/components/BottomNav'
 import { SmartAdvisorChat } from '@/components/SmartAdvisorChat'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+
+export const maxDuration = 60
+
 
 export default async function DashboardLayout({
   children,
