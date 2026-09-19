@@ -122,6 +122,9 @@
     4. **ไม่มี Error Handling เลย**: ไม่มี try/catch ใน API route + ไม่แสดง error ใน UI → ผู้ใช้เห็นแค่ loader หมุนแล้วหายไป — เพิ่ม Error UI + Retry button
   - อัปเกรด AI Model ทุกจุดเป็น `gemini-3.8-flash` เพื่อหลีกเลี่ยงปัญหา 503 High Demand จากเวอร์ชัน 3.5-flash
   - ไฟล์ที่แก้ไข: `route.ts`, `SmartAdvisorChat.tsx`, `smart-add-action.ts`, `extract-action.ts`
+- **Milestone 14.2 (AI Timeout & Stability Fix)**:
+  - แก้ไขปัญหา AI Slip Scanner และ แชทบอทตัดจบกลางคันเนื่องจากติดข้อจำกัด Vercel Serverless Timeout (15s default).
+  - เพิ่ม `export const maxDuration = 60` ใน `src/app/dashboard/layout.tsx` เพื่อให้ Server Actions ทั้งหมด (รวมถึง `extract-action.ts` ที่ใช้อ่านสลิป) ได้รับเวลาทำงานสูงสุด 60 วินาที.
 
 ## Automated Tests
 - Unit tests suite (`npm test`) ผ่านฉลุย **119/119 tests** (100% pass rate) ครอบคลุมถึง M14.1 (AI Chat Fix).
