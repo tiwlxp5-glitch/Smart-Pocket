@@ -231,10 +231,7 @@ export function SmartAdvisorChat({ wallets, buckets }: { wallets: any[], buckets
                 <div className="flex items-start">
                   <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl rounded-tl-sm shadow-sm text-sm space-y-2">
                     <p className="text-red-700">
-                      ⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ AI
-                      {error?.message && process.env.NODE_ENV === 'development' && (
-                        <span className="block text-xs text-red-500 mt-1">{error.message}</span>
-                      )}
+                      ⚠️ {error?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ AI'}
                     </p>
                     <button
                       onClick={() => {

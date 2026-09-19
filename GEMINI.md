@@ -146,7 +146,11 @@
   - แก้ไขไฟล์ทั้งหมดที่เคยเรียกใช้ `alert()` เช่น หน้าสร้างรายจ่าย, หน้าสร้างรายรับ, จัดการกระเป๋า, ลบ/กู้คืนประวัติ ให้เปลี่ยนไปใช้ `toast.error()` แทน เพื่อประสบการณ์ใช้งานที่ดีขึ้นและไม่ค้างเมื่อ AI เกิด Timeout
 
 - **Milestone 14.7 (Recurring Action Safety Loop)**:
-  - เพิ่มความปลอดภัยในการรัน `process_due_recurring_transactions` จากฝั่ง Server Component (หน้า `/dashboard`)
+  - เพิ่
+- **Milestone 14.8 (AI Chat UX Improvement for Rate Limits)**:
+  - แก้ไขปัญหาผู้ใช้สับสนกับข้อความ "⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ AI" เมื่อโควตาใช้งาน Gemini ฟรีรายวันเต็ม
+  - ปรับปรุง `route.ts` ให้ดักจับ Error Code 429 (Quota) และ 503 (Overload) ใน `toUIMessageStreamResponse()` เพื่อส่งข้อความที่เข้าใจง่ายขึ้น
+  - แก้ไข `SmartAdvisorChat.tsx` ให้แสดงข้อความ error message แทนข้อความแบบตายตัว เพื่อให้ผู้ใช้ทราบว่าปัญหามาจากโควตาหรือเซิร์ฟเวอร์เต็มมความปลอดภัยในการรัน `process_due_recurring_transactions` จากฝั่ง Server Component (หน้า `/dashboard`)
 - **Milestone 14.8 (Dashboard Server Component Refactoring)**:
   - แยกส่วนตรรกะการคำนวณข้อมูลที่ซับซ้อน (Data transformation & calculation) เช่น ยอดเงินรวม (Net Worth), การคำนวณแจ้งเตือนงบประมาณ (Budget Alerts), และยอดรับ/จ่ายรวมของถังงบประมาณ ออกจาก `page.tsx` ของ Dashboard
   - สร้าง `src/utils/dashboardService.ts` เพื่อจัดการ Data Service อย่างเป็นสัดส่วน

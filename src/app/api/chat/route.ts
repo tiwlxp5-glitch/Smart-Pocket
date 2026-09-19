@@ -73,7 +73,18 @@ export async function POST(req: Request) {
     });
 
     // Use the result object's built-in response method — most compatible with Vercel
-    return result.toUIMessageStreamResponse();
+    return result.toUIMessageStreamResponse({
+      onError: (error: unknown) => {
+        const errorString = String(error);
+        if (errorString.includes('quota') || errorString.includes('429')) {
+          return 'โควตาใช้งาน AI ฟรีเต็มแล้ว (Limit 20 requests) กรุณาลองใหม่ในภายหลังครับ';
+        }
+        if (errorString.includes('503') || errorString.includes('high demand') || errorString.includes('overloaded')) {
+          return 'เซิร์ฟเวอร์ AI มีผู้ใช้งานหนาแน่นมาก กรุณาลองใหม่อีกครั้งครับ';
+        }
+        return 'เกิดข้อผิดพลาดในการเชื่อมต่อ AI';
+      }
+    });
 
   } catch (error: any) {
     console.error('[Smart Advisor API Error]', {
