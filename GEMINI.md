@@ -150,7 +150,8 @@
 - **Milestone 14.8 (AI Chat UX Improvement for Rate Limits)**:
   - แก้ไขปัญหาผู้ใช้สับสนกับข้อความ "⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ AI" เมื่อโควตาใช้งาน Gemini ฟรีรายวันเต็ม
   - ปรับปรุง `route.ts` ให้ดักจับ Error Code 429 (Quota) และ 503 (Overload) ใน `toUIMessageStreamResponse()` เพื่อส่งข้อความที่เข้าใจง่ายขึ้น
-  - แก้ไข `SmartAdvisorChat.tsx` ให้แสดงข้อความ error message แทนข้อความแบบตายตัว เพื่อให้ผู้ใช้ทราบว่าปัญหามาจากโควตาหรือเซิร์ฟเวอร์เต็มมความปลอดภัยในการรัน `process_due_recurring_transactions` จากฝั่ง Server Component (หน้า `/dashboard`)
+  - แก้ไข `SmartAdvisorChat.tsx` ให้แสดงข้อความ error message แทนข้อความแบบตายตัว เพื่อให้ผู้ใช้ทราบว่าปัญหามาจากโควตาหรือเซิร์ฟเวอร์เต็ม
+
 - **Milestone 14.8 (Dashboard Server Component Refactoring)**:
   - แยกส่วนตรรกะการคำนวณข้อมูลที่ซับซ้อน (Data transformation & calculation) เช่น ยอดเงินรวม (Net Worth), การคำนวณแจ้งเตือนงบประมาณ (Budget Alerts), และยอดรับ/จ่ายรวมของถังงบประมาณ ออกจาก `page.tsx` ของ Dashboard
   - สร้าง `src/utils/dashboardService.ts` เพื่อจัดการ Data Service อย่างเป็นสัดส่วน
@@ -159,6 +160,11 @@
   - ปรับปรุงให้ย้อนรอยสร้างรายการที่หลุดไป (Catch-up) ได้แม่นยำขึ้น รองรับปีอธิกสุรทิน (Leap Year)
   - เปลี่ยนแปลงกลไก `checkAndProcessRecurringAction` Server Action (`actions.ts`) และ `process_due_recurring_transactions` ให้ส่งค่า `has_more_pending` Boolean flag กลับมา แทนที่จะพึ่งพา `processed_count === 36` ในการระบุว่ายังมีรายการคงค้างหรือไม่ เพื่อความถูกต้องของข้อมูลเมื่อรวมทุก schedules
   - สร้างไฟล์ SQL สำหรับแพตช์ใหม่: `supabase/schema_recurring_has_more_fix.sql`
+
+- **Milestone 14.8 (AI Persona & Tone Update)**:
+  - ปรับโทนแชทบอท Smart Advisor ให้มีความเป็น "มืออาชีพ สุภาพ อบอุ่น" มากขึ้น เลิกใช้คำว่า "เพื่อน" เพื่อความน่าเชื่อถือ
+  - ดึงข้อมูล `display_name` จาก Supabase (`profiles` table) ใน `layout.tsx` มาส่งให้ `SmartAdvisorChat` เพื่อให้ AI เรียกชื่อผู้ใช้งานได้อย่างถูกต้อง (เช่น "คุณ...")
+  - ปรับแต่งข้อความเริ่มต้น (Welcome Message) ให้สอดคล้องกับบุคลิกใหม่
 
 - **Milestone 14.8 (Ghost Money Bug Fix)**:
   - แก้ไขปัญหายอดเงินล่องหน (Ghost Money) เวลาผู้ใช้กู้คืนรายการ (Restore) หรือย้ายลงถังขยะ (Trash)
