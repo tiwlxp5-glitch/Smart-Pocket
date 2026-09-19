@@ -138,5 +138,22 @@ supabase/schema_onboarding.sql
 supabase/schema_fix_cascade_delete.sql
 ```
 
+## AI SDK & Vercel Best Practices (Lessons Learned)
+When modifying or creating new AI endpoints using `@ai-sdk/google` and `ai` (v7) in this Vercel environment, YOU MUST follow these rules:
 
+1. **Defensive Client Initialization**: 
+   - NEVER initialize the AI client (e.g., `createGoogleGenerativeAI`) at the module level. 
+   - ALWAYS initialize it INSIDE the request handler's `try/catch` block.
+   - ALWAYS validate the presence of `process.env.GEMINI_API_KEY` before initialization to prevent silent 500 errors on Vercel.
 
+2. **Vercel Route Configuration**:
+   - Always include `export const maxDuration = 60;` (or higher) in AI routes.
+   - Always include `export const runtime = 'nodejs';` to ensure maximum compatibility with the AI SDK streaming methods.
+
+3. **Streaming Responses**:
+   - Use `return result.toUIMessageStreamResponse();` directly on the `streamText` result object. Do not attempt to manually chain `toUIMessageStream` and `createUIMessageStreamResponse`.
+   - Always include an `onError: (event) => console.error(...)` callback in `streamText` for Vercel logging.
+
+4. **Prompt-Driven UI Hooks (Markdown Interception)**:
+   - To dynamically style specific entities (like Bank names) in the UI, instruct the AI via System Prompt to wrap them in a specific markdown syntax (e.g., `**[Entity]**`). 
+   - Intercept these tags (`<strong>`, `<em>`) via `ReactMarkdown` custom components on the client to apply styles (like `preset.color`) safely without complex Regex text parsing.
