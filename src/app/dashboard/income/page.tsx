@@ -9,6 +9,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import { Wallet as WalletTypeInterface } from '@/types/database'
 import { getWalletTypeLabel } from '@/utils/walletHelper'
 import { startNavigationProgress } from '@/components/NavigationProgress'
+import { toast } from 'sonner'
 
 interface Bucket {
   id: string
@@ -136,7 +137,7 @@ export default function IncomePage() {
           router.push('/dashboard')
         }, 1500)
       } catch (error) {
-        alert('เกิดข้อผิดพลาดในการบันทึกรายรับ')
+        toast.error('เกิดข้อผิดพลาดในการบันทึกรายรับ')
         setIsSaving(false)
       }
     }

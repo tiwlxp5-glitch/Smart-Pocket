@@ -3,6 +3,7 @@
 import { useTransition } from 'react'
 import { Trash2, Loader2 } from 'lucide-react'
 import { moveToTrash } from '@/app/dashboard/actions'
+import { toast } from 'sonner'
 
 export function DeleteHistoryButton({ id }: { id: string }) {
   const [isPending, startTransition] = useTransition()
@@ -14,7 +15,7 @@ export function DeleteHistoryButton({ id }: { id: string }) {
         await moveToTrash(id)
       } catch (err) {
         console.error('Failed to move to trash:', err)
-        alert('เกิดข้อผิดพลาดในการลบรายการ')
+        toast.error('เกิดข้อผิดพลาดในการลบรายการ')
       }
     })
   }

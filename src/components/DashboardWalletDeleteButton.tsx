@@ -3,6 +3,7 @@
 import { Archive, Loader2 } from 'lucide-react'
 import { deleteWallet } from '@/app/dashboard/actions'
 import { useTransition } from 'react'
+import { toast } from 'sonner'
 
 export function DashboardWalletDeleteButton({ walletId, walletName }: { walletId: string, walletName: string }) {
   const [isPending, startTransition] = useTransition()
@@ -15,11 +16,11 @@ export function DashboardWalletDeleteButton({ walletId, walletName }: { walletId
       try {
         const res = await deleteWallet(walletId)
         if (!res?.success) {
-          alert(res?.message || 'เกิดข้อผิดพลาดในการลบกระเป๋า')
+          toast.error(res?.message || 'เกิดข้อผิดพลาดในการลบกระเป๋า')
         }
       } catch (err) {
         console.error('Failed to delete wallet:', err)
-        alert('เกิดข้อผิดพลาดในการลบกระเป๋า')
+        toast.error('เกิดข้อผิดพลาดในการลบกระเป๋า')
       }
     })
   }

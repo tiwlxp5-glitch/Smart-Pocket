@@ -4,6 +4,7 @@ import "./globals.css";
 import { Suspense } from "react";
 import PWA from "@/components/PWA";
 import { NavigationProgress } from "@/components/NavigationProgress";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Suspense>
         <PWA />
         {children}
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

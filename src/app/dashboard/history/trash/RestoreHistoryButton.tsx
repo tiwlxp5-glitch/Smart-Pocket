@@ -3,6 +3,7 @@
 import { useTransition } from 'react'
 import { ArchiveRestore, Loader2 } from 'lucide-react'
 import { restoreFromTrash } from '@/app/dashboard/actions'
+import { toast } from 'sonner'
 
 export function RestoreHistoryButton({ id }: { id: string }) {
   const [isPending, startTransition] = useTransition()
@@ -13,7 +14,7 @@ export function RestoreHistoryButton({ id }: { id: string }) {
         await restoreFromTrash(id)
       } catch (err) {
         console.error('Failed to restore from trash:', err)
-        alert('เกิดข้อผิดพลาดในการกู้คืนรายการ')
+        toast.error('เกิดข้อผิดพลาดในการกู้คืนรายการ')
       }
     })
   }

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Download, X, FileSpreadsheet, Calendar, Check, Loader2, Sparkles, FileText } from 'lucide-react'
 import { format } from 'date-fns'
+import { toast } from 'sonner'
 
 export interface ExportTransactionItem {
   id: string
@@ -86,7 +87,7 @@ export function ExportModal({ transactions }: ExportModalProps) {
       setIsOpen(false)
     } catch (err) {
       console.error('Export Excel Error:', err)
-      alert('เกิดข้อผิดพลาดในการสร้างไฟล์ Excel กรุณาลองใหม่อีกครั้ง')
+      toast.error('เกิดข้อผิดพลาดในการสร้างไฟล์ Excel กรุณาลองใหม่อีกครั้ง')
     } finally {
       setIsExportingExcel(false)
     }
@@ -165,7 +166,7 @@ export function ExportModal({ transactions }: ExportModalProps) {
       setIsOpen(false)
     } catch (err) {
       console.error('Export CSV Error:', err)
-      alert('เกิดข้อผิดพลาดในการส่งออกไฟล์ CSV')
+      toast.error('เกิดข้อผิดพลาดในการส่งออกไฟล์ CSV')
     } finally {
       setIsExportingCSV(false)
     }

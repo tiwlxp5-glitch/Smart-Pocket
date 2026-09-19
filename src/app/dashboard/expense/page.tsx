@@ -10,6 +10,7 @@ import { extractSlipData } from './extract-action'
 import { Wallet as WalletTypeInterface } from '@/types/database'
 import { getWalletTypeLabel, detectBankFromText } from '@/utils/walletHelper'
 import { startNavigationProgress } from '@/components/NavigationProgress'
+import { toast } from 'sonner'
 
 interface Bucket {
   id: string
@@ -222,7 +223,7 @@ export default function ExpensePage() {
       }
     } catch (error) {
       console.error(error)
-      alert('อ่านสลิปไม่สำเร็จ กรุณากรอกข้อมูลเองครับ')
+      toast.error('อ่านสลิปไม่สำเร็จ กรุณากรอกข้อมูลเองครับ')
       setSlipPreview(null)
       setSlipFile(null)
       setCompressedSlipBlob(null)
@@ -268,7 +269,7 @@ export default function ExpensePage() {
         }, 2000)
       } catch (error) {
         console.error('Failed to add expense:', error)
-        alert('เกิดข้อผิดพลาดในการบันทึกรายจ่าย')
+        toast.error('เกิดข้อผิดพลาดในการบันทึกรายจ่าย')
         setIsSubmitting(false)
       }
     }
